@@ -15,3 +15,17 @@ Installation is as easy as:
 ```bash
 sudo make install
 ```
+
+## Usage
+
+The usage is described with the `--help` flag.
+
+Simply run:
+```bash
+cctl --help
+```
+or
+```bash
+cctl {command} --help
+```
+for usage information.
