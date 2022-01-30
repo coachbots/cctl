@@ -10,7 +10,6 @@ import sys
 from os import makedirs, path
 import logging
 from configparser import ConfigParser
-from importlib import resources
 
 from cctl.res import ERROR_CODES, RES_STR
 

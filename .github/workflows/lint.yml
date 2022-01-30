@@ -1,0 +1,32 @@
+name: Linting
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  run-pylint:
+    name: Run Python Linters
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Git Repo
+        uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.6
+          cache: 'pip'
+
+      - name: Install Linters
+        run: pip install flake8
+
+      - name: Run flake8
+        run: flake8 .
+
+
