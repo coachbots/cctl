@@ -9,6 +9,7 @@ import re
 import logging
 from argparse import Namespace
 from subprocess import call
+from multiprocessing import Process
 import time
 
 from cctl.res import ERROR_CODES, RES_STR
@@ -126,6 +127,31 @@ class CommandAction:
             call(['./led_on.py', str(i)], cwd=CommandAction.SERVER_DIR)
 
     @staticmethod
+    def manage_system() -> None:
+        """Boots up the coachbot driver system.
+        FIXME:
+            - Shouldn't be implemented the way it is. Should be calling a
+              module function.
+        """
+        def _start_ftp_server():
+            call(['./cloud.py', configuration.get_server_interface()],
+                 cwd=configuration.get_server_dir())
+
+        def _start_manager():
+            call(['./manager.py'], cwd=configuration.get_server_dir())
+
+        ftp_server = Process(target=_start_ftp_server)
+        coach_manager = Process(target=_start_manager)
+        procs = [ftp_server, coach_manager]
+
+        for proc in procs:
+            proc.start()
+            time.sleep(5)  # FIXME: Really bad
+
+        for proc in procs:
+            proc.join()
+
+    @staticmethod
     def upload_code(usr_code: str, os_update: bool) -> None:
         """Uploads user code to all robots.
 
@@ -219,6 +245,10 @@ class CommandAction:
             if self._args.command == RES_STR['cmd_update']:
                 CommandAction.upload_code(self._args.usr_path[0],
                                           self._args.os_update)
+                return 0
+
+            if self._args.command == RES_STR['cmd_manage']:
+                CommandAction.manage_system()
                 return 0
 
         except FileNotFoundError as fnf_err:

@@ -29,10 +29,12 @@ def main():
                               help=RES_STR['cmd_pause_desc'])
     update_parser = command_parser.add_parser(RES_STR['cmd_update'],
                                               help=RES_STR['cmd_update_desc'])
+    command_parser.add_parser(RES_STR['cmd_manage'],
+                              help=RES_STR['cmd_manage_desc'])
 
-    for p in (on_parser, off_parser, blink_parser):
-        p.add_argument(RES_STR['cmd_id'], metavar='N', type=str, nargs='+',
-                       help=RES_STR['cmd_arg_id_help'])
+    for pars in (on_parser, off_parser, blink_parser):
+        pars.add_argument(RES_STR['cmd_id'], metavar='N', type=str, nargs='+',
+                          help=RES_STR['cmd_arg_id_help'])
 
     update_parser.add_argument('--operating-system', '-o',
                                help=RES_STR['cmd_update_os_desc'],
