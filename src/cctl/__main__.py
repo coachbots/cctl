@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import sys
 import argparse
 import logging
 
@@ -24,10 +23,10 @@ def main():
                                            help=RES_STR['cmd_off_help'])
     blink_parser = command_parser.add_parser(RES_STR['cmd_blink'],
                                              help=RES_STR['cmd_blink_desc'])
-    start_parser = command_parser.add_parser(RES_STR['cmd_start'],
-                                             help=RES_STR['cmd_start_desc'])
-    pause_parser = command_parser.add_parser(RES_STR['cmd_pause'],
-                                             help=RES_STR['cmd_pause_desc'])
+    command_parser.add_parser(RES_STR['cmd_start'],
+                              help=RES_STR['cmd_start_desc'])
+    command_parser.add_parser(RES_STR['cmd_pause'],
+                              help=RES_STR['cmd_pause_desc'])
     update_parser = command_parser.add_parser(RES_STR['cmd_update'],
                                               help=RES_STR['cmd_update_desc'])
 
