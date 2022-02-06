@@ -40,5 +40,6 @@ RES_STR = {
 }
 
 ERROR_CODES = {
-    'conf_error': 101
+    'conf_error': 101,
+    'server_dir_missing': 102
 }

@@ -11,7 +11,7 @@ from argparse import Namespace
 from subprocess import call
 import time
 
-from cctl.res import RES_STR
+from cctl.res import ERROR_CODES, RES_STR
 from cctl import configuration
 
 BotTargets = Union[range, bool]
@@ -162,7 +162,7 @@ class CommandAction:
     def __init__(self, args: Namespace):
         self._args = args
 
-    def exec(self) -> None:
+    def exec(self) -> int:
         """Parses arguments automatically and handles booting."""
         try:
             # Commands which contain ranges of robots.
@@ -179,7 +179,8 @@ class CommandAction:
                     # If one of the targets is a boolean, means we need to turn
                     # on all.
                     if isinstance(targets, bool):
-                        if self._args.command == RES_STR['cmd_on']:
+                        if self._args.command in (RES_STR['cmd_on'],
+                                                  RES_STR['cmd_off']):
                             logging.info(RES_STR['bot_all_booting_msg'],
                                          target_str)
                             CommandAction.boot_all(target_on)
@@ -201,7 +202,7 @@ class CommandAction:
                         if self._args.command == RES_STR['cmd_blink']:
                             logging.info(RES_STR['bot_blink_msg'], bot)
                             CommandAction.blink(bot)
-                return
+                return 0
 
             # Start/Pause command.
             if self._args.command in (RES_STR['cmd_start'],
@@ -212,14 +213,16 @@ class CommandAction:
 
                 logging.info(RES_STR['bot_operating_msg'], target_str)
                 CommandAction.set_operating(target_on)
-                return
+                return 0
 
             # Upload command.
             if self._args.command == RES_STR['cmd_update']:
                 CommandAction.upload_code(self._args.usr_path[0],
                                           self._args.os_update)
-                return
+                return 0
 
         except FileNotFoundError as fnf_err:
             logging.error(RES_STR['server_dir_missing'], fnf_err)
-            return
+            return ERROR_CODES['server_dir_missing']
+
+        return 0

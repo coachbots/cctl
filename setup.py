@@ -10,7 +10,7 @@ with open('README.md', 'r', encoding='utf-8') as fh:
 
 setuptools.setup(
     name='cctl',
-    version='0.1.2',
+    version='0.1.3',
     author='Marko Vejnovic',
     author_email='contact@markovejnovic.com',
     description='Coachbot Control Software',
@@ -25,7 +25,7 @@ setuptools.setup(
     python_requires='>=3.6',
     entry_points={
         'console_scripts': [
-            'cctl = cctl:__main__'
+            'cctl = cctl.__main__:main'
         ]
     }
 )
