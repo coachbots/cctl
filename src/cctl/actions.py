@@ -2,7 +2,7 @@
 
 """Defines the main class that handles all commands."""
 
-from typing import Literal
+from typing import Union
 import os
 import shutil
 import re
@@ -14,7 +14,7 @@ import time
 from cctl.res import RES_STR
 from cctl import configuration
 
-BotTargets = range | Literal[True]
+BotTargets = Union[range, bool]
 
 
 def _parse_id(coach_id: str) -> BotTargets:
@@ -48,7 +48,6 @@ class CommandAction:
     appropriately.
     """
 
-    # FIXME: Shouldn't be hard-coded.
     SERVER_DIR = configuration.get_server_dir()
     INTERFACE_NAME = configuration.get_server_interface()
 
