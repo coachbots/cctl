@@ -7,7 +7,7 @@ import logging
 from .res import RES_STR
 from .actions import CommandAction
 
-logging.basicConfig(encoding='utf-8', level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
 
 parser = argparse.ArgumentParser(prog=RES_STR['app_name'],
                                  description=RES_STR['app_desc'])
