@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-SUPPORTED_COMMANDS=('on' 'off' 'blink' 'start' 'pause' 'upload' 'manage')
+SUPPORTED_COMMANDS=('on' 'off' 'blink' 'start' 'pause' 'upload' 'manage', 'cam')
 ID_ARG_COMMANDS=('on' 'off' 'blink')
 
 function _is_flag()
@@ -27,6 +27,10 @@ function _cctl_completions()
     # suggest.
     if _is_flag; then
         COMPREPLY+=('--help')
+    fi
+
+    if [ "${COMP_WORDS[1]}" == "cam" ]; then
+        COMPREPLY+=($(compgen -W "setup preview" ${COMP_WORDS[COMP_CWORD]}))
     fi
 
     # If we're working on the upload, let's try to suggest the flags.

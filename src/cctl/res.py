@@ -63,7 +63,7 @@ RES_STR = {
                                'to run the\n%s\ncommand as root.',
     'v4l2loopback_already_loaded': 'v4l2loopback is already loaded. Please ' +
                                    'rmmod v4l2loopback (will remove all ' +
-                                   'loopback video streams).'
+                                   'loopback video streams).',
     'running_ffpeg': 'Running ffmpeg as:\n%s\n.'
 }
 
