@@ -35,7 +35,7 @@ RES_STR = {
     'conf_error': 'Configuration file error. Please ensure a configuration ' +
                   'file exists in ~/.config/coachswarm/cctl.conf or ' +
                   '/etc/coachswarm/cctl.conf. Creating ' +
-                  '~/.config/coachswarm.cctl.conf',
+                  '~/.config/coachswarm/cctl.conf',
     'conf_malformed': 'Malformed configuration file.',
     'cmd_manage': 'manage',
     'cmd_manage_desc': 'Starts the management console. This was called ' +
