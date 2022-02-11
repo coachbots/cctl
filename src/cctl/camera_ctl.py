@@ -5,7 +5,7 @@ import logging
 import sys
 import os
 from os import path
-from typing import Optional
+from typing import Optional, Tuple
 from subprocess import PIPE, Popen, call
 from cctl.configuration import get_camera_device_name, \
     get_camera_lens_correction_factors, get_processed_video_device_name
@@ -104,7 +104,8 @@ def start_processing_stream(
         k_1: float = get_camera_lens_correction_factors()[0],
         k_2: float = get_camera_lens_correction_factors()[1],
         c_x: float = get_camera_lens_correction_factors()[2],
-        c_y: float = get_camera_lens_correction_factors()[3]) -> None:
+        c_y: float = get_camera_lens_correction_factors()[3]) -> Tuple[str,
+                                                                       int]:
     """
     Starts the appropriate `ffmpeg` stream that does all live-video
     corrections.
@@ -114,6 +115,10 @@ def start_processing_stream(
         k2: The second correction parameter
         cx: The relative lens focal center on the x-axis
         cy: The relative lens focal center on the y-axis
+
+    Returns:
+        A tuple containing the full path to the video device and the PID of the
+        process.
 
     Raises:
         ValueError if either of the streams do not have an appropriate device.
@@ -132,11 +137,30 @@ def start_processing_stream(
         raise CameraError(CameraEnum.CAMERA_CORRECTED.value)
 
     command = ['ffmpeg', '-re', '-i', in_stream, '-map', '0:v', '-vf',
-               f'"lenscorrection=k1={k_1}:k2={k_2}:' +
-               f'cx={c_x}:cy={c_y}",format=yuv420p', '-f', 'v4l2', out_stream]
+               f'lenscorrection=k1={k_1}:k2={k_2}:' +
+               f'cx={c_x}:cy={c_y},format=yuv420p', '-f', 'v4l2', out_stream]
 
-    logging.info(RES_STR['running_ffmpeg'], command)
+    logging.info(RES_STR['running_ffmpeg'], ' '.join(command))
+    pid = Popen(command).pid
 
-    if call(command) != 0:
-        logging.error(RES_STR['unknown_camera_error'])
-        sys.exit(ERROR_CODES['unknown_camera_error'])
+    return out_stream, pid
+
+
+def start_processed_preview() -> Tuple[str, int]:
+    """Attempts to start the processed preview.
+
+    Returns:
+        The device path and the pid of ffplay.
+
+    Raises:
+        CameraError if this is not possible.
+    """
+    device = get_processed_camera_stream_device()
+
+    if device is None:
+        raise CameraError(CameraEnum.CAMERA_CORRECTED.value)
+
+    command = ['ffplay', device]
+    pid = Popen(command).pid
+
+    return device, pid

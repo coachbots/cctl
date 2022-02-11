@@ -219,7 +219,11 @@ class CommandAction:
 
             return 0
         if self._args.cam_command == RES_STR['cmd_cam_preview']:
-            print('Preview')
+            try:
+                camera_ctl.start_processed_preview()
+            except camera_ctl.CameraError:
+                logging.error(RES_STR['unknown_camera_error'])
+                return ERROR_CODES['unknown_camera_error']
             return 0
 
         return -1
