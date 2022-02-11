@@ -39,10 +39,16 @@ RES_STR = {
     'conf_malformed': 'Malformed configuration file.',
     'cmd_manage': 'manage',
     'cmd_manage_desc': 'Starts the management console. This was called ' +
-                       'init.py in legacy code.'
+                       'init.py in legacy code.',
+    'unknown_camera_error': 'An unexpected camera error has occurred.',
+    'processed_stream_creating_error': 'Could not create the stream. Please ' +
+                                       'make sure you have root permissions ' +
+                                       'for this.'
 }
 
 ERROR_CODES = {
     'conf_error': 101,
-    'server_dir_missing': 102
+    'server_dir_missing': 102,
+    'unknown_camera_error': 121,
+    'processed_stream_creating_error': 122,
 }
