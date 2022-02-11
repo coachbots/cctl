@@ -13,6 +13,7 @@ install:
 	python3 -m pip install dist/cctl-*.whl
 	mkdir -p /usr/local/man/man1
 	cp dist/cctl.1.gz /usr/local/man/man1/cctl.1.gz
+	cp cctl-completion.bash /etc/bash_completion.d/cctl.bash
 
 uninstall:
 	python3 -m pip uninstall cctl
