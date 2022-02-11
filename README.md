@@ -29,3 +29,5 @@ or
 cctl {command} --help
 ```
 for usage information.
+
+Manpages exist and can be seen with `man cctl`.
