@@ -4,7 +4,7 @@ from enum import IntEnum
 import logging
 import sys
 import os
-from os import path, popen
+from os import path
 from typing import Optional
 from subprocess import PIPE, Popen, call
 from cctl.configuration import get_camera_device_name, \
@@ -77,7 +77,7 @@ def make_processed_stream(
     """Attempts to make a stream using the loopback device."""
     modprobe_command = ['modprobe', '--first-time', 'v4l2loopback',
                         f'card_label="{target_name}"']
-    with Popen(modprobe_command, stdout=PIPE) as probe_attempt:
+    with Popen(modprobe_command, stderr=PIPE) as probe_attempt:
         _, out_err = probe_attempt.communicate()
         if 'Operation not permitted' in str(out_err):
             # We don't have permissions. Let's ask the user to give us
@@ -131,11 +131,12 @@ def start_processing_stream(
     if out_stream is None:
         raise CameraError(CameraEnum.CAMERA_CORRECTED.value)
 
-    result = call(['ffmpeg', '-re', '-i', in_stream, '-map', '0:v',
-                   '-vf', f'"lenscorrection=k1={k_1}:k2={k_2}:' +
-                   f'cx={c_x}:cy={c_y}",format=yuv420p',
-                   '-f', 'v4l2', out_stream])
+    command = ['ffmpeg', '-re', '-i', in_stream, '-map', '0:v', '-vf',
+               f'"lenscorrection=k1={k_1}:k2={k_2}:' +
+               f'cx={c_x}:cy={c_y}",format=yuv420p', '-f', 'v4l2', out_stream]
 
-    if result != 0:
+    logging.info(RES_STR['running_ffmpeg'], command)
+
+    if call(command) != 0:
         logging.error(RES_STR['unknown_camera_error'])
         sys.exit(ERROR_CODES['unknown_camera_error'])
