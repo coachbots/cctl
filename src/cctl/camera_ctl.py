@@ -78,14 +78,16 @@ def make_processed_stream(
     modprobe_command = ['modprobe', '--first-time', 'v4l2loopback',
                         f'card_label="{target_name}"']
     with Popen(modprobe_command, stdout=PIPE) as probe_attempt:
-        output = probe_attempt.communicate()
-        if 'Operating not permitted' in output:
+        _, out_err = probe_attempt.communicate()
+        if 'Operation not permitted' in str(out_err):
             # We don't have permissions. Let's ask the user to give us
             # permissions.
             logging.info(RES_STR['cam_modprobe_permission'],
-                         ''.join(modprobe_command))
-            call(['sudo'] + modprobe_command)
-        if 'Module already in kernel' in output:
+                         ' '.join(modprobe_command))
+            # -k forces sudo to ask for password.
+            if call(['sudo', '-k'] + modprobe_command) == 0:
+                return
+        if 'Module already in kernel' in str(out_err):
             # The module is already in kernel. The user should get rid of it.
             # We can't because we might break another loopback stream.
             logging.error(RES_STR['v4l2loopback_already_loaded'])

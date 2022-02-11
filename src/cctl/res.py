@@ -60,7 +60,7 @@ RES_STR = {
     'camera_stream_does_not_exist': 'Camera stream does not exist. ' +
                                     'Creating.',
     'cam_modprobe_permission': 'Insufficient permissions. You are now asked ' +
-                               'to run the %s command as root.',
+                               'to run the %s command as root.\n',
     'v4l2loopback_already_loaded': 'v4l2loopback is already loaded. Please ' +
                                    'rmmod v4l2loopback (will remove all ' +
                                    'loopback video streams).'
