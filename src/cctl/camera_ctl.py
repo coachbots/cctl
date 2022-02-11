@@ -1,13 +1,34 @@
 """This module exposes functions for controlling camera source and sink."""
 
+from enum import IntEnum
 import logging
 import sys
 import os
 from os import path
 from typing import Optional
 from subprocess import call
+from cctl.configuration import get_camera_device_name, \
+    get_camera_lens_correction_factors, get_processed_video_device_name
 
 from cctl.res import ERROR_CODES, RES_STR
+
+
+class CameraEnum(IntEnum):
+    """A small enumerator for storing supported cameras."""
+    CAMERA_RAW = 0
+    CAMERA_CORRECTED = 1
+
+
+class CameraError(ValueError):
+    """Represents a camera error that may have occurred.
+
+    Parameters:
+        identifier: A variable for holding which camera errored out. Usually,
+        this could be the number at the end of /dev/videoX or an IntEnum value.
+    """
+    def __init__(self, identifier: int) -> None:
+        super().__init__()
+        self.identifier = identifier
 
 
 def _get_camera_device_by_name(name: str) -> Optional[str]:
@@ -25,7 +46,7 @@ def _get_camera_device_by_name(name: str) -> Optional[str]:
 
 
 def get_raw_camera_stream_device(
-        target_name: str = 'Piwebcam: UVC Camera') -> Optional[str]:
+        target_name: str = get_camera_device_name()) -> Optional[str]:
     """
     Parameters:
         target_name: The name of the raw camera stream device.
@@ -38,7 +59,8 @@ def get_raw_camera_stream_device(
 
 
 def get_processed_camera_stream_device(
-        target_name: str = "coachcam_stream_processed") -> Optional[str]:
+        target_name: str = get_processed_video_device_name()) \
+        -> Optional[str]:
     """
     Parameters:
         target_name: The name of the processed camera stream device.
@@ -51,7 +73,7 @@ def get_processed_camera_stream_device(
 
 
 def make_processed_stream(
-        target_name: str = "coachcam_stream_processed") -> None:
+        target_name: str = get_processed_video_device_name()) -> None:
     """Attempts to make a stream using the loopback device."""
     result = call(['modprobe', 'v4l2loopback', f'card_label="{target_name}"'])
 
@@ -60,8 +82,11 @@ def make_processed_stream(
         sys.exit(ERROR_CODES['processed_stream_creating_error'])
 
 
-def start_processing_stream(k_1: float = -0.22, k_2: float = -0.022,
-                            c_x: float = .52, c_y: float = 0.5) -> None:
+def start_processing_stream(
+        k_1: float = get_camera_lens_correction_factors()[0],
+        k_2: float = get_camera_lens_correction_factors()[1],
+        c_x: float = get_camera_lens_correction_factors()[2],
+        c_y: float = get_camera_lens_correction_factors()[3]) -> None:
     """
     Starts the appropriate `ffmpeg` stream that does all live-video
     corrections.
@@ -72,6 +97,9 @@ def start_processing_stream(k_1: float = -0.22, k_2: float = -0.022,
         cx: The relative lens focal center on the x-axis
         cy: The relative lens focal center on the y-axis
 
+    Raises:
+        ValueError if either of the streams do not have an appropriate device.
+
     Note:
         This implementation merely calls `ffmpeg` as a subprocess.
     """
@@ -79,8 +107,11 @@ def start_processing_stream(k_1: float = -0.22, k_2: float = -0.022,
     in_stream = get_raw_camera_stream_device()
     out_stream = get_processed_camera_stream_device()
 
-    assert in_stream is not None
-    assert out_stream is not None
+    if in_stream is None:
+        raise CameraError(CameraEnum.CAMERA_RAW.value)
+
+    if out_stream is None:
+        raise CameraError(CameraEnum.CAMERA_CORRECTED.value)
 
     result = call(['ffmpeg', '-re', '-i', in_stream, '-map', '0:v',
                    '-vf', f'"lenscorrection=k1={k_1}:k2={k_2}:' +

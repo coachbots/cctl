@@ -8,6 +8,7 @@ FIXME:
 
 import sys
 from os import makedirs, path
+from typing import Tuple
 import logging
 from configparser import ConfigParser
 
@@ -27,6 +28,10 @@ mandatory_keys = {
     ],
     'coachswarm': [
         'conf_path'
+    ],
+    'camera': [
+        'raw_dev_name',
+        'processed_dev_name'
     ]
 }
 
@@ -44,6 +49,14 @@ if len(files_found) == 0:
     }
     config['coachswarm'] = {
         'conf_path': path.join(usr_conf_dir, 'coachswarm.conf')
+    }
+    config['camera'] = {
+        'raw_dev_name': 'Piwebcam: UVC Camera',
+        'processed_dev_name': 'Coachcam: Stream_Processed',
+        'k1': -0.22,
+        'k2': -0.022,
+        'cx': 0.52,
+        'cy': 0.5
     }
 
     if not path.exists(usr_conf_dir):
@@ -70,15 +83,54 @@ except AssertionError:
 
 
 def get_server_dir():
-    """Returns the operating server directory."""
+    """
+    Returns:
+        The operating server directory.
+    """
     return config['server']['path']
 
 
 def get_server_interface():
-    """Returns the server interface"""
+    """
+    Returns:
+        The server interface
+    """
     return config['server']['interface']
 
 
 def get_coachswarm_conf_path():
-    """Returns the coachswarm.conf filepath"""
+    """
+    Returns:
+        The coachswarm.conf filepath
+    """
     return config['coachswarm']['conf_path']
+
+
+def get_camera_device_name() -> str:
+    """
+    Returns:
+        The camera device name. This name is the name of the raw video stream
+        recording the coachbots.
+    """
+    return config['camera']['raw_dev_name']
+
+
+def get_processed_video_device_name() -> str:
+    """
+    Returns:
+        The processed (ie. lens-corrected) video device name.
+    """
+    return config['camera']['processed_dev_name']
+
+
+def get_camera_lens_correction_factors() -> Tuple[float, float, float, float]:
+    """
+    Returns:
+        The camera correction factors in the format (k1, k2, cx, cy)
+    """
+    return (
+        config.getfloat('camera', 'k1'),
+        config.getfloat('camera', 'k2'),
+        config.getfloat('camera', 'cx'),
+        config.getfloat('camera', 'cy')
+    )

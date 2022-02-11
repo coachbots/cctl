@@ -13,7 +13,7 @@ from multiprocessing import Process
 import time
 
 from cctl.res import ERROR_CODES, RES_STR
-from cctl import configuration
+from cctl import camera_ctl, configuration
 
 BotTargets = Union[range, bool]
 
@@ -188,9 +188,48 @@ class CommandAction:
     def __init__(self, args: Namespace):
         self._args = args
 
+    def _camera_command_handler(self) -> int:
+        """Handles camera commands.
+
+        Note:
+            This function may exit prematurely using sys.exit if something
+            fails. This is expected behavior.
+
+        Returns:
+            0 for a successful invokation, -1 otherwise.
+        """
+        if self._args.cam_command == RES_STR['cmd_cam_setup']:
+            try:
+                camera_ctl.start_processing_stream()
+            except camera_ctl.CameraError as v_err:
+                if v_err.identifier == camera_ctl.CameraEnum.CAMERA_RAW.value:
+                    logging.error(RES_STR['camera_raw_error'])
+                    return ERROR_CODES['camera_raw_error']
+
+                if v_err.identifier == \
+                        camera_ctl.CameraEnum.CAMERA_CORRECTED.value:
+                    logging.info(RES_STR['camera_stream_does_not_exist'])
+                    camera_ctl.make_processed_stream()
+
+                    try:
+                        camera_ctl.start_processing_stream()
+                    except camera_ctl.CameraError:
+                        logging.error(RES_STR['unknown_camera_error'])
+                        return ERROR_CODES['unknown_camera_error']
+
+            return 0
+        if self._args.cam_command == RES_STR['cmd_cam_preview']:
+            print('Preview')
+            return 0
+
+        return -1
+
     def exec(self) -> int:
         """Parses arguments automatically and handles booting."""
         try:
+            if self._args.command == 'cam':
+                return self._camera_command_handler()
+
             # Commands which contain ranges of robots.
             if self._args.command in (RES_STR['cmd_on'],
                                       RES_STR['cmd_off'],

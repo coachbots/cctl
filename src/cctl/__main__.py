@@ -23,6 +23,8 @@ def main():
                                            help=RES_STR['cmd_off_help'])
     blink_parser = command_parser.add_parser(RES_STR['cmd_blink'],
                                              help=RES_STR['cmd_blink_desc'])
+    camera_parser = command_parser.add_parser(RES_STR['cmd_cam'],
+                                              help=RES_STR['cmd_cam_desc'])
     command_parser.add_parser(RES_STR['cmd_start'],
                               help=RES_STR['cmd_start_desc'])
     command_parser.add_parser(RES_STR['cmd_pause'],
@@ -42,6 +44,16 @@ def main():
                                default=False)
     update_parser.add_argument('usr_path', metavar='PATH', type=str,
                                nargs=1, help=RES_STR['usr_code_path_desc'])
+
+    cam_subparser = camera_parser.add_subparsers(
+        title=RES_STR['cmd_cam_cmd_title'],
+        help=RES_STR['cmd_cam_cmd_help'],
+        dest='cam_command'
+    )
+    cam_subparser.add_parser(RES_STR['cmd_cam_setup'],
+                             help=RES_STR['cmd_cam_setup_desc'])
+    cam_subparser.add_parser(RES_STR['cmd_cam_preview'],
+                             help=RES_STR['cmd_cam_preview_desc'])
 
     args = parser.parse_args()
     if args.command is None:

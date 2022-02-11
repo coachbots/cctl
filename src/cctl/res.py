@@ -43,12 +43,27 @@ RES_STR = {
     'unknown_camera_error': 'An unexpected camera error has occurred.',
     'processed_stream_creating_error': 'Could not create the stream. Please ' +
                                        'make sure you have root permissions ' +
-                                       'for this.'
+                                       'for this.',
+    'cmd_cam': 'cam',
+    'cmd_cam_desc': 'Coachswarm overhead camera control.',
+    'cmd_cam_cmd_title': 'camera-command',
+    'cmd_cam_cmd_help': 'Camera subcommands',
+    'cmd_cam_setup': 'setup',
+    'cmd_cam_setup_desc': 'Setup the coachbot overhead video stream. This ' +
+                          'will setup a loopback device (requires root) as ' +
+                          'well as lens correction.',
+    'cmd_cam_preview': 'preview',
+    'cmd_cam_preview_desc': 'Opens a preview window of the corrected video.',
+    'camera_raw_error': 'Could not open the raw video. Make sure the camera ' +
+                        'plugged in.',
+    'camera_stream_does_not_exist': 'Camera stream does not exist. ' +
+                                    'Creating.'
 }
 
 ERROR_CODES = {
     'conf_error': 101,
     'server_dir_missing': 102,
     'unknown_camera_error': 121,
-    'processed_stream_creating_error': 122,
+    'camera_raw_error': 122,
+    'processed_stream_creating_error': 124,
 }
