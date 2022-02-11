@@ -37,9 +37,9 @@ def _get_camera_device_by_name(name: str) -> Optional[str]:
         video_name_file = path.join(video_descriptors, video_dev, 'name')
         video_name = None
         with open(video_name_file, 'r') as vfile:
-            video_name = vfile.read()
+            video_name = vfile.read().strip()
 
-        if video_name in name:
+        if video_name.find(name) != -1:
             return path.join('/', 'dev', video_dev)
 
     return None
