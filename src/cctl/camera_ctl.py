@@ -4,9 +4,9 @@ from enum import IntEnum
 import logging
 import sys
 import os
-from os import path
+from os import path, popen
 from typing import Optional
-from subprocess import call
+from subprocess import PIPE, Popen, call
 from cctl.configuration import get_camera_device_name, \
     get_camera_lens_correction_factors, get_processed_video_device_name
 
@@ -75,11 +75,27 @@ def get_processed_camera_stream_device(
 def make_processed_stream(
         target_name: str = get_processed_video_device_name()) -> None:
     """Attempts to make a stream using the loopback device."""
-    result = call(['modprobe', 'v4l2loopback', f'card_label="{target_name}"'])
+    modprobe_command = ['modprobe', '--first-time', 'v4l2loopback',
+                        f'card_label="{target_name}"']
+    with Popen(modprobe_command, stdout=PIPE) as probe_attempt:
+        output = probe_attempt.communicate()
+        if 'Operating not permitted' in output:
+            # We don't have permissions. Let's ask the user to give us
+            # permissions.
+            logging.info(RES_STR['cam_modprobe_permission'],
+                         ''.join(modprobe_command))
+            call(['sudo'] + modprobe_command)
+        if 'Module already in kernel' in output:
+            # The module is already in kernel. The user should get rid of it.
+            # We can't because we might break another loopback stream.
+            logging.error(RES_STR['v4l2loopback_already_loaded'])
+            sys.exit(ERROR_CODES['processed_stream_creating_error'])
 
-    if result != 0:
-        logging.error(RES_STR['processed_stream_creating_error'])
-        sys.exit(ERROR_CODES['processed_stream_creating_error'])
+        if probe_attempt.returncode == 0:
+            return
+
+    logging.error(RES_STR['processed_stream_creating_error'])
+    sys.exit(ERROR_CODES['processed_stream_creating_error'])
 
 
 def start_processing_stream(

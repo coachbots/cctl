@@ -43,7 +43,8 @@ RES_STR = {
     'unknown_camera_error': 'An unexpected camera error has occurred.',
     'processed_stream_creating_error': 'Could not create the stream. Please ' +
                                        'make sure you have root permissions ' +
-                                       'for this.',
+                                       'for this and ensure v4l2loopback is ' +
+                                       'not loaded in the kernel (lsmod).',
     'cmd_cam': 'cam',
     'cmd_cam_desc': 'Coachswarm overhead camera control.',
     'cmd_cam_cmd_title': 'camera-command',
@@ -57,7 +58,12 @@ RES_STR = {
     'camera_raw_error': 'Could not open the raw video. Make sure the camera ' +
                         'plugged in.',
     'camera_stream_does_not_exist': 'Camera stream does not exist. ' +
-                                    'Creating.'
+                                    'Creating.',
+    'cam_modprobe_permission': 'Insufficient permissions. You are now asked ' +
+                               'to run the %s command as root.',
+    'v4l2loopback_already_loaded': 'v4l2loopback is already loaded. Please ' +
+                                   'rmmod v4l2loopback (will remove all ' +
+                                   'loopback video streams).'
 }
 
 ERROR_CODES = {
