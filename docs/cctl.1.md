@@ -71,6 +71,11 @@ Moreover, this subcommand also supports the [*-o*,*--operating-system*] flag
 which reuploads the operating system of all running Coachbots. The operating
 system is copied from SERVER_DIR/temp/.
 
+## cctl-manage
+
+**cctl manage** starts the FTP server required for operating and opens the
+management interface.
+
 # CONFIGURATION
 
 **cctl** has been designed to be highly configurable. By default, **cctl**
