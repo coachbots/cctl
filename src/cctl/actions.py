@@ -3,8 +3,6 @@
 """Defines the main class that handles all commands."""
 
 from typing import Union
-import os
-import shutil
 import re
 import logging
 from argparse import Namespace
@@ -13,12 +11,10 @@ from multiprocessing import Process
 import time
 
 from cctl.res import ERROR_CODES, RES_STR
-from cctl import camera_ctl, configuration
-
-BotTargets = Union[range, bool]
+from cctl.api import camera_ctl, bot_ctl, configuration
 
 
-def _parse_id(coach_id: str) -> BotTargets:
+def _parse_id(coach_id: str) -> Union[range, bool]:
     """Parses the id parameter ensuring that it fits the format:
         ^(\\d+)$ or ^(\\d+)-(\\d+)$. If 'all' is given, then the function
         returns true, otherwise returns a list of targets to be turned on.
@@ -44,94 +40,19 @@ def _parse_id(coach_id: str) -> BotTargets:
 
 
 class CommandAction:
-    """Class handling all actions that are supported by cctl. This class
+    """
+    Class handling all actions that are supported by cctl. This class
     automatically parses arguments that argparse cannot and switches execution
     appropriately.
     """
 
-    SERVER_DIR = configuration.get_server_dir()
-    INTERFACE_NAME = configuration.get_server_interface()
-
-    @staticmethod
-    def boot_bot(bot_id: int, state: bool) -> None:
-        """Changes the state of a bot to on or off.
-
-        Parameters:
-            bot_id - Target bot
-            state - Whether to boot on or off
-
-        FIXME:
-            Shouldn't be implemented the way it is. Should be calling a module
-            function.
-        """
-        call(['./ble_one.py', str(int(state)), str(bot_id)],
-             cwd=CommandAction.SERVER_DIR)
-
-    @staticmethod
-    def boot_all(state: bool) -> None:
-        """Turns all robots on or off.
-
-        Parameters:
-            state - Whether to boot on or off
-
-        FIXME:
-            Shouldn't be implemented the way it is. Should be calling a module
-            function.
-        """
-        if state:
-            call(['./reliable_ble_on.py'], cwd=CommandAction.SERVER_DIR)
-            return
-
-        call(['./reliable_ble_off.py'], cwd=CommandAction.SERVER_DIR)
-
-    @staticmethod
-    def set_operating(state: bool) -> None:
-        """Turns user code on robots on or off.
-
-        Parameters:
-            state - Whether to unpause or pause
-
-        FIXME:
-            Shouldn't be implemented the way it is. Should be calling a module
-            function.
-        """
-        if state:
-            call(['./start.py'], cwd=CommandAction.SERVER_DIR)
-            return
-
-        call(['./stop.py'], cwd=CommandAction.SERVER_DIR)
-
-    @staticmethod
-    def blink(robot_id: int) -> None:
-        """Blinks a robot.
-
-        Parameters:
-            bot_id - Target bot
-
-        FIXME:
-            Shouldn't be implemented the way it is. Should be calling a module
-            function.
-        """
-        call(['./led_on.py', str(robot_id)], cwd=CommandAction.SERVER_DIR)
-
-    @staticmethod
-    def blink_all() -> None:
-        """Blinks all robots.
-
-        FIXME:
-            - Shouldn't be implemented the way it is. Should be calling a
-              module function.
-            - Need to check whether bots are alive.
-        """
-        for i in range(0, 100):
-            call(['./led_on.py', str(i)], cwd=CommandAction.SERVER_DIR)
-
     @staticmethod
     def manage_system() -> None:
         """Boots up the coachbot driver system.
-        FIXME:
-            - Shouldn't be implemented the way it is. Should be calling a
-              module function.
+
+        Todo:
+            Shouldn't be implemented the way it is. Should be calling a
+            module function.
         """
         def _start_ftp_server():
             call(['./cloud.py', configuration.get_server_interface()],
@@ -150,40 +71,6 @@ class CommandAction:
 
         for proc in procs:
             proc.join()
-
-    @staticmethod
-    def upload_code(usr_code: str, os_update: bool) -> None:
-        """Uploads user code to all robots.
-
-        Parameters:
-            usr_code - The path to the target user code.
-
-        FIXME:
-            - Shouldn't be implemented the way it is. Should be calling a
-              module function.
-        """
-        server_tmp = os.path.join(configuration.get_server_dir(), 'temp')
-
-        shutil.copy2(usr_code, os.path.join(server_tmp, 'usr_code.py'))
-
-        if not os_update:
-            logging.info(RES_STR['upload_msg'])
-            call(['./update.py', CommandAction.INTERFACE_NAME],
-                 cwd=CommandAction.SERVER_DIR)
-            return
-
-        logging.info(RES_STR['upload_os_msg'])
-        shutil.copy2(configuration.get_coachswarm_conf_path(),
-                     os.path.join(server_tmp, 'coachswarm.conf'))
-        # TODO: Remove these sleeps with a while loop.
-        # TODO: I don't really know what this code does.
-        call(['./scan.py'], cwd=CommandAction.SERVER_DIR)
-        time.sleep(0.5)
-        call(['./hard_push.py', CommandAction.INTERFACE_NAME],
-             cwd=CommandAction.SERVER_DIR)
-        time.sleep(0.5)
-        call(['./reboot_batch.py', CommandAction.INTERFACE_NAME],
-             cwd=CommandAction.SERVER_DIR)
 
     def __init__(self, args: Namespace):
         self._args = args
@@ -228,6 +115,51 @@ class CommandAction:
 
         return -1
 
+    def _on_off_blink_handler(self) -> int:
+        target_on = self._args.command == RES_STR['cmd_on']
+        target_str = RES_STR['cmd_on'] if target_on \
+            else RES_STR['cmd_off']
+
+        for i in self._args.id:
+            targets = _parse_id(i)
+
+            # If one of the targets is a boolean, means we need to turn
+            # on all.
+            if isinstance(targets, bool):
+                if self._args.command in (RES_STR['cmd_on'],
+                                          RES_STR['cmd_off']):
+                    logging.info(RES_STR['bot_all_booting_msg'],
+                                 target_str)
+                    bot_ctl.boot_bot('all', target_on)
+
+                if self._args.command == RES_STR['cmd_blink']:
+                    logging.info(RES_STR['bot_all_blink_msg'])
+                    bot_ctl.blink('all')
+
+                return 0
+
+            # Else, go one-by-one turning robots on.
+            for bot in targets:
+                if self._args.command in (RES_STR['cmd_on'],
+                                          RES_STR['cmd_off']):
+                    logging.info(RES_STR['bot_booting_msg'], bot,
+                                 target_str)
+                    bot_ctl.boot_bot(bot, target_on)
+
+                if self._args.command == RES_STR['cmd_blink']:
+                    logging.info(RES_STR['bot_blink_msg'], bot)
+                    bot_ctl.blink(bot)
+        return 0
+
+    def _start_pause_handler(self) -> int:
+        target_on = self._args.command == RES_STR['cmd_start']
+        target_str = RES_STR['cmd_start'] if target_on \
+            else RES_STR['cmd_pause']
+
+        logging.info(RES_STR['bot_operating_msg'], target_str)
+        bot_ctl.set_user_code_running(target_on)
+        return 0
+
     def exec(self) -> int:
         """Parses arguments automatically and handles booting."""
         try:
@@ -238,56 +170,17 @@ class CommandAction:
             if self._args.command in (RES_STR['cmd_on'],
                                       RES_STR['cmd_off'],
                                       RES_STR['cmd_blink']):
-                target_on = self._args.command == RES_STR['cmd_on']
-                target_str = RES_STR['cmd_on'] if target_on \
-                    else RES_STR['cmd_off']
-
-                for i in self._args.id:
-                    targets = _parse_id(i)
-
-                    # If one of the targets is a boolean, means we need to turn
-                    # on all.
-                    if isinstance(targets, bool):
-                        if self._args.command in (RES_STR['cmd_on'],
-                                                  RES_STR['cmd_off']):
-                            logging.info(RES_STR['bot_all_booting_msg'],
-                                         target_str)
-                            CommandAction.boot_all(target_on)
-
-                        if self._args.command == RES_STR['cmd_blink']:
-                            logging.info(RES_STR['bot_all_blink_msg'])
-                            CommandAction.blink_all()
-
-                        break
-
-                    # Else, go one-by-one turning robots on.
-                    for bot in targets:
-                        if self._args.command in (RES_STR['cmd_on'],
-                                                  RES_STR['cmd_off']):
-                            logging.info(RES_STR['bot_booting_msg'], bot,
-                                         target_str)
-                            CommandAction.boot_bot(bot, target_on)
-
-                        if self._args.command == RES_STR['cmd_blink']:
-                            logging.info(RES_STR['bot_blink_msg'], bot)
-                            CommandAction.blink(bot)
-                return 0
+                return self._on_off_blink_handler()
 
             # Start/Pause command.
             if self._args.command in (RES_STR['cmd_start'],
                                       RES_STR['cmd_pause']):
-                target_on = self._args.command == RES_STR['cmd_start']
-                target_str = RES_STR['cmd_start'] if target_on \
-                    else RES_STR['cmd_pause']
-
-                logging.info(RES_STR['bot_operating_msg'], target_str)
-                CommandAction.set_operating(target_on)
-                return 0
+                return self._start_pause_handler()
 
             # Upload command.
             if self._args.command == RES_STR['cmd_update']:
-                CommandAction.upload_code(self._args.usr_path[0],
-                                          self._args.os_update)
+                bot_ctl.upload_code(self._args.usr_path[0],
+                                    self._args.os_update)
                 return 0
 
             if self._args.command == RES_STR['cmd_manage']:

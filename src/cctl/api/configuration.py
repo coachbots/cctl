@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
-"""Singleton module containing configuration values.
+"""
+Singleton module containing configuration values.
 
-FIXME:
+Todo:
     Not cross platform due to using UNIX-like configuration.
 """
 

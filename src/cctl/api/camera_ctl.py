@@ -7,7 +7,7 @@ import os
 from os import path
 from typing import Optional, Tuple
 from subprocess import PIPE, Popen, call
-from cctl.configuration import get_camera_device_name, \
+from cctl.api.configuration import get_camera_device_name, \
     get_camera_lens_correction_factors, get_processed_video_device_name
 
 from cctl.res import ERROR_CODES, RES_STR

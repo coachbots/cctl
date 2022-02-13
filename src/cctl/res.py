@@ -64,7 +64,9 @@ RES_STR = {
     'v4l2loopback_already_loaded': 'v4l2loopback is already loaded. Please ' +
                                    'rmmod v4l2loopback (will remove all ' +
                                    'loopback video streams).',
-    'running_ffmpeg': 'Running ffmpeg as:\n%s\n.'
+    'running_ffmpeg': 'Running ffmpeg as:\n%s\n.',
+    'invalid_bot_id_exception': 'Invalid Bot ID. Valid ids are integers or ' +
+                                'the string \'all\'.'
 }
 
 ERROR_CODES = {
