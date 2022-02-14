@@ -59,6 +59,19 @@ for usage information.
 Manpages exist and can be viewed with `man cctl`. These fully document the
 operation of `cctl`.
 
+## Tests
+
+Running tests is a mildly involved process. All tests are currently feature
+tests, meaning that it is only possible to run tests in the target environment.
+In other words, in order to get valid test results, you must run them
+exclusively on the computer controlling the coachbots. You can then simply run:
+
+```bash
+make test
+```
+
+to run all tests.
+
 ## Documentation
 
 The code is fully documented and can be viewed by running:

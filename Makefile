@@ -1,3 +1,6 @@
+.PHONY: build manpage docs install uninstall install-docs uninstall-docs \
+	test-feature test-unit test
+
 build:
 	python3 -m build
 
@@ -30,3 +33,11 @@ uninstall-docs:
 	rm -f /usr/local/man/man1/cctl.1.gz
 	rm -f /etc/bash_completion.d/cctl.bash
 	rm -rf /usr/share/doc/cctl
+
+test-feature:
+	python -m unittest discover tests/feature
+
+test-unit:
+	python -m unittest discover tests/unit
+
+test: test-feature test-unit
