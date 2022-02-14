@@ -9,11 +9,25 @@ manpage:
 	mv build/cctl.1.gz dist/cctl.1.gz
 	rm -r build
 
+docs: manpage
+	cd docs && $(MAKE) html
+	cp docs/build/html
+
 install:
 	python3 -m pip install dist/cctl-*.whl
-	mkdir -p /usr/local/man/man1
-	cp dist/cctl.1.gz /usr/local/man/man1/cctl.1.gz
-	cp cctl-completion.bash /etc/bash_completion.d/cctl.bash
 
 uninstall:
 	python3 -m pip uninstall cctl
+
+# The uninstall-docs call here is made to ensure that the old doctree gets
+# cleaned up.
+install-docs: uninstall-docs
+	install -Dm644 dist/cctl.1.gz /usr/local/man/man1/cctl.1.gz
+	install -Dm644 cctl-completion.bash /etc/bash_completion.d/cctl.bash
+	cd docs/build/html && find . -type f -exec install -Dm644 \
+		"{}" "/usr/share/doc/cctl/{}" \;
+
+uninstall-docs:
+	rm -f /usr/local/man/man1/cctl.1.gz
+	rm -f /etc/bash_completion.d/cctl.bash
+	rm -rf /usr/share/doc/cctl

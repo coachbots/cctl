@@ -9,7 +9,7 @@ Dependencies
 ------------
 
 Before installing **cctl** ensure you have ``ffmpeg``, ``v4l2loopback``,
-``python3.6`` and the appropriate ``pip`` version.
+``python3.6``, ``pandoc`` and the appropriate ``pip`` version.
 
 Distro-specific Guides
 ----------------------
@@ -21,7 +21,7 @@ On Ubuntu, you can install all of the dependencies with:
 
 .. code-block:: bash
 
-   sudo apt-get install ffmpeg python3.6 v4l2loopback-dkms
+   sudo apt-get install ffmpeg python3.6 v4l2loopback-dkms pandoc
    pip install --user build
 
 The task of installation is then simply cloning the repository, building it and

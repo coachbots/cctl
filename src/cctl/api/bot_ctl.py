@@ -20,7 +20,7 @@ def boot_bot(bot_id: Union[str, int], state: bool) -> None:
     Changes the state of a bot to on or off.
 
     Parameters:
-        bot_id: Target bot. If this parameter is a string 'all', then all
+        robot_id: Target bot. If this parameter is a string 'all', then all
             robots are turned on/off. All other string values raise errors.
         state: Whether to boot on or off
 
