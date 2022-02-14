@@ -11,7 +11,6 @@ manpage:
 
 docs: manpage
 	cd docs && $(MAKE) html
-	cp docs/build/html
 
 install:
 	python3 -m pip install dist/cctl-*.whl
