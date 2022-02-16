@@ -44,6 +44,14 @@ class Coachbot:
         """
         return self.identifier == other.identifier
 
+    def __str__(self) -> str:
+        """Converts the Coachbot to a string.
+
+        Returns:
+            str: The string representation of the Coachbot
+        """
+        return f'Coachbot<id={self.identifier}>'
+
     @property
     def address(self) -> str:
         """Returns the IP address of self.
