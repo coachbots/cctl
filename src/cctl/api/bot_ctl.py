@@ -4,8 +4,9 @@
 This module exposes various functions for controlling robots.
 """
 
-from typing import Generator, List, Union
+from typing import Generator, Iterable, List, Union
 from subprocess import call
+import asyncio
 import os
 import shutil
 import time
@@ -13,7 +14,7 @@ import logging
 
 from cctl.api import configuration
 from cctl.res import RES_STR
-from cctl.netutils import host_is_reachable
+from cctl.netutils import async_host_is_reachable, host_is_reachable
 
 
 class Coachbot:
@@ -35,6 +36,14 @@ class Coachbot:
         """
         return f'192.168.1.{self.identifier + Coachbot.IP_ADDRESS_SHIFT}'
 
+    async def async_is_alive(self) -> bool:
+        """Asynchronously checks whether self is booted and accessible.
+
+        Returns:
+            bool: Whether self is on.
+        """
+        return await async_host_is_reachable(self.address)
+
     def is_alive(self) -> bool:
         """Checks whether self is booted and accessible.
 
@@ -45,7 +54,8 @@ class Coachbot:
             This function may possibly be slow due to the fact that it has to
             ping the coachbot over network.
         """
-        return host_is_reachable(self.address)
+        return asyncio.get_event_loop().run_until_complete(
+            self.async_is_alive())
 
     @staticmethod
     def from_address(address: str) -> 'Coachbot':
@@ -61,9 +71,12 @@ class Coachbot:
                         Coachbot.IP_ADDRESS_SHIFT)
 
 
-def get_alives(
-        bot_range: range = range(0, 100)) -> Generator[Coachbot, None, None]:
-    """Returns a generator of bots that are active.
+async def async_get_alives(bots: Iterable[Coachbot]) \
+        -> Generator[Coachbot, None, None]:
+    """Asynchronously returns a generator of bots that are active.
+
+    Parameters:
+        bs (Iterable[Coachbot]): The set of bots to check if they are alive.
 
     Returns:
         Generator: A generator yielding Coachbot objects only if they are
@@ -73,10 +86,28 @@ def get_alives(
         This function may potentially be slow because it has to ping each bot.
         The implementation is a cleaned-up implementation of legacy behavior.
     """
-    for i in bot_range:
-        coachbot = Coachbot(i)
-        if coachbot.is_alive():
-            yield coachbot
+    tasks = [asyncio.ensure_future(bot.async_is_alive()) for bot in bots]
+    await asyncio.wait(tasks)
+    return (bot for bot, task in zip(bots, tasks) if task.result())
+
+
+def get_alives(
+        bots: Iterable[Coachbot] = (Coachbot(i) for i in range(0, 100))) \
+        -> Generator[Coachbot, None, None]:
+    """Returns a generator of bots that are active.
+
+    Parameters:
+        bs (Iterable[Coachbot]): The set of bots to check if they are alive.
+
+    Returns:
+        Generator: A generator yielding Coachbot objects only if they are
+        active.
+
+    Note:
+        This function may potentially be slow because it has to ping each bot.
+        The implementation is a cleaned-up implementation of legacy behavior.
+    """
+    return asyncio.get_event_loop().run_until_complete(async_get_alives(bots))
 
 
 def boot_bot(bot_id: Union[str, int], state: bool) -> None:

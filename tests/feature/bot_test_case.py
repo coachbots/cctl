@@ -4,9 +4,11 @@
 This module holds the base class used for Bot feature testing.
 """
 
-from typing import List
+from typing import Iterable, List
 import unittest
 import random
+
+from cctl.api.bot_ctl import Coachbot
 
 
 class BotTestCase(unittest.TestCase):

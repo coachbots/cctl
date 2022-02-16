@@ -32,13 +32,22 @@ class TestBootBot(BotTestCase):
 
     def test_boot_multiple_positive(self):
         """Tests whether multiple bots can boot up successfully."""
-        bc.boot_bots(self.test_bots, self.test_bots * [True])
-        self.assert_bot_powers(self.test_bots, self.test_bots * [True])
+        bc.boot_bots(self.test_bots, len(self.test_bots) * [True])
+        self.assert_bot_powers(self.test_bots, len(self.test_bots) * [True])
 
     def test_boot_multiple_negative(self):
         """Tests whether multiple bots can be booted down successfully."""
         bc.boot_bots(self.test_bots, False)
-        self.assert_bot_powers(self.test_bots, self.test_bots * [True])
+        self.assert_bot_powers(self.test_bots, len(self.test_bots) * [True])
+
+    def test_get_alives(self):
+        """Tests whether get_alives operates as expected."""
+        target_bot = self.random_testing_bot
+        bc.boot_bot(target_bot, True)
+
+        coachbot = bc.Coachbot(target_bot)
+        self.assertEqual([coachbot], list(bc.get_alives(
+            bc.Coachbot(i) for i in self.test_bots)))
 
 
 if __name__ == '__main__':
