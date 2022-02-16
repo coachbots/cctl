@@ -33,6 +33,10 @@ mandatory_keys = {
     'camera': [
         'raw_dev_name',
         'processed_dev_name'
+    ],
+    'logs': [
+        'syslog_path',
+        'legacy_log_file_path'
     ]
 }
 
@@ -58,6 +62,11 @@ if len(files_found) == 0:
         'k2': -0.022,
         'cx': 0.52,
         'cy': 0.5
+    }
+
+    config['logs'] = {
+        'syslog_path': '/var/log/syslog',
+        'legacy_log_file_path': '/home/pi/control/experiment_log'
     }
 
     if not path.exists(usr_conf_dir):
@@ -135,3 +144,24 @@ def get_camera_lens_correction_factors() -> Tuple[float, float, float, float]:
         config.getfloat('camera', 'cx'),
         config.getfloat('camera', 'cy')
     )
+
+
+def get_syslog_path() -> str:
+    """Returns the syslog path.
+
+    Returns:
+        str: The user-configured syslog path.
+    """
+    return config.get('log', 'syslog_path')
+
+
+def get_legacy_log_file_path() -> str:
+    """Returns the legacy log file name.
+
+    This filename is the filename cctl expects legacy logs to be called on the
+    coachbots.
+
+    Returns:
+        str: The user configured legacy log filename.
+    """
+    return config.get('log', 'legacy_log_file_path')

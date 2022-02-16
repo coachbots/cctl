@@ -4,7 +4,7 @@
 This module exposes various functions for controlling robots.
 """
 
-from typing import List, Union
+from typing import Generator, List, Union
 from subprocess import call
 import os
 import shutil
@@ -13,6 +13,70 @@ import logging
 
 from cctl.api import configuration
 from cctl.res import RES_STR
+from cctl.netutils import host_is_reachable
+
+
+class Coachbot:
+    """Class representing a Coachbot. Use this class for Coachbot
+    operations.
+    """
+
+    IP_ADDRESS_SHIFT = 3
+
+    def __init__(self, identifier: int) -> None:
+        self.identifier = identifier
+
+    @property
+    def address(self) -> str:
+        """Returns the IP address of self.
+
+        Returns:
+            str: The correct hostname of self.
+        """
+        return f'192.168.1.{self.identifier + Coachbot.IP_ADDRESS_SHIFT}'
+
+    def is_alive(self) -> bool:
+        """Checks whether self is booted and accessible.
+
+        Returns:
+            bool: Whether self is on.
+
+        Note:
+            This function may possibly be slow due to the fact that it has to
+            ping the coachbot over network.
+        """
+        return host_is_reachable(self.address)
+
+    @staticmethod
+    def from_address(address: str) -> 'Coachbot':
+        """Builds a Coachbot from the given ip address.
+
+        Properties:
+            address (str): The target ip address.
+
+        Returns:
+            Coachbot: The bot corresponding to the given IP address.
+        """
+        return Coachbot(int(address.split('.')[-1]) -
+                        Coachbot.IP_ADDRESS_SHIFT)
+
+
+def get_alives(
+        bot_range: range = range(0, 100)) -> Generator[Coachbot, None, None]:
+    """Returns a generator of bots that are active.
+
+    Returns:
+        Generator: A generator yielding Coachbot objects only if they are
+        active.
+
+    Note:
+        This function may potentially be slow because it has to ping each bot.
+        The implementation is a cleaned-up implementation of legacy behavior.
+    """
+    for i in bot_range:
+        coachbot = Coachbot(i)
+        if coachbot.is_alive():
+            yield coachbot
 
 
 def boot_bot(bot_id: Union[str, int], state: bool) -> None:
