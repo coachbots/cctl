@@ -28,7 +28,9 @@ mandatory_keys = {
         'path'
     ],
     'coachswarm': [
-        'conf_path'
+        'conf_path',
+        'id_range_min',
+        'id_range_max'
     ],
     'camera': [
         'raw_dev_name',
@@ -40,6 +42,30 @@ mandatory_keys = {
     ]
 }
 
+default_values = {
+    'server': {
+        'interface': 'enp60s0',
+        'path': '/home/hanlin/coach/server_beta'
+    },
+    'coachswarm': {
+        'conf_path': path.join(usr_conf_dir, 'coachswarm.conf'),
+        'id_range_min': 0,
+        'id_range_max': 99
+    },
+    'camera': {
+        'raw_dev_name': 'Piwebcam: UVC Camera',
+        'processed_dev_name': 'Coachcam: Stream_Processed',
+        'k1': -0.22,
+        'k2': -0.022,
+        'cx': 0.52,
+        'cy': 0.5
+    },
+    'logs': {
+        'syslog_path': '/var/log/syslog',
+        'legacy_log_file_path': '/home/pi/control/experiment_log'
+    }
+}
+
 config = ConfigParser()
 
 # Attempt to read config if possible.
@@ -48,26 +74,8 @@ files_found = config.read(conf_file_paths)
 if len(files_found) == 0:
     logging.warning(RES_STR['conf_error'])
     config = ConfigParser()
-    config['server'] = {
-        'interface': 'enp60s0',
-        'path': '/home/hanlin/coach/server_beta'
-    }
-    config['coachswarm'] = {
-        'conf_path': path.join(usr_conf_dir, 'coachswarm.conf')
-    }
-    config['camera'] = {
-        'raw_dev_name': 'Piwebcam: UVC Camera',
-        'processed_dev_name': 'Coachcam: Stream_Processed',
-        'k1': -0.22,
-        'k2': -0.022,
-        'cx': 0.52,
-        'cy': 0.5
-    }
 
-    config['logs'] = {
-        'syslog_path': '/var/log/syslog',
-        'legacy_log_file_path': '/home/pi/control/experiment_log'
-    }
+    config.update(default_values)
 
     if not path.exists(usr_conf_dir):
         makedirs(usr_conf_dir)
@@ -165,3 +173,11 @@ def get_legacy_log_file_path() -> str:
         str: The user configured legacy log filename.
     """
     return config.get('log', 'legacy_log_file_path')
+
+
+def get_valid_coachbot_range():
+    """Returns the valid Coachbot range."""
+    return range(
+        config.getint('coachswarm', 'id_range_min'),
+        config.getint('coachswarm', 'id_range_max') + 1
+    )

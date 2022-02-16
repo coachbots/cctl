@@ -25,6 +25,15 @@ class Coachbot:
     IP_ADDRESS_SHIFT = 3
 
     def __init__(self, identifier: int) -> None:
+        """Constructs a Coachbot.
+
+        Raises:
+            ValueError: If the identifier does not fit the configured Coachbot
+                range.
+        """
+        if identifier not in configuration.get_valid_coachbot_range():
+            raise ValueError
+
         self.identifier = identifier
 
     @property
