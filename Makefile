@@ -1,8 +1,10 @@
+PYTHON=python3
+
 .PHONY: build manpage docs install uninstall install-docs uninstall-docs \
 	test-feature test-unit test
 
 build:
-	python3 -m build
+	$(PYTHON) -m build
 
 manpage:
 	mkdir -p build
@@ -16,10 +18,10 @@ docs: manpage
 	cd docs && $(MAKE) html
 
 install:
-	python3 -m pip install dist/cctl-*.whl
+	$(PYTHON) -m pip install dist/cctl-*.whl
 
 uninstall:
-	python3 -m pip uninstall cctl
+	$(PYTHON) -m pip uninstall cctl
 
 # The uninstall-docs call here is made to ensure that the old doctree gets
 # cleaned up.
@@ -35,9 +37,9 @@ uninstall-docs:
 	rm -rf /usr/share/doc/cctl
 
 test-feature:
-	python -m unittest discover tests/feature
+	$(PYTHON) -m unittest discover tests/feature
 
 test-unit:
-	python -m unittest discover tests/unit
+	$(PYTHON) -m unittest discover tests/unit
 
 test: test-feature test-unit
