@@ -36,6 +36,14 @@ class Coachbot:
 
         self.identifier = identifier
 
+    def __eq__(self, other: 'Coachbot') -> bool:
+        """Tests for equality based on the identifier of the Coachbot.
+
+        Returns:
+            bool: Whether the objects are equal.
+        """
+        return self.identifier == other.identifier
+
     @property
     def address(self) -> str:
         """Returns the IP address of self.
