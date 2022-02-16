@@ -141,8 +141,8 @@ def boot_bot(bot_id: Union[str, int], state: bool) -> None:
          cwd=configuration.get_server_dir())
 
 
-def boot_bots(bots: Union[List[Union[str, int]], str],
-              states: Union[bool, List[bool]]) -> None:
+def boot_bots(bots: Union[Iterable[Union[str, int]], str],
+              states: Union[bool, Iterable[bool]]) -> None:
     """
     Changes the state of a plethora of bots on or off.
 

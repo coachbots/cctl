@@ -4,7 +4,7 @@
 This module holds the base class used for Bot feature testing.
 """
 
-from typing import Iterable, List
+from typing import Generator, Iterable
 import unittest
 import random
 
@@ -15,21 +15,38 @@ class BotTestCase(unittest.TestCase):
     """Represents a base Bot-related integration test case."""
 
     @property
-    def test_bots(self) -> List[int]:
-        """
-        The identifiers of testing bots.
-        """
-        return [90 + x for x in range(0, 10)]
-
-    @property
-    def random_testing_bot(self) -> int:
+    def test_bots(self) -> Generator[Coachbot, None, None]:
         """
         Returns:
-            A random testing bot.
+            Generator[Coachbot, None, None]: The testing bots.
         """
-        return random.choice(self.test_bots)
+        return (Coachbot(90 + x) for x in range(0, 10))
 
-    def assert_bot_power(self, bot_id: int, expected: bool):
+    @property
+    def test_bot_ids(self) -> Generator[int, None, None]:
+        """
+        Returns:
+            Generator[int, None, None]: The testing bots' ids.
+        """
+        return (bot.identifier for bot in self.test_bots)
+
+    @property
+    def random_testing_bot(self) -> Coachbot:
+        """
+        Returns:
+            Coachbot: A random testing bot.
+        """
+        return random.choice(list(self.test_bots))
+
+    @property
+    def random_testing_bot_id(self) -> int:
+        """
+        Returns:
+            int: A random testing bot.
+        """
+        return self.random_testing_bot.identifier
+
+    def assert_bot_power(self, bot: Coachbot, expected: bool):
         """
         Asserts that a bot is turned on or off.
 
@@ -37,14 +54,30 @@ class BotTestCase(unittest.TestCase):
             bot_id: The id of the bot.
             expected: The expected state of the bot.
         """
+        self.assertEqual(expected, bot.is_alive())
 
-    def assert_bot_powers(self, bot_ids: List[int], expecteds: List[bool]):
+    def assert_bot_powers(self, bots: Iterable[Coachbot],
+                          expecteds: Iterable[bool]):
         """
         Asserts that multiple bots are turned on or off.
 
         Parameters:
-            bot_ids: A list of bot ids.
-            expecteds: A list of expected states for each of the bots.
+            bots (Iterable[Coachbot]): An iterable of Coachbots.
+            expecteds (Iterable[Bool]): An iterable of expected states for each
+                of the bots.
         """
-        for bot_id, expected in zip(bot_ids, expecteds):
-            self.assert_bot_power(bot_id, expected)
+        for bot, expected in zip(bots, expecteds):
+            self.assert_bot_power(bot, expected)
+
+    def wait_until_bots_reachable(self, bots: Iterable[Coachbot]) -> None:
+        """Pauses execution until all specified bots are reachable.
+
+        Parameters:
+            bots (Iterable[Coachbot]): The target bots.
+        """
+        reachable = False
+        while not reachable:
+            for bot in bots:
+                reachable = bot.is_alive()
+                if not reachable:
+                    continue
