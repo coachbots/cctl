@@ -23,11 +23,9 @@ class TestBootBot(BotTestCase):
         """Tests whether a robot can boot up and down successfully."""
         target_bot = self.random_testing_bot
         bc.boot_bot(target_bot.identifier, True)
-        self.wait_until_bots_state([target_bot], [True])
         self.assert_bot_power(target_bot, True)
 
         bc.boot_bot(target_bot.identifier, False)
-        self.wait_until_bots_state([target_bot], [False])
         self.assert_bot_power(target_bot, False)
 
     def test_boot_multiple(self):
@@ -40,8 +38,6 @@ class TestBootBot(BotTestCase):
                                [True for _ in self.test_bots])
 
         bc.boot_bots((bot.identifier for bot in self.test_bots), False)
-        self.wait_until_bots_state(self.test_bots,
-                                   [False for _ in self.test_bots])
         self.assert_bot_powers(self.test_bots,
                                [False for _ in self.test_bots])
 
