@@ -79,10 +79,10 @@ class Coachbot:
 
     async def async_wait_until_alive(self) -> None:
         """Asynchronously waits until self is booted and accessible."""
-        async def _sleeper(flag: asyncio.Event):
+        async def _sleeper(flag: asyncio.Event) -> None:
+            await asyncio.sleep(1)
             if await self.async_is_alive():
                 flag.set()
-            await asyncio.sleep(1)
 
         flag = asyncio.Event()
         asyncio.get_event_loop().create_task(_sleeper(flag))

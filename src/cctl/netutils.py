@@ -12,7 +12,7 @@ from paramiko.client import SSHClient
 
 
 async def async_ping(hostname: str, count: int = 1,
-                     max_timeout: float = 2) -> int:
+                     max_timeout: float = 1) -> int:
     """Asynchronously pings a hostname.
 
     Parameters:
