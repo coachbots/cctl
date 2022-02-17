@@ -77,6 +77,22 @@ class Coachbot:
         """
         return await async_host_is_reachable(self.address)
 
+    async def async_wait_until_alive(self) -> None:
+        """Asynchronously waits until self is booted and accessible."""
+        async def _sleeper(flag: asyncio.Event):
+            if await self.async_is_alive():
+                flag.set()
+            await asyncio.sleep(1)
+
+        flag = asyncio.Event()
+        asyncio.get_event_loop().create_task(_sleeper(flag))
+        await flag.wait()
+
+    def wait_until_alive(self) -> None:
+        """Blocks execution until self is alive and reachable."""
+        asyncio.get_event_loop().run_until_complete(
+            self.async_wait_until_alive())
+
     def is_alive(self) -> bool:
         """Checks whether self is booted and accessible.
 
@@ -147,6 +163,9 @@ async def async_boot_bot(bot: Union[str, int, Coachbot], state: bool) -> None:
     """
     Asynchronously changes the state of a bot to on or off.
 
+    Contrary to legacy implementation, this function pauses execution until the
+    bot is fully reachable.
+
     Parameters:
         bot (str | int | Coachbot): Target bot. If this parameter is a string
             'all', then all robots are turned on/off. All other string values
@@ -173,17 +192,24 @@ async def async_boot_bot(bot: Union[str, int, Coachbot], state: bool) -> None:
     if isinstance(bot, str):
         raise ValueError(RES_STR['invalid_bot_id_exception'])
 
+    m_bot = bot if isinstance(bot, Coachbot) else Coachbot(bot)
+
     await asyncio.create_subprocess_exec(
         './ble_one.py',
         str(int(state)),
-        str(bot.identifier if isinstance(bot, Coachbot) else bot),
+        str(m_bot.identifier),
         cwd=configuration.get_server_dir()
     )
+
+    await m_bot.async_wait_until_alive()
 
 
 def boot_bot(bot: Union[str, int, Coachbot], state: bool) -> None:
     """
     Synchronously changes the state of a bot to on or off.
+
+    Contrary to legacy implementation, this function pauses execution until the
+    bot is fully reachable.
 
     Parameters:
         bot (str | int | Coachbot): Target bot. If this parameter is a string
