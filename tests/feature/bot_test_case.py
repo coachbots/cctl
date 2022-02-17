@@ -88,7 +88,7 @@ class BotTestCase(unittest.TestCase):
         start_time = time()
         while not as_expected and (time() - start_time) < timeout:
             for bot, expected_state in zip(bots, states):
-                if bot.is_alive() != expected_state
+                if bot.is_alive() != expected_state:
                     as_expected = False
                     break
                 as_expected = True
