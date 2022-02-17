@@ -7,6 +7,10 @@ This module holds the base class used for Bot feature testing.
 from typing import Generator, Iterable
 import unittest
 import random
+import os
+import sys
+
+sys.path.insert(0, os.path.abspath('./src'))
 
 from cctl.api.bot_ctl import Coachbot
 
