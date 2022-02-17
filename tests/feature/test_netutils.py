@@ -8,10 +8,10 @@ import unittest
 import os
 import sys
 
-sys.path.insert(0, os.path.join(os.getcwd(), os.path.abspath('src')))
+sys.path.insert(0, os.path.abspath('./src'))
 
 from cctl.api import configuration
-import cctl.netutils as netutils
+from cctl as import netutils
 
 
 class TestNetutils(unittest.TestCase):
