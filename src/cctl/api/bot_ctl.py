@@ -14,7 +14,7 @@ import logging
 
 from cctl.api import configuration
 from cctl.res import RES_STR
-from cctl.netutils import async_host_is_reachable, host_is_reachable
+from cctl.netutils import async_host_is_reachable
 
 
 class Coachbot:

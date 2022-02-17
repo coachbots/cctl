@@ -46,7 +46,7 @@ def ping(hostname: str, count: int = 1) -> int:
 
 
 async def async_host_is_reachable(hostname: str,
-                                  max_attempts: int = 3) -> bool:
+                                  max_attempts: int = 1) -> bool:
     """Asynchronously checks whether a host is reachable via ping.
 
     Parameters:
