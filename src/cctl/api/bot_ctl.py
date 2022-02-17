@@ -77,19 +77,27 @@ class Coachbot:
         """
         return await async_host_is_reachable(self.address)
 
-    async def async_wait_until_alive(self, sleep_time: float = 3) -> None:
-        """Asynchronously waits until self is booted and accessible.
+    async def async_wait_until_state(self, state: bool = True,
+                                     sleep_time: float = 3) -> None:
+        """Asynchronously waits until self is alive and reachable over network,
+        or not, depending on the state parameter.
 
         Parameters:
+            state (bool): The target state to meet.
             sleep_time (float): The number of seconds to sleep between polls.
         """
-        while not await self.async_is_alive():
+        while not await self.async_is_alive() == state:
             await asyncio.sleep(sleep_time)
 
-    def wait_until_alive(self) -> None:
-        """Blocks execution until self is alive and reachable."""
+    def wait_until_state(self, state: bool) -> None:
+        """Blocks execution until self is alive and reachable or not, depending
+        on the parameter.
+
+        Parameters:
+            state (bool): The target state
+        """
         asyncio.get_event_loop().run_until_complete(
-            self.async_wait_until_alive())
+            self.async_wait_until_state(state))
 
     def is_alive(self) -> bool:
         """Checks whether self is booted and accessible.
