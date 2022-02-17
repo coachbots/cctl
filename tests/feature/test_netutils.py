@@ -19,8 +19,7 @@ class TestNetutils(unittest.TestCase):
     def test_ping(self):
         """Tests whether ping works as expected."""
         self.assertEqual(0,
-                         netutils.ping(netutils.get_ip_address(
-                             configuration.get_server_interface())))
+                         netutils.ping(netutils.get_ip_address( configuration.get_server_interface())))
 
     def test_host_is_reachable(self):
         """Tests whether host_is_reachable works as expected."""
@@ -36,7 +35,8 @@ class TestNetutils(unittest.TestCase):
         with tempfile.NamedTemporaryFile('w+b') as file:
             file.write(contents)
             self.assertEqual(contents,
-                             netutils.read_remote_file('localhost', file.name))
+                             netutils.read_remote_file('localhost', file.name),
+                             f'{file.name} did not have the correct contents.')
 
 
 if __name__ == '__main__':
