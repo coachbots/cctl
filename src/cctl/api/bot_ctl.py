@@ -44,6 +44,46 @@ class Coachbot:
         """
         return self.identifier == other.identifier
 
+    def __lt__(self, other: 'Coachbot') -> bool:
+        """Tests for less-than based on the identifier of the Coachbot.
+
+        Returns:
+            bool: Whether self is less-than other.
+        """
+        return self.identifier < other.identifier
+
+    def __le__(self, other: 'Coachbot') -> bool:
+        """Tests for less-than-equal based on the identifier of the Coachbot.
+
+        Returns:
+            bool: Whether self is less-than-equal other.
+        """
+        return self.identifier <= other.identifier
+
+    def __gt__(self, other: 'Coachbot') -> bool:
+        """Tests for greater-than based on the identifier of the Coachbot.
+
+        Returns:
+            bool: Whether self is greater-than other.
+        """
+        return self.identifier > other.identifier
+
+    def __ge__(self, other: 'Coachbot') -> bool:
+        """Tests for greater-than-equal based on the identifier of the Coachbot.
+
+        Returns:
+            bool: Whether self is greater-than-equal other.
+        """
+        return self.identifier >= other.identifier
+
+    def __ne__(self, other: 'Coachbot') -> bool:
+        """Tests whether self is not equal to other based on the identifiers.
+
+        Returns:
+            bool: Whether self is not equal to other other.
+        """
+        return self.identifier != other.identifier
+
     def __str__(self) -> str:
         """Converts the Coachbot to a string.
 
@@ -215,7 +255,7 @@ async def async_get_alives(bots: Iterable[Coachbot]) \
 
 def get_alives(
         bots: Iterable[Coachbot] = (Coachbot(i) for i in range(0, 100))) \
-        -> Generator[Coachbot, None, None]:
+        -> List[Coachbot]:
     """Returns a generator of bots that are active.
 
     Parameters:
