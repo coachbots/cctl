@@ -2,8 +2,7 @@
 
 """Defines the main class that handles all commands."""
 
-import asyncio
-from typing import Union, Iterable
+from typing import Union
 import re
 import logging
 from argparse import Namespace
