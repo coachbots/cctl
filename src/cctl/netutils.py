@@ -109,10 +109,11 @@ def get_ip_address(ifname: str) -> str:
     Returns:
         str: The IP address of that interface.
     """
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+        ip_a = socket.inet_ntoa(fcntl.ioctl(
+            sock.fileno(),
+            0x8915,  # SIOCGIFADDR
+            struct.pack('256s', bytes(ifname[:15], 'utf-8'))
+        )[20:24])
 
-    return socket.inet_ntoa(fcntl.ioctl(
-        sock.fileno(),
-        0x8915,  # SIOCGIFADDR
-        struct.pack('256s', bytes(ifname[:15], 'utf-8'))
-    )[20:24])
+        return ip_a
