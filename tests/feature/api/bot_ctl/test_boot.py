@@ -20,25 +20,25 @@ from tests.feature import BotTestCase
 class TestBootBot(BotTestCase):
     """Tests bot-power-related functions."""
 
-    #def test_boot(self):
-    #    """Tests whether a robot can boot up and down successfully."""
-    #    target_bot = self.random_testing_bot
-    #    target_bot.boot(True)
-    #    self.assert_bot_power(target_bot, True)
+    def test_boot(self):
+        """Tests whether a robot can boot up and down successfully."""
+        target_bot = self.random_testing_bot
+        target_bot.boot(True)
+        self.assert_bot_power(target_bot, True)
 
-    #    target_bot.boot(False)
-    #    self.assert_bot_power(target_bot, False)
+        target_bot.boot(False)
+        self.assert_bot_power(target_bot, False)
 
-    #def test_boot_multiple(self):
-    #    """Tests whether multiple bots can be booted up and down successfully.
-    #    """
-    #    bc.boot_bots(self.test_bots, True)
-    #    self.assert_bot_powers(self.test_bots,
-    #                           [True for _ in self.test_bots])
+    def test_boot_multiple(self):
+        """Tests whether multiple bots can be booted up and down successfully.
+        """
+        bc.boot_bots(self.test_bots, True)
+        self.assert_bot_powers(self.test_bots,
+                               [True for _ in self.test_bots])
 
-    #    bc.boot_bots(self.test_bots, False)
-    #    self.assert_bot_powers(self.test_bots,
-    #                           [False for _ in self.test_bots])
+        bc.boot_bots(self.test_bots, False)
+        self.assert_bot_powers(self.test_bots,
+                               [False for _ in self.test_bots])
 
     def test_get_alives(self):
         """Tests whether get_alives operates as expected."""
