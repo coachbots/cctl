@@ -13,7 +13,7 @@ import sys
 
 sys.path.insert(0, os.path.abspath('./src'))
 
-from cctl.api.bot_ctl import Coachbot, boot_bots
+from cctl.api.bot_ctl import Coachbot, boot_bots, wait_until_bots_state
 
 
 class BotTestCase(unittest.TestCase):
@@ -87,8 +87,7 @@ class BotTestCase(unittest.TestCase):
             self.assert_bot_power(bot, expected)
 
     def wait_until_bots_state(self, bots: Iterable[Coachbot],
-                              states: Iterable[bool],
-                              timeout: float = 10) -> None:
+                              states: Iterable[bool]) -> None:
         """Pauses execution until all specified bots are reachable.
 
         Parameters:
@@ -96,11 +95,4 @@ class BotTestCase(unittest.TestCase):
             states (Iterable[bool]): The expected states of the bots.
             timeout (float): The maximum allowable timeout.
         """
-        as_expected = False
-        start_time = time()
-        while not as_expected and (time() - start_time) < timeout:
-            for bot, expected_state in zip(bots, states):
-                if bot.is_alive() != expected_state:
-                    as_expected = False
-                    break
-                as_expected = True
+        wait_until_bots_state(bots, states)

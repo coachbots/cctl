@@ -32,8 +32,6 @@ class TestBootBot(BotTestCase):
         """Tests whether multiple bots can be booted up and down successfully.
         """
         bc.boot_bots((bot.identifier for bot in self.test_bots), True)
-        self.wait_until_bots_state(self.test_bots,
-                                   [True for _ in self.test_bots])
         self.assert_bot_powers(self.test_bots,
                                [True for _ in self.test_bots])
 
@@ -45,7 +43,6 @@ class TestBootBot(BotTestCase):
         """Tests whether get_alives operates as expected."""
         test_bots = itertools.islice(self.test_bots, 3)
         bc.boot_bots((bot.identifier for bot in test_bots), True)
-        self.wait_until_bots_state(test_bots, [True for _ in test_bots])
         self.assertEqual(list(test_bots), list(bc.get_alives()))
 
 

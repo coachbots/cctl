@@ -4,7 +4,7 @@
 This module exposes various functions for controlling robots.
 """
 
-from typing import Generator, Iterable, List, Union
+from typing import Generator, Iterable, Union
 from subprocess import call
 import asyncio
 import os
@@ -77,7 +77,7 @@ class Coachbot:
         """
         return await async_host_is_reachable(self.address)
 
-    async def async_wait_until_state(self, state: bool = True,
+    async def async_wait_until_state(self, state: bool,
                                      sleep_time: float = 3) -> None:
         """Asynchronously waits until self is alive and reachable over network,
         or not, depending on the state parameter.
@@ -209,7 +209,7 @@ async def async_boot_bot(bot: Union[str, int, Coachbot], state: bool) -> None:
         stderr=asyncio.subprocess.DEVNULL
     )
 
-    await m_bot.async_wait_until_alive()
+    await m_bot.async_wait_until_state(state)
 
 
 def boot_bot(bot: Union[str, int, Coachbot], state: bool) -> None:
@@ -358,3 +358,25 @@ def upload_code(path_to_usr_code: str, os_update: bool) -> None:
     time.sleep(0.5)
     call(['./reboot_batch.py', configuration.get_server_interface()],
          cwd=configuration.get_server_dir())
+
+
+def wait_until_bots_state(bots: Iterable[Coachbot],
+                          states: Iterable[bool]) -> None:
+    """Blocks execution until all bots meet the specified state.
+
+    Example:
+
+    .. code-block:
+
+       # Wait until bots 1 and 2 are on and 3 is off.
+       wait_until_bots_state([1, 2, 3], [True, True, False])
+
+       # Wait until 3, 4, 5 are all on.
+       wait_until_bots_state([3, 4, 5], 3 * [True])
+
+    Parameters:
+        bots (Iterable[Coachbot]): The bots to test.
+        states (Iterable[bool]): The states that those bots need to meet.
+    """
+    asyncio.gather(bot.async_wait_until_state(state)
+                   for bot, state in zip(bots, states))
