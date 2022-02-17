@@ -11,12 +11,15 @@ import subprocess
 from paramiko.client import SSHClient
 
 
-async def async_ping(hostname: str, count: int = 1) -> int:
+async def async_ping(hostname: str, count: int = 1,
+                     max_timeout: float = 2) -> int:
     """Asynchronously pings a hostname.
 
     Parameters:
         hostname (str): The target to ping
         count (int): The number of times to ping it.
+        max_timeout (float): The maximum number of seconds before ping gives
+            up.
 
     Returns:
         int: The ping status code.
@@ -24,6 +27,7 @@ async def async_ping(hostname: str, count: int = 1) -> int:
     return await (await asyncio.create_subprocess_exec(
         'ping',
         '-n' if platform.system().lower() == 'windows' else '-c',
+        '-w', str(max_timeout),
         str(count),
         hostname,
         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
