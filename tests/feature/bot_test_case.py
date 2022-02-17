@@ -13,11 +13,23 @@ import sys
 
 sys.path.insert(0, os.path.abspath('./src'))
 
-from cctl.api.bot_ctl import Coachbot
+from cctl.api.bot_ctl import Coachbot, boot_bots
 
 
 class BotTestCase(unittest.TestCase):
-    """Represents a base Bot-related integration test case."""
+    """Represents a base Bot-related integration test case.
+
+    You can inherit from this test case in order to receive useful methods as
+    well ensure that all bots start and end in a booted-down state.
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        boot_bots('all', False)
+
+    def tearDown(self) -> None:
+        super().tearDown()
+        boot_bots('all', False)
 
     @property
     def test_bots(self) -> Generator[Coachbot, None, None]:
