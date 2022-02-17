@@ -4,7 +4,7 @@
 This module exposes various functions for controlling robots.
 """
 
-from typing import Generator, Iterable, Union
+from typing import Generator, Iterable, Union, List
 from subprocess import DEVNULL, call
 import asyncio
 import os
@@ -161,7 +161,6 @@ class Coachbot:
             stdout=asyncio.subprocess.DEVNULL,
             stderr=asyncio.subprocess.DEVNULL
         )
-
         await self.async_wait_until_state(state)
 
     def boot(self, state: bool) -> None:
@@ -189,23 +188,29 @@ class Coachbot:
 
 
 async def async_get_alives(bots: Iterable[Coachbot]) \
-        -> Generator[Coachbot, None, None]:
+        -> List[Coachbot]:
     """Asynchronously returns a generator of bots that are active.
 
     Parameters:
         bs (Iterable[Coachbot]): The set of bots to check if they are alive.
 
     Returns:
-        Generator: A generator yielding Coachbot objects only if they are
-        active.
+        List[Coachbot]: The list of alive bots.
 
-    Note:
-        This function may potentially be slow because it has to ping each bot.
-        The implementation is a cleaned-up implementation of legacy behavior.
+    Warning:
+        This function may not return bots in the same order as what you
+        inputted.
+
+    Todo:
+        Mildly dirty implementation.
     """
-    tasks = [asyncio.ensure_future(bot.async_is_alive()) for bot in bots]
-    await asyncio.wait(tasks)
-    return (bot for bot, task in zip(bots, tasks) if task.result())
+    async def _helper(bot: Coachbot, result_l: List[Coachbot]):
+        if await bot.async_is_alive():
+            result_l.append(bot)
+
+    m_list = []
+    await asyncio.gather(*(_helper(bot, m_list) for bot in bots))
+    return m_list
 
 
 def get_alives(
@@ -217,14 +222,16 @@ def get_alives(
         bs (Iterable[Coachbot]): The set of bots to check if they are alive.
 
     Returns:
-        Generator: A generator yielding Coachbot objects only if they are
-        active.
+        List[Coachbot]: The list of alive bots.
 
-    Note:
-        This function may potentially be slow because it has to ping each bot.
-        The implementation is a cleaned-up implementation of legacy behavior.
+    Warning:
+        This function may not return bots in the same order as what you
+        inputted.
     """
-    return asyncio.get_event_loop().run_until_complete(async_get_alives(bots))
+    async def _helper():
+        return await async_get_alives(bots)
+
+    return asyncio.get_event_loop().run_until_complete(_helper())
 
 
 def boot_bots(bots: Union[Iterable[Coachbot], str],
@@ -247,31 +254,30 @@ def boot_bots(bots: Union[Iterable[Coachbot], str],
         * Currently, this function calls an extrenal script. It should, rather,
         be invoking it as a function from the module.
     """
-    async def _internal():
-        def _boot_all(state: bool) -> None:
-            call(
-                f'./reliable_ble_{"on" if state else "off"}.py',
-                cwd=configuration.get_server_dir(),
-                stdout=DEVNULL,
-                stderr=DEVNULL)
+    def _boot_all(state: bool) -> None:
+        call(
+            f'./reliable_ble_{"on" if state else "off"}.py',
+            cwd=configuration.get_server_dir(),
+            stdout=DEVNULL,
+            stderr=DEVNULL)
 
-        if isinstance(bots, str) and bots == 'all':
-            if not isinstance(states, bool):
-                raise ValueError(RES_STR['invalid_bot_id_exception'])
-
-            _boot_all(states)
-            return
-
-        if isinstance(bots, str):
+    if isinstance(bots, str) and bots == 'all':
+        if not isinstance(states, bool):
             raise ValueError(RES_STR['invalid_bot_id_exception'])
 
-        state_l = states if isinstance(states, Iterable) \
-            else (states for _ in bots)
+        _boot_all(states)
+        return
 
-        asyncio.gather(
-            *(bot.async_boot(state) for bot, state in zip(bots, state_l)))
+    if isinstance(bots, str):
+        raise ValueError(RES_STR['invalid_bot_id_exception'])
 
-    asyncio.get_event_loop().run_until_complete(_internal())
+    state_l = states if isinstance(states, Iterable) \
+        else (states for _ in bots)
+
+    tasks = [asyncio.get_event_loop().create_task(bot.async_boot(state)) \
+             for bot, state in zip(bots, state_l)]
+
+    asyncio.get_event_loop().run_until_complete(asyncio.wait(tasks))
 
 
 def set_user_code_running(state: bool) -> None:

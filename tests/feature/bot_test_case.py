@@ -5,7 +5,7 @@ This module holds the base class used for Bot feature testing.
 """
 
 from time import time
-from typing import Generator, Iterable
+from typing import Generator, Iterable, List
 import unittest
 import random
 import os
@@ -32,20 +32,12 @@ class BotTestCase(unittest.TestCase):
         boot_bots('all', False)
 
     @property
-    def test_bots(self) -> Generator[Coachbot, None, None]:
+    def test_bots(self) -> List[Coachbot]:
         """
         Returns:
             Generator[Coachbot, None, None]: The testing bots.
         """
-        return (Coachbot(90 + x) for x in range(0, 10))
-
-    @property
-    def test_bot_ids(self) -> Generator[int, None, None]:
-        """
-        Returns:
-            Generator[int, None, None]: The testing bots' ids.
-        """
-        return (bot.identifier for bot in self.test_bots)
+        return [Coachbot(90 + x) for x in range(0, 10)]
 
     @property
     def random_testing_bot(self) -> Coachbot:
@@ -54,14 +46,6 @@ class BotTestCase(unittest.TestCase):
             Coachbot: A random testing bot.
         """
         return random.choice(list(self.test_bots))
-
-    @property
-    def random_testing_bot_id(self) -> int:
-        """
-        Returns:
-            int: A random testing bot.
-        """
-        return self.random_testing_bot.identifier
 
     def assert_bot_power(self, bot: Coachbot, expected: bool):
         """
