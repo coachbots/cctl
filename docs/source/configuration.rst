@@ -37,6 +37,12 @@ is an example file with all supported keys.
    # here will be used to control the coachbots.
    conf_path = /home/marko/.config/coachswarm/coachswarm.conf
    
+   # These two configuration parameters specify the minimum and maximum ID of
+   # the coachbots. id_range_min is the smallest ID in the coachswarm while
+   # id_range_max is the biggest ID of the coachswarm.
+   id_range_min = 0
+   id_range_max = 99
+   
    [camera]
    # The name of the raw device to be used as the input video stream. You can
    # find this with `cat /sys/class/video4linux/video*/name` of the appropriate
@@ -55,6 +61,13 @@ is an example file with all supported keys.
    k2 = -0.022
    cx = 0.52
    cy = 0.5
+
+   [logs]
+   # The path to the local and remote syslog file.
+   syslog_path = /var/log/syslog
+   # The legacy log file path. This file is the file that used to be fetched
+   # with ./collect_data.py and ./harvest.py
+   legacy_log_file_path = /home/pi/control/experiment_log
 
 coachswarm.conf
 ---------------

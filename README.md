@@ -59,6 +59,11 @@ for usage information.
 Manpages exist and can be viewed with `man cctl`. These fully document the
 operation of `cctl`.
 
+## Documentation.
+
+The documentation is currently hosted on
+[st.iris.markovejnovic.com/cctl-docs](https://st.iris.markovejnovic.com/cctl-docs/).
+
 ## Tests
 
 Running tests is a mildly involved process. All tests are currently feature
