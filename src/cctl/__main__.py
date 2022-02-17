@@ -12,7 +12,8 @@ def main():
     logging.basicConfig(level=logging.DEBUG)
 
     parser = argparse.ArgumentParser(prog=RES_STR['app_name'],
-                                     description=RES_STR['app_desc'])
+                                     description=RES_STR['app_desc'],
+                                     format='[%(levelname)] :%(message)s')
 
     command_parser = parser.add_subparsers(title=RES_STR['cmd_command'],
                                            help=RES_STR['cmd_command_help'],

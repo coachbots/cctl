@@ -11,10 +11,11 @@ import os
 import shutil
 import time
 import logging
+import socket
 
 from cctl.api import configuration
 from cctl.res import RES_STR
-from cctl.netutils import async_host_is_reachable
+from cctl.netutils import async_host_is_reachable, get_broadcast_address
 
 
 class Coachbot:
@@ -219,12 +220,46 @@ class Coachbot:
         asyncio.get_event_loop().run_until_complete(self.async_boot(state))
 
     async def async_blink(self) -> None:
-        """Asynchronously blinks the robot."""
-        await asyncio.create_subprocess_exec(
-            './led_on.py',
-            str(self.identifier),
-            cwd=configuration.get_server_dir()
-        )
+        """Asynchronously blinks the robot.
+
+        .. warning:: I am lying -- this is not asynchronous as of now. It's 1AM
+            and I just want it to work.
+
+        Note:
+            There's much we can reverse-engineer from this function. The bots
+            are running something on port 5005 which is listening. The
+            broadcast IP address ensures that anything on the network receives
+            this packet. Now, 192.168.1.2 is not listening on 5005. You can
+            check that with:
+            
+            .. code-block:: bash
+            
+               sudo lsof -iTCP -sTCP:LISTEN -P -n
+
+            That means that all the coach-os' are listening on 5005. However,
+            dangerously, led_blink doesn't attempt to target a specific bot,
+            rather broadcasting its request to all robots where the parameter
+            is the id.
+
+        Todo:
+            Clean up this function, I merely reimplemented it as it was
+            (without the ifconfig parsing).
+        """
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        br_addr = get_broadcast_address(configuration.get_server_interface())
+        try:
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+            for i in range(200):
+                await asyncio.sleep(0.05)
+                sock.sendto(bytes(f'LED_ON|{self.identifier}', 'ascii'),
+                            (br_addr, 5005))
+        finally:
+            sock.close()
+
+
+def get_all_coachbots() -> List[Coachbot]:
+    """Returns a list of all Coachbots."""
+    return [Coachbot(i) for i in configuration.get_valid_coachbot_range()]
 
 
 async def async_get_alives(bots: Iterable[Coachbot]) \
@@ -292,7 +327,8 @@ def boot_bots(bots: Union[Iterable[Coachbot], str],
 
     Todo:
         * Currently, this function calls an extrenal script. It should, rather,
-        be invoking it as a function from the module.
+            be invoking it as a function from the module.
+
     """
     def _boot_all(state: bool) -> None:
         call(
@@ -318,6 +354,20 @@ def boot_bots(bots: Union[Iterable[Coachbot], str],
              for bot, state in zip(bots, state_l)]
 
     asyncio.get_event_loop().run_until_complete(asyncio.wait(tasks))
+
+
+def blink_bots(bots: Union[Iterable[Coachbot], str]):
+    """Blinks a plethora of bots.
+
+    Parameters:
+        bots (Iterable[Coachbot] | str): The list of bots. This list can
+            contain either Coachbots or a string 'all'. If this list contains
+            both, then the algorithm only boots all bots, once.
+    """
+    m_bots = bots if isinstance(bots, Iterable) else get_all_coachbots()
+    asyncio.get_event_loop().run_until_complete(asyncio.wait([
+        asyncio.get_event_loop().create_task(bot.async_blink())
+            for bot in m_bots]))
 
 
 def set_user_code_running(state: bool) -> None:

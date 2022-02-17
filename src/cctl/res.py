@@ -25,6 +25,7 @@ RES_STR = {
     'cmd_blink': 'blink',
     'cmd_blink_desc': 'Blinks the LED on specified robots.',
     'bot_blink_msg': 'Blinking robot %d.',
+    'bot_blink_many_msg': 'Blinking robots %s.',
     'bot_all_blink_msg': 'Blinking all robots.',
     'cmd_update': 'upload',
     'cmd_update_desc': 'Updates the code on all on robots.',

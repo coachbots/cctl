@@ -149,11 +149,9 @@ class CommandAction:
             return 0
 
         if self._args.command == RES_STR['cmd_blink']:
-            for bot in targets:
-                # TODO: Replace this with bot.blink() when its written, or
-                # better yet, blink_bots(targets)
-                logging.info(RES_STR['bot_blink_msg'], bot.identifier)
-                bot_ctl.blink(bot.identifier)
+            logging.info(RES_STR['bot_blink_many_msg'],
+                ','.join([str(bot.identifier) for bot in targets]))
+            bot_ctl.blink_bots(targets)
             return 0
 
         return 0
