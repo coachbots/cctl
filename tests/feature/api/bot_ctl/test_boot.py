@@ -5,6 +5,7 @@ This module tests whether functions related to bot power and booting operate as
 expected.
 """
 
+import time
 import unittest
 import itertools
 import os
@@ -41,9 +42,13 @@ class TestBootBot(BotTestCase):
 
     def test_get_alives(self):
         """Tests whether get_alives operates as expected."""
-        test_bots = itertools.islice(self.test_bots, 3)
-        bc.boot_bots(self.test_bots, True)
-        self.assertEqual(list(test_bots), list(bc.get_alives()))
+        test_bots = self.test_bots[:3]
+        bc.boot_bots(test_bots, True)
+
+        start_time = time.time()
+        self.assertEqual(sorted(test_bots), sorted(bc.get_alives()))
+        self.assertLess(time.time() - start_time, 10,
+                        'get_alives() failed being too slow.')
 
 
 if __name__ == '__main__':

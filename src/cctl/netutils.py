@@ -10,6 +10,9 @@ import platform
 import subprocess
 from paramiko.client import SSHClient
 
+SIOCGIFADDR = 0x8915  # See man netdevice 7
+SIOCGIFBRDADDR = 0x8919  # See man netdevice 7
+
 
 async def async_ping(hostname: str, count: int = 1,
                      max_timeout: float = 1) -> int:
@@ -116,7 +119,32 @@ def get_ip_address(ifname: str) -> str:
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
         ip_a = socket.inet_ntoa(fcntl.ioctl(
             sock.fileno(),
-            0x8915,  # SIOCGIFADDR
+            SIOCGIFADDR,
+            struct.pack('256s', bytes(ifname[:15], 'utf-8'))
+        )[20:24])
+
+        return ip_a
+
+
+def get_broadcast_address(ifname: str) -> str:
+    """Returns the broadcast address of the specified interface name.
+
+    Note:
+        On a network, the broadcast address is the address that, which sent to,
+        ensures that all devices on the network receive the message sent. In
+        other words, if you send to this address, the router ensures that every
+        device will get the memo.
+
+    Parameters:
+        ifname (str): The target interface name.
+
+    Returns:
+        str: The broadcast IP address of that interface.
+    """
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+        ip_a = socket.inet_ntoa(fcntl.ioctl(
+            sock.fileno(),
+            SIOCGIFBRDADDR,
             struct.pack('256s', bytes(ifname[:15], 'utf-8'))
         )[20:24])
 
