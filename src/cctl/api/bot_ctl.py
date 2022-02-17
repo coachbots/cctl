@@ -77,16 +77,14 @@ class Coachbot:
         """
         return await async_host_is_reachable(self.address)
 
-    async def async_wait_until_alive(self) -> None:
-        """Asynchronously waits until self is booted and accessible."""
-        async def _sleeper(flag: asyncio.Event) -> None:
-            await asyncio.sleep(1)
-            if await self.async_is_alive():
-                flag.set()
+    async def async_wait_until_alive(self, sleep_time: float = 3) -> None:
+        """Asynchronously waits until self is booted and accessible.
 
-        flag = asyncio.Event()
-        asyncio.get_event_loop().create_task(_sleeper(flag))
-        await flag.wait()
+        Parameters:
+            sleep_time (float): The number of seconds to sleep between polls.
+        """
+        while not await self.async_is_alive():
+            await asyncio.sleep(sleep_time)
 
     def wait_until_alive(self) -> None:
         """Blocks execution until self is alive and reachable."""
