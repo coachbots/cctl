@@ -7,9 +7,8 @@ import struct
 import asyncio
 import fcntl
 import platform
+import subprocess
 from paramiko.client import SSHClient
-
-from cctl.res import RES_STR
 
 
 async def async_ping(hostname: str, count: int = 1) -> int:
@@ -26,7 +25,8 @@ async def async_ping(hostname: str, count: int = 1) -> int:
         'ping',
         '-n' if platform.system().lower() == 'windows' else '-c',
         str(count),
-        hostname
+        hostname,
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
     )).wait()
 
 
