@@ -4,6 +4,7 @@
 This module holds the base class used for Bot feature testing.
 """
 
+from time import time
 from typing import Generator, Iterable
 import unittest
 import random
@@ -73,14 +74,17 @@ class BotTestCase(unittest.TestCase):
         for bot, expected in zip(bots, expecteds):
             self.assert_bot_power(bot, expected)
 
-    def wait_until_bots_reachable(self, bots: Iterable[Coachbot]) -> None:
+    def wait_until_bots_reachable(self, bots: Iterable[Coachbot],
+                                  timeout: float = 10) -> None:
         """Pauses execution until all specified bots are reachable.
 
         Parameters:
             bots (Iterable[Coachbot]): The target bots.
+            timeout (float): The maximum allowable timeout.
         """
         reachable = False
-        while not reachable:
+        start_time = time()
+        while not reachable and (time() - start_time) < timeout:
             for bot in bots:
                 reachable = bot.is_alive()
                 if not reachable:
