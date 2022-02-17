@@ -193,7 +193,7 @@ def boot_bots(bots: Union[Iterable[Union[str, int]], str],
         ValueError: Raised when a string not-equal-to 'all' is passed.
 
     Todo:
-        Currently, this function calls an extrenal script. It should, rather,
+        * Currently, this function calls an extrenal script. It should, rather,
         be invoking it as a function from the module.
     """
     if isinstance(bots, str) and bots == 'all':
@@ -205,11 +205,14 @@ def boot_bots(bots: Union[Iterable[Union[str, int]], str],
     if isinstance(bots, str):
         raise ValueError(RES_STR['invalid_bot_id_exception'])
 
-    state_l = states if isinstance(states, List) else [states] * len(bots)
+    state_l = states if isinstance(states, Iterable) \
+        else (states for _ in bots)
 
-    if 'all' in bots:
-        boot_bot('all', state_l[bots.index('all')])
-        return
+    # If one of the targets is all, then boot all and do nothing else.
+    for target_bot, state in zip(bots, state_l):
+        if target_bot == 'all':
+            boot_bot('all', state)
+            return
 
     for bot, state in zip(bots, state_l):
         boot_bot(bot, state)
