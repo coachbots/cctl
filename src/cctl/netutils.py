@@ -115,8 +115,7 @@ def get_ip_address(ifname: str) -> str:
         return socket.inet_ntoa(fcntl.ioctl(
             sock.fileno(),
             0x8915,  # SIOCGIFADDR
-            struct.pack('256s', ifname[:15])
+            struct.pack('256s', bytes(ifname[:15], 'utf-8'))
         )[20:24])
     except struct.error as s_err:
-        raise ValueError(RES_STR['invalid_interface_exception']) \
-            from s_err
+        raise ValueError(RES_STR['invalid_interface_exception']) from s_err
