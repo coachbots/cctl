@@ -260,12 +260,6 @@ def boot_bots(bots: Union[Iterable[Coachbot], str],
         state_l = states if isinstance(states, Iterable) \
             else (states for _ in bots)
 
-        # If one of the targets is all, then boot all and do nothing else.
-        for target_bot, state in zip(bots, state_l):
-            if target_bot == 'all':
-                _boot_all(state)
-                return
-
         asyncio.gather(
             *(bot.async_boot(state) for bot, state in zip(bots, state_l)))
 
