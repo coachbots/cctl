@@ -11,7 +11,7 @@ import sys
 sys.path.insert(0, os.path.abspath('./src'))
 
 from cctl.api import configuration
-from cctl as import netutils
+from cctl import netutils
 
 
 class TestNetutils(unittest.TestCase):
