@@ -27,8 +27,8 @@ async def async_ping(hostname: str, count: int = 1,
     return await (await asyncio.create_subprocess_exec(
         'ping',
         '-n' if platform.system().lower() == 'windows' else '-c',
-        '-w', str(max_timeout),
         str(count),
+        '-w', str(max_timeout),
         hostname,
         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
     )).wait()
