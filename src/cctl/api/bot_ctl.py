@@ -179,6 +179,14 @@ class Coachbot:
         """
         asyncio.get_event_loop().run_until_complete(self.async_boot(state))
 
+    async def async_blink(self) -> None:
+        """Asynchronously blinks the robot."""
+        await asyncio.create_subprocess_exec(
+            './led_on.py',
+            str(self.identifier),
+            cwd=configuration.get_server_dir()
+        )
+
 
 async def async_get_alives(bots: Iterable[Coachbot]) \
         -> Generator[Coachbot, None, None]:

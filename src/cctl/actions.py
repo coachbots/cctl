@@ -2,7 +2,8 @@
 
 """Defines the main class that handles all commands."""
 
-from typing import Union
+import asyncio
+from typing import Union, Iterable
 import re
 import logging
 from argparse import Namespace
@@ -130,7 +131,7 @@ class CommandAction:
                                           RES_STR['cmd_off']):
                     logging.info(RES_STR['bot_all_booting_msg'],
                                  target_str)
-                    bot_ctl.boot_bot('all', target_on)
+                    bot_ctl.boot_bots('all', target_on)
 
                 if self._args.command == RES_STR['cmd_blink']:
                     logging.info(RES_STR['bot_all_blink_msg'])
@@ -138,14 +139,12 @@ class CommandAction:
 
                 return 0
 
-            # Else, go one-by-one turning robots on.
-            for bot in targets:
-                if self._args.command in (RES_STR['cmd_on'],
-                                          RES_STR['cmd_off']):
-                    logging.info(RES_STR['bot_booting_msg'], bot,
-                                 target_str)
-                    bot_ctl.boot_bot(bot, target_on)
+            if self._args.command in (RES_STR['cmd_on'], RES_STR['cmd_off']):
+                bot_ctl.boot_bots((bot_ctl.Coachbot(i) for i in targets),
+                                  target_on * len(targets))
+                return 0
 
+            for bot in targets:
                 if self._args.command == RES_STR['cmd_blink']:
                     logging.info(RES_STR['bot_blink_msg'], bot)
                     bot_ctl.blink(bot)
