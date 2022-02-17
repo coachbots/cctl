@@ -143,14 +143,15 @@ def get_alives(
     return asyncio.get_event_loop().run_until_complete(async_get_alives(bots))
 
 
-def boot_bot(bot_id: Union[str, int], state: bool) -> None:
+def boot_bot(bot: Union[str, int, Coachbot], state: bool) -> None:
     """
     Changes the state of a bot to on or off.
 
     Parameters:
-        robot_id: Target bot. If this parameter is a string 'all', then all
-            robots are turned on/off. All other string values raise errors.
-        state: Whether to boot on or off
+        bot (str | int | Coachbot): Target bot. If this parameter is a string
+            'all', then all robots are turned on/off. All other string values
+            raise errors. You can also pass a Coachbot object.
+        state (bool): Whether to boot on or off
 
     Raises:
         ValueError: Raised when a string not-equal-to 'all' is passed.
@@ -160,17 +161,18 @@ def boot_bot(bot_id: Union[str, int], state: bool) -> None:
         be invoking it as a function from the module.
     """
     # Handle the case of all bots.
-    if isinstance(bot_id, str) and bot_id == 'all':
+    if isinstance(bot, str) and bot == 'all':
         if state:
             call(['./reliable_ble_on.py'], cwd=configuration.get_server_dir())
             return
         call(['./reliable_ble_off.py'], cwd=configuration.get_server_dir())
         return
 
-    if isinstance(bot_id, str):
+    if isinstance(bot, str):
         raise ValueError(RES_STR['invalid_bot_id_exception'])
 
-    call(['./ble_one.py', str(int(state)), str(bot_id)],
+    call(['./ble_one.py', str(int(state)),
+          str(bot.identifier if isinstance(bot, Coachbot) else bot)],
          cwd=configuration.get_server_dir())
 
 

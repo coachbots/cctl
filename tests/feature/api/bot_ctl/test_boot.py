@@ -25,6 +25,14 @@ class TestBootBot(BotTestCase):
         self.wait_until_bots_reachable([target_bot])
         self.assert_bot_power(target_bot, True)
 
+    def test_boot_positive_as_object(self):
+        """Tests whether a robot can boot up successfully when passed as an
+        object."""
+        target_bot = self.random_testing_bot
+        bc.boot_bot(target_bot, True)
+        self.wait_until_bots_reachable([target_bot])
+        self.assert_bot_power(target_bot, True)
+
     def test_boot_negative(self):
         """Tests whether a robot can boot down successfully."""
         target_bot = self.random_testing_bot
