@@ -50,6 +50,14 @@ class Coachbot:
         Returns:
             str: The string representation of the Coachbot
         """
+        return f'Coachbot({self.identifier})'
+
+    def __repr__(self) -> str:
+        """Converts the Coachbot as a string.
+
+        Returns:
+            str: The string representation of the Coachbot
+        """
         return f'Coachbot<id={self.identifier}>'
 
     @property
