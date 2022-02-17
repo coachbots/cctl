@@ -5,7 +5,7 @@ This module exposes various functions for controlling robots.
 """
 
 from typing import Generator, Iterable, Union
-from subprocess import call
+from subprocess import DEVNULL, call
 import asyncio
 import os
 import shutil
@@ -125,6 +125,60 @@ class Coachbot:
         return Coachbot(int(address.split('.')[-1]) -
                         Coachbot.IP_ADDRESS_SHIFT)
 
+    async def async_boot(self, state: bool) -> None:
+        """
+        Asynchronously changes the state of a bot to on or off.
+
+        Contrary to legacy implementation, this function pauses execution until
+        the bot is fully reachable.
+
+        Parameters:
+            state (bool): Whether to boot on or off
+
+        Example:
+
+        .. code-block:
+
+           # This code will attempt to boot bots 90-95 in a very faster manner
+           # (spawning 6 boot-up functions) but will block until all robots are
+           # done.
+           # Note that this needs to be in an async function.
+           m_bots = (Coachbot(i) for i in range(90, 95))
+           asyncio.gather(*(async_boot_bot(bot, True) for bot in m_bots))
+
+        Raises:
+            ValueError: Raised when a string not-equal-to 'all' is passed.
+
+        Todo:
+            Currently, this function calls an extrenal script. It should,
+            rather, be invoking it as a function from the module.
+        """
+        await asyncio.create_subprocess_exec(
+            './ble_one.py',
+            str(int(state)),
+            str(self.identifier),
+            cwd=configuration.get_server_dir(),
+            stdout=asyncio.subprocess.DEVNULL,
+            stderr=asyncio.subprocess.DEVNULL
+        )
+
+        await self.async_wait_until_state(state)
+
+    def boot(self, state: bool) -> None:
+        """
+        Synchronously changes the state of a bot to on or off.
+
+        Contrary to legacy implementation, this function pauses execution until
+        the bot is fully reachable.
+
+        Parameters:
+            state (bool): Whether to boot on or off
+
+        Raises:
+            ValueError: Raised when a string not-equal-to 'all' is passed.
+        """
+        asyncio.get_event_loop().run_until_complete(self.async_boot(state))
+
 
 async def async_get_alives(bots: Iterable[Coachbot]) \
         -> Generator[Coachbot, None, None]:
@@ -165,84 +219,18 @@ def get_alives(
     return asyncio.get_event_loop().run_until_complete(async_get_alives(bots))
 
 
-async def async_boot_bot(bot: Union[str, int, Coachbot], state: bool) -> None:
-    """
-    Asynchronously changes the state of a bot to on or off.
-
-    Contrary to legacy implementation, this function pauses execution until the
-    bot is fully reachable.
-
-    Parameters:
-        bot (str | int | Coachbot): Target bot. If this parameter is a string
-            'all', then all robots are turned on/off. All other string values
-            raise errors. You can also pass a Coachbot object.
-        state (bool): Whether to boot on or off
-
-    Raises:
-        ValueError: Raised when a string not-equal-to 'all' is passed.
-
-    Todo:
-        Currently, this function calls an extrenal script. It should, rather,
-        be invoking it as a function from the module.
-    """
-    # Handle the case of all bots.
-    if isinstance(bot, str) and bot == 'all':
-        await asyncio.create_subprocess_exec(
-            f'./reliable_ble_{"on" if state else "off"}.py',
-            cwd=configuration.get_server_dir(),
-            stdout=asyncio.subprocess.DEVNULL,
-            stderr=asyncio.subprocess.DEVNULL
-        )
-        return
-
-    if isinstance(bot, str):
-        raise ValueError(RES_STR['invalid_bot_id_exception'])
-
-    m_bot = bot if isinstance(bot, Coachbot) else Coachbot(bot)
-
-    await asyncio.create_subprocess_exec(
-        './ble_one.py',
-        str(int(state)),
-        str(m_bot.identifier),
-        cwd=configuration.get_server_dir(),
-        stdout=asyncio.subprocess.DEVNULL,
-        stderr=asyncio.subprocess.DEVNULL
-    )
-
-    await m_bot.async_wait_until_state(state)
-
-
-def boot_bot(bot: Union[str, int, Coachbot], state: bool) -> None:
-    """
-    Synchronously changes the state of a bot to on or off.
-
-    Contrary to legacy implementation, this function pauses execution until the
-    bot is fully reachable.
-
-    Parameters:
-        bot (str | int | Coachbot): Target bot. If this parameter is a string
-            'all', then all robots are turned on/off. All other string values
-            raise errors. You can also pass a Coachbot object.
-        state (bool): Whether to boot on or off
-
-    Raises:
-        ValueError: Raised when a string not-equal-to 'all' is passed.
-    """
-    asyncio.get_event_loop().run_until_complete(async_boot_bot(bot, state))
-
-
-def boot_bots(bots: Union[Iterable[Union[str, int]], str],
+def boot_bots(bots: Union[Iterable[Coachbot], str],
               states: Union[bool, Iterable[bool]]) -> None:
     """
     Changes the state of a plethora of bots on or off.
 
     Parameters:
-        bots: The list of bots. This list can contain either integers
-            (representing bot IDs) or a string 'all'. If this list contains
+        bots (Iterable[Coachbot] | str): The list of bots. This list can
+            contain either Coachbots or a string 'all'. If this list contains
             both, then the algorithm only boots all bots, once.
-        state: The list of states for all bots. This string should have the
-            exact same number of elements as ``bots``. It can also be a boolean
-            which controls the state of all bots.
+        state (Iterable[bool] | bool): The list of states for all bots. This
+            string should have the exact same number of elements as ``bots``.
+            It can also be a boolean which controls the state of all bots.
 
     Raises:
         ValueError: Raised when a string not-equal-to 'all' is passed.
@@ -251,26 +239,37 @@ def boot_bots(bots: Union[Iterable[Union[str, int]], str],
         * Currently, this function calls an extrenal script. It should, rather,
         be invoking it as a function from the module.
     """
-    if isinstance(bots, str) and bots == 'all':
-        if not isinstance(states, bool):
-            raise ValueError(RES_STR['invalid_bot_id_exception'])
-        boot_bot('all', states)
-        return
+    async def _internal():
+        def _boot_all(state: bool) -> None:
+            call(
+                f'./reliable_ble_{"on" if state else "off"}.py',
+                cwd=configuration.get_server_dir(),
+                stdout=DEVNULL,
+                stderr=DEVNULL)
 
-    if isinstance(bots, str):
-        raise ValueError(RES_STR['invalid_bot_id_exception'])
+        if isinstance(bots, str) and bots == 'all':
+            if not isinstance(states, bool):
+                raise ValueError(RES_STR['invalid_bot_id_exception'])
 
-    state_l = states if isinstance(states, Iterable) \
-        else (states for _ in bots)
-
-    # If one of the targets is all, then boot all and do nothing else.
-    for target_bot, state in zip(bots, state_l):
-        if target_bot == 'all':
-            boot_bot('all', state)
+            _boot_all(states)
             return
 
-    for bot, state in zip(bots, state_l):
-        boot_bot(bot, state)
+        if isinstance(bots, str):
+            raise ValueError(RES_STR['invalid_bot_id_exception'])
+
+        state_l = states if isinstance(states, Iterable) \
+            else (states for _ in bots)
+
+        # If one of the targets is all, then boot all and do nothing else.
+        for target_bot, state in zip(bots, state_l):
+            if target_bot == 'all':
+                _boot_all(state)
+                return
+
+        asyncio.gather(
+            *(bot.async_boot(state) for bot, state in zip(bots, state_l)))
+
+    asyncio.get_event_loop().run_until_complete(_internal())
 
 
 def set_user_code_running(state: bool) -> None:
@@ -378,5 +377,7 @@ def wait_until_bots_state(bots: Iterable[Coachbot],
         bots (Iterable[Coachbot]): The bots to test.
         states (Iterable[bool]): The states that those bots need to meet.
     """
-    asyncio.gather(bot.async_wait_until_state(state)
-                   for bot, state in zip(bots, states))
+    async def _internal():
+        asyncio.gather(bot.async_wait_until_state(state)
+                       for bot, state in zip(bots, states))
+    asyncio.get_event_loop().run_until_complete(_internal())

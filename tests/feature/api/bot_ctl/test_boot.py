@@ -22,10 +22,10 @@ class TestBootBot(BotTestCase):
     def test_boot(self):
         """Tests whether a robot can boot up and down successfully."""
         target_bot = self.random_testing_bot
-        bc.boot_bot(target_bot.identifier, True)
+        target_bot.boot_bot(True)
         self.assert_bot_power(target_bot, True)
 
-        bc.boot_bot(target_bot.identifier, False)
+        target_bot.boot_bot(False)
         self.assert_bot_power(target_bot, False)
 
     def test_boot_multiple(self):
