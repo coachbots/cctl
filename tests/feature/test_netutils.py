@@ -8,7 +8,7 @@ import unittest
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath('./src'))
+sys.path.insert(0, os.path.join(os.getcwd(), os.path.abspath('src')))
 
 from cctl.api import configuration
 import cctl.netutils as netutils
@@ -37,7 +37,6 @@ class TestNetutils(unittest.TestCase):
             file.write(contents)
             self.assertEqual(contents,
                              netutils.read_remote_file('localhost', file.name))
-
 
 
 if __name__ == '__main__':
