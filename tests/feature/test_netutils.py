@@ -7,10 +7,10 @@ import tempfile
 import unittest
 import os
 import sys
-from cctl.api import configuration
 
 sys.path.insert(0, os.path.abspath('./src'))
 
+from cctl.api import configuration
 import cctl.netutils as netutils
 
 
