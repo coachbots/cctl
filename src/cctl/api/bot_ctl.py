@@ -198,7 +198,9 @@ async def async_boot_bot(bot: Union[str, int, Coachbot], state: bool) -> None:
         './ble_one.py',
         str(int(state)),
         str(m_bot.identifier),
-        cwd=configuration.get_server_dir()
+        cwd=configuration.get_server_dir(),
+        stdout=asyncio.subprocess.DEVNULL,
+        stderr=asyncio.subprocess.DEVNULL
     )
 
     await m_bot.async_wait_until_alive()
