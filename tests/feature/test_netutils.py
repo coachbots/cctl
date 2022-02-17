@@ -34,6 +34,7 @@ class TestNetutils(unittest.TestCase):
         contents = 'Test File Contents\n\rTest File\n\r'.encode('utf-8')
         with tempfile.NamedTemporaryFile('w+b') as file:
             file.write(contents)
+            file.flush()
             self.assertEqual(contents,
                              netutils.read_remote_file('localhost', file.name),
                              f'{file.name} did not have the correct contents.')
