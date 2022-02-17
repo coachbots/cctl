@@ -143,9 +143,9 @@ def get_alives(
     return asyncio.get_event_loop().run_until_complete(async_get_alives(bots))
 
 
-def boot_bot(bot: Union[str, int, Coachbot], state: bool) -> None:
+async def async_boot_bot(bot: Union[str, int, Coachbot], state: bool) -> None:
     """
-    Changes the state of a bot to on or off.
+    Asynchronously changes the state of a bot to on or off.
 
     Parameters:
         bot (str | int | Coachbot): Target bot. If this parameter is a string
@@ -162,18 +162,39 @@ def boot_bot(bot: Union[str, int, Coachbot], state: bool) -> None:
     """
     # Handle the case of all bots.
     if isinstance(bot, str) and bot == 'all':
-        if state:
-            call(['./reliable_ble_on.py'], cwd=configuration.get_server_dir())
-            return
-        call(['./reliable_ble_off.py'], cwd=configuration.get_server_dir())
+        await asyncio.create_subprocess_exec(
+            f'./reliable_ble_{"on" if state else "off"}.py',
+            cwd=configuration.get_server_dir(),
+            stdout=asyncio.subprocess.DEVNULL,
+            stderr=asyncio.subprocess.DEVNULL
+        )
         return
 
     if isinstance(bot, str):
         raise ValueError(RES_STR['invalid_bot_id_exception'])
 
-    call(['./ble_one.py', str(int(state)),
-          str(bot.identifier if isinstance(bot, Coachbot) else bot)],
-         cwd=configuration.get_server_dir())
+    await asyncio.create_subprocess_exec(
+        './ble_one.py',
+        str(int(state)),
+        str(bot.identifier if isinstance(bot, Coachbot) else bot),
+        cwd=configuration.get_server_dir()
+    )
+
+
+def boot_bot(bot: Union[str, int, Coachbot], state: bool) -> None:
+    """
+    Synchronously changes the state of a bot to on or off.
+
+    Parameters:
+        bot (str | int | Coachbot): Target bot. If this parameter is a string
+            'all', then all robots are turned on/off. All other string values
+            raise errors. You can also pass a Coachbot object.
+        state (bool): Whether to boot on or off
+
+    Raises:
+        ValueError: Raised when a string not-equal-to 'all' is passed.
+    """
+    asyncio.get_event_loop().run_until_complete(async_boot_bot(bot, state))
 
 
 def boot_bots(bots: Union[Iterable[Union[str, int]], str],
