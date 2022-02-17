@@ -2,7 +2,7 @@
 
 """Defines the main class that handles all commands."""
 
-from typing import Union
+from typing import Union, List
 import re
 import logging
 from argparse import Namespace
@@ -14,7 +14,7 @@ from cctl.res import ERROR_CODES, RES_STR
 from cctl.api import camera_ctl, bot_ctl, configuration
 
 
-def _parse_id(coach_id: str) -> Union[range, bool]:
+def _parse_id(coach_id: str) -> Union[List[int], bool]:
     """Parses the id parameter ensuring that it fits the format:
         ^(\\d+)$ or ^(\\d+)-(\\d+)$. If 'all' is given, then the function
         returns true, otherwise returns a list of targets to be turned on.
@@ -28,13 +28,13 @@ def _parse_id(coach_id: str) -> Union[range, bool]:
     # Try matching with range first:
     match = re.match(range_regex, coach_id)
     if match is not None:
-        return range(int(match.group(1)), int(match.group(2)) + 1)
+        return list(range(int(match.group(1)), int(match.group(2)) + 1))
 
     # Try matching with single:
     match = re.match(single_id_regex, coach_id)
     if match is not None:
         val = int(match.group(1))
-        return range(val, val + 1)
+        return list(range(val, val + 1))
 
     raise AttributeError(RES_STR['unsupported_argument'])
 
@@ -120,12 +120,13 @@ class CommandAction:
         target_str = RES_STR['cmd_on'] if target_on \
             else RES_STR['cmd_off']
 
-        for i in self._args.id:
-            targets = _parse_id(i)
-
-            # If one of the targets is a boolean, means we need to turn
-            # on all.
-            if isinstance(targets, bool):
+        # Assemble the targets list. If at any point we reach an 'all'
+        # as an input, it means we need to boot/blink all bots and end
+        # execution.
+        targets = []
+        for identifier in self._args.id:
+            parsed = _parse_id(identifier)
+            if isinstance(parsed, bool):
                 if self._args.command in (RES_STR['cmd_on'],
                                           RES_STR['cmd_off']):
                     logging.info(RES_STR['bot_all_booting_msg'],
@@ -138,15 +139,23 @@ class CommandAction:
 
                 return 0
 
-            if self._args.command in (RES_STR['cmd_on'], RES_STR['cmd_off']):
-                bot_ctl.boot_bots((bot_ctl.Coachbot(i) for i in targets),
-                                  target_on * len(targets))
-                return 0
+            targets += [bot_ctl.Coachbot(bot_id) for bot_id in parsed]
 
+        if self._args.command in (RES_STR['cmd_on'], RES_STR['cmd_off']):
+            logging.info(RES_STR['bot_booting_many_msg'],
+                         ','.join([str(bot.identifier) for bot in targets]),
+                         target_str)
+            bot_ctl.boot_bots(targets, target_on)
+            return 0
+
+        if self._args.command == RES_STR['cmd_blink']:
             for bot in targets:
-                if self._args.command == RES_STR['cmd_blink']:
-                    logging.info(RES_STR['bot_blink_msg'], bot)
-                    bot_ctl.blink(bot)
+                # TODO: Replace this with bot.blink() when its written, or
+                # better yet, blink_bots(targets)
+                logging.info(RES_STR['bot_blink_msg'], bot.identifier)
+                bot_ctl.blink(bot.identifier)
+            return 0
+
         return 0
 
     def _start_pause_handler(self) -> int:

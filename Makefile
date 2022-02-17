@@ -18,7 +18,7 @@ docs: manpage
 	cd docs && $(MAKE) html
 
 install:
-	$(PYTHON) -m pip install dist/cctl-*.whl
+	$(PYTHON) -m pip install dist/cctl-*.whl --force-reinstall
 
 uninstall:
 	$(PYTHON) -m pip uninstall cctl

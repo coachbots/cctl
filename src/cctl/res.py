@@ -14,6 +14,7 @@ RES_STR = {
                        r'Format must match one of: [\d], [\d-\d] or "all".',
     'unsupported_argument': 'Unsupported Argument Passed.',
     'bot_booting_msg': 'Booting coachbot %d %s.',
+    'bot_booting_many_msg': 'Booting coachbots %s %s.',
     'bot_all_booting_msg': 'Booting all coachbots %s.',
     'server_dir_missing': 'Could not find server directory: %s',
     'cmd_start': 'start',
