@@ -6,6 +6,7 @@ expected.
 """
 
 import unittest
+import itertools
 import os
 import sys
 
@@ -18,49 +19,38 @@ from tests.feature import BotTestCase
 class TestBootBot(BotTestCase):
     """Tests bot-power-related functions."""
 
-    def test_boot_positive(self):
-        """Tests whether a robot can boot up successfully."""
+    def test_boot(self):
+        """Tests whether a robot can boot up and down successfully."""
         target_bot = self.random_testing_bot
         bc.boot_bot(target_bot.identifier, True)
-        self.wait_until_bots_reachable([target_bot])
+        self.wait_until_bots_state([target_bot], [True])
         self.assert_bot_power(target_bot, True)
 
-    def test_boot_positive_as_object(self):
-        """Tests whether a robot can boot up successfully when passed as an
-        object."""
-        target_bot = self.random_testing_bot
-        bc.boot_bot(target_bot, True)
-        self.wait_until_bots_reachable([target_bot])
-        self.assert_bot_power(target_bot, True)
-
-    def test_boot_negative(self):
-        """Tests whether a robot can boot down successfully."""
-        target_bot = self.random_testing_bot
         bc.boot_bot(target_bot.identifier, False)
-        self.wait_until_bots_reachable([target_bot])
+        self.wait_until_bots_state([target_bot], [False])
         self.assert_bot_power(target_bot, False)
 
-    def test_boot_multiple_positive(self):
-        """Tests whether multiple bots can boot up successfully."""
-        bc.boot_bots((bot.identifier for bot in self.test_bots),
-                     sum(1 for _ in self.test_bots) * [True])
-        self.wait_until_bots_reachable(self.test_bots)
+    def test_boot_multiple(self):
+        """Tests whether multiple bots can be booted up and down successfully.
+        """
+        bc.boot_bots((bot.identifier for bot in self.test_bots), True)
+        self.wait_until_bots_state(self.test_bots,
+                                   [True for _ in self.test_bots])
         self.assert_bot_powers(self.test_bots,
-                               sum(1 for _ in self.test_bots) * [True])
+                               [True for _ in self.test_bots])
 
-    def test_boot_multiple_negative(self):
-        """Tests whether multiple bots can be booted down successfully."""
         bc.boot_bots((bot.identifier for bot in self.test_bots), False)
-        self.wait_until_bots_reachable(self.test_bots)
+        self.wait_until_bots_state(self.test_bots,
+                                   [False for _ in self.test_bots])
         self.assert_bot_powers(self.test_bots,
-                               sum(1 for _ in self.test_bots) * [True])
+                               [False for _ in self.test_bots])
 
     def test_get_alives(self):
         """Tests whether get_alives operates as expected."""
-        target_bot = self.random_testing_bot
-        bc.boot_bot(target_bot.identifier, True)
-        self.wait_until_bots_reachable([target_bot])
-        self.assertEqual([target_bot], list(bc.get_alives()))
+        test_bots = itertools.islice(self.test_bots, 3)
+        bc.boot_bots((bot.identifier for bot in test_bots), True)
+        self.wait_until_bots_state(test_bots, [True for _ in test_bots])
+        self.assertEqual(list(test_bots), list(bc.get_alives()))
 
 
 if __name__ == '__main__':

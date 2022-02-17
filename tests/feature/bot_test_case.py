@@ -74,18 +74,21 @@ class BotTestCase(unittest.TestCase):
         for bot, expected in zip(bots, expecteds):
             self.assert_bot_power(bot, expected)
 
-    def wait_until_bots_reachable(self, bots: Iterable[Coachbot],
-                                  timeout: float = 10) -> None:
+    def wait_until_bots_state(self, bots: Iterable[Coachbot],
+                              states: Iterable[bool],
+                              timeout: float = 10) -> None:
         """Pauses execution until all specified bots are reachable.
 
         Parameters:
             bots (Iterable[Coachbot]): The target bots.
+            states (Iterable[bool]): The expected states of the bots.
             timeout (float): The maximum allowable timeout.
         """
-        reachable = False
+        as_expected = False
         start_time = time()
-        while not reachable and (time() - start_time) < timeout:
-            for bot in bots:
-                reachable = bot.is_alive()
-                if not reachable:
-                    continue
+        while not as_expected and (time() - start_time) < timeout:
+            for bot, expected_state in zip(bots, states):
+                if bot.is_alive() != expected_state
+                    as_expected = False
+                    break
+                as_expected = True
