@@ -150,7 +150,7 @@ class CommandAction:
 
         if self._args.command == RES_STR['cmd_blink']:
             logging.info(RES_STR['bot_blink_many_msg'],
-                ','.join([str(bot.identifier) for bot in targets]))
+                         ','.join([str(bot.identifier) for bot in targets]))
             bot_ctl.blink_bots(targets)
             return 0
 
@@ -167,33 +167,26 @@ class CommandAction:
 
     def exec(self) -> int:
         """Parses arguments automatically and handles booting."""
+        def _uploader():
+            bot_ctl.upload_code(self._args.usr_path[0],
+                                self._args.os_update)
+
+        handlers = {
+            'cam': self._camera_command_handler,
+            RES_STR['cmd_on']: self._on_off_blink_handler,
+            RES_STR['cmd_off']: self._on_off_blink_handler,
+            RES_STR['cmd_blink']: self._on_off_blink_handler,
+            RES_STR['cmd_start']: self._start_pause_handler,
+            RES_STR['cmd_pause']: self._start_pause_handler,
+            RES_STR['cmd_update']: _uploader,
+
+            # TODO: make this a member method
+            RES_STR['cmd_manage']: CommandAction.manage_system,
+        }
+
         try:
-            if self._args.command == 'cam':
-                return self._camera_command_handler()
-
-            # Commands which contain ranges of robots.
-            if self._args.command in (RES_STR['cmd_on'],
-                                      RES_STR['cmd_off'],
-                                      RES_STR['cmd_blink']):
-                return self._on_off_blink_handler()
-
-            # Start/Pause command.
-            if self._args.command in (RES_STR['cmd_start'],
-                                      RES_STR['cmd_pause']):
-                return self._start_pause_handler()
-
-            # Upload command.
-            if self._args.command == RES_STR['cmd_update']:
-                bot_ctl.upload_code(self._args.usr_path[0],
-                                    self._args.os_update)
-                return 0
-
-            if self._args.command == RES_STR['cmd_manage']:
-                CommandAction.manage_system()
-                return 0
+            return handlers[self._args.command]
 
         except FileNotFoundError as fnf_err:
             logging.error(RES_STR['server_dir_missing'], fnf_err)
             return ERROR_CODES['server_dir_missing']
-
-        return 0

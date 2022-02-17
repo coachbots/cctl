@@ -4,7 +4,7 @@
 This module exposes various functions for controlling robots.
 """
 
-from typing import Generator, Iterable, Union, List
+from typing import Iterable, Union, List
 from subprocess import DEVNULL, call
 import asyncio
 import os
@@ -231,9 +231,9 @@ class Coachbot:
             broadcast IP address ensures that anything on the network receives
             this packet. Now, 192.168.1.2 is not listening on 5005. You can
             check that with:
-            
+
             .. code-block:: bash
-            
+
                sudo lsof -iTCP -sTCP:LISTEN -P -n
 
             That means that all the coach-os' are listening on 5005. However,
@@ -249,7 +249,7 @@ class Coachbot:
         br_addr = get_broadcast_address(configuration.get_server_interface())
         try:
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-            for i in range(200):
+            for _ in range(200):
                 await asyncio.sleep(0.05)
                 sock.sendto(bytes(f'LED_ON|{self.identifier}', 'ascii'),
                             (br_addr, 5005))
@@ -350,7 +350,7 @@ def boot_bots(bots: Union[Iterable[Coachbot], str],
     state_l = states if isinstance(states, Iterable) \
         else (states for _ in bots)
 
-    tasks = [asyncio.get_event_loop().create_task(bot.async_boot(state)) \
+    tasks = [asyncio.get_event_loop().create_task(bot.async_boot(state))
              for bot, state in zip(bots, state_l)]
 
     asyncio.get_event_loop().run_until_complete(asyncio.wait(tasks))
@@ -364,10 +364,10 @@ def blink_bots(bots: Union[Iterable[Coachbot], str]):
             contain either Coachbots or a string 'all'. If this list contains
             both, then the algorithm only boots all bots, once.
     """
-    m_bots = bots if isinstance(bots, Iterable) else get_all_coachbots()
-    asyncio.get_event_loop().run_until_complete(asyncio.wait([
-        asyncio.get_event_loop().create_task(bot.async_blink())
-            for bot in m_bots]))
+    m_bots = get_all_coachbots() if isinstance(bots, str) else bots
+    asyncio.get_event_loop().run_until_complete(
+        asyncio.wait([asyncio.get_event_loop().create_task(bot.async_blink())
+                      for bot in m_bots]))
 
 
 def set_user_code_running(state: bool) -> None:
