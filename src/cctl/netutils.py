@@ -2,7 +2,10 @@
 
 """Exposes network utilities."""
 
+import socket
+import struct
 import asyncio
+import fcntl
 import platform
 from paramiko.client import SSHClient
 
@@ -90,3 +93,23 @@ def read_remote_file(hostname: str, remote_path: str) -> bytes:
     client.close()
 
     return data
+
+
+def get_ip_address(ifname: str) -> str:
+    """Returns the ip address of the specified interface name.
+
+    Author:
+        `Martin Konecny <https://stackoverflow.com/questions/24196932/>`_
+
+    Parameters:
+        ifname (str): The target interface name.
+
+    Returns:
+        str: The IP address of that interface.
+    """
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    return socket.inet_ntoa(fcntl.ioctl(
+        sock.fileno(),
+        0x8915,  # SIOCGIFADDR
+        struct.pack('256s', ifname[:15])
+    )[20:24])

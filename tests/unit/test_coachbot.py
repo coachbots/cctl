@@ -1,7 +1,7 @@
-"""Holds the Coachbot unit test cases."""
-
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+
+"""Holds the Coachbot unit test cases."""
 
 import unittest
 import os
@@ -31,7 +31,6 @@ class TestCoachbot(unittest.TestCase):
     def test_can_be_built_from_address(self):
         """Tests whether the coachbot can be constructed form an IP address."""
         self.assertEqual(Coachbot(90), Coachbot.from_address('192.168.1.93'))
-
 
 
 if __name__ == '__main__':
