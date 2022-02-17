@@ -9,6 +9,8 @@ import fcntl
 import platform
 from paramiko.client import SSHClient
 
+from cctl.res import RES_STR
+
 
 async def async_ping(hostname: str, count: int = 1) -> int:
     """Asynchronously pings a hostname.
@@ -108,8 +110,13 @@ def get_ip_address(ifname: str) -> str:
         str: The IP address of that interface.
     """
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    return socket.inet_ntoa(fcntl.ioctl(
-        sock.fileno(),
-        0x8915,  # SIOCGIFADDR
-        struct.pack('256s', ifname[:15])
-    )[20:24])
+
+    try:
+        return socket.inet_ntoa(fcntl.ioctl(
+            sock.fileno(),
+            0x8915,  # SIOCGIFADDR
+            struct.pack('256s', ifname[:15])
+        )[20:24])
+    except struct.error as s_err:
+        raise ValueError(RES_STR['invalid_interface_exception']) \
+            from s_err

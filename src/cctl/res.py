@@ -66,7 +66,8 @@ RES_STR = {
                                    'loopback video streams).',
     'running_ffmpeg': 'Running ffmpeg as:\n%s\n.',
     'invalid_bot_id_exception': 'Invalid Bot ID. Valid ids are integers or ' +
-                                'the string \'all\'.'
+                                'the string \'all\'.',
+    'invalid_interface_exception': 'Invalid Interface Provided.'
 }
 
 ERROR_CODES = {
