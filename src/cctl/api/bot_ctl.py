@@ -199,7 +199,7 @@ def boot_bots(bots: Union[Iterable[Union[str, int]], str],
     if isinstance(bots, str) and bots == 'all':
         if not isinstance(states, bool):
             raise ValueError(RES_STR['invalid_bot_id_exception'])
-        boot_bot('all', True)
+        boot_bot('all', states)
         return
 
     if isinstance(bots, str):
