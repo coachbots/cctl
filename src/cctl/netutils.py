@@ -57,7 +57,10 @@ async def async_host_is_reachable(hostname: str,
     Returns:
         bool: Whether the host was reachable on any attempt.
     """
-    return any(await async_ping(hostname, 1) == 0 for _ in range(max_attempts))
+    for _ in range(max_attempts):
+        if (await async_ping(hostname, 1)) == 0:
+            return True
+    return False
 
 
 def host_is_reachable(hostname: str, max_attempts: int = 3) -> bool:
@@ -99,9 +102,6 @@ def read_remote_file(hostname: str, remote_path: str) -> bytes:
 
 def get_ip_address(ifname: str) -> str:
     """Returns the ip address of the specified interface name.
-
-    Author:
-        `Martin Konecny <https://stackoverflow.com/questions/24196932/>`_
 
     Parameters:
         ifname (str): The target interface name.
