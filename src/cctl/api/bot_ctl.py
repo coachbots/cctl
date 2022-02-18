@@ -15,7 +15,8 @@ import socket
 
 from cctl.api import configuration
 from cctl.res import RES_STR
-from cctl.netutils import async_host_is_reachable, get_broadcast_address, read_remote_file
+from cctl.netutils import async_host_is_reachable, get_broadcast_address, \
+    read_remote_file
 
 
 class Coachbot:
@@ -38,67 +39,27 @@ class Coachbot:
         self.identifier = identifier
 
     def __eq__(self, other: 'Coachbot') -> bool:
-        """Tests for equality based on the identifier of the Coachbot.
-
-        Returns:
-            bool: Whether the objects are equal.
-        """
         return self.identifier == other.identifier
 
     def __lt__(self, other: 'Coachbot') -> bool:
-        """Tests for less-than based on the identifier of the Coachbot.
-
-        Returns:
-            bool: Whether self is less-than other.
-        """
         return self.identifier < other.identifier
 
     def __le__(self, other: 'Coachbot') -> bool:
-        """Tests for less-than-equal based on the identifier of the Coachbot.
-
-        Returns:
-            bool: Whether self is less-than-equal other.
-        """
         return self.identifier <= other.identifier
 
     def __gt__(self, other: 'Coachbot') -> bool:
-        """Tests for greater-than based on the identifier of the Coachbot.
-
-        Returns:
-            bool: Whether self is greater-than other.
-        """
         return self.identifier > other.identifier
 
     def __ge__(self, other: 'Coachbot') -> bool:
-        """Tests for greater-than-equal based on the identifier of the Coachbot.
-
-        Returns:
-            bool: Whether self is greater-than-equal other.
-        """
         return self.identifier >= other.identifier
 
     def __ne__(self, other: 'Coachbot') -> bool:
-        """Tests whether self is not equal to other based on the identifiers.
-
-        Returns:
-            bool: Whether self is not equal to other other.
-        """
         return self.identifier != other.identifier
 
     def __str__(self) -> str:
-        """Converts the Coachbot to a string.
-
-        Returns:
-            str: The string representation of the Coachbot
-        """
         return f'Coachbot({self.identifier})'
 
     def __repr__(self) -> str:
-        """Converts the Coachbot as a string.
-
-        Returns:
-            str: The string representation of the Coachbot
-        """
         return f'Coachbot<id={self.identifier}>'
 
     @property
@@ -522,3 +483,7 @@ def wait_until_bots_state(bots: Iterable[Coachbot],
         asyncio.gather(bot.async_wait_until_state(state)
                        for bot, state in zip(bots, states))
     asyncio.get_event_loop().run_until_complete(_internal())
+
+
+def async_fetch_logs_legacy(bots: Iterable[Coachbot]) -> List[bytes]:
+    pass

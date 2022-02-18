@@ -25,7 +25,7 @@ class TestLogs(BotTestCase):
         """Tests whether legacy logs are fetched as expected."""
         expected_content = 'my_content\n\r'.encode('utf-8')
         netutils.write_remote_file(self._test_bot.address,
-                                   '/home/hanlin/control/experiment_log',
+                                   configuration.get_legacy_log_file_path(),
                                    expected_content)
         actual_content = self._test_bot.fetch_legacy_log()
         self.assertEqual(expected_content, actual_content)

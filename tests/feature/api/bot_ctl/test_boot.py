@@ -7,7 +7,6 @@ expected.
 
 import time
 import unittest
-import itertools
 import os
 import sys
 
