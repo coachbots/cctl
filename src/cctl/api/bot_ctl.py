@@ -15,7 +15,7 @@ import socket
 
 from cctl.api import configuration
 from cctl.res import RES_STR
-from cctl.netutils import async_host_is_reachable, get_broadcast_address
+from cctl.netutils import async_host_is_reachable, get_broadcast_address, read_remote_file
 
 
 class Coachbot:
@@ -255,6 +255,43 @@ class Coachbot:
                             (br_addr, 5005))
         finally:
             sock.close()
+
+    async def async_fetch_legacy_log(self):
+        """This function is an implementation of the legacy behavior for
+        copying legacy ``experiment_log`` logs into an output directory.
+
+        Warning:
+            This function does not check if targets are online. Make sure you
+            are not attempting to copy from a target that is not online.
+
+        Returns:
+            bytes: The contents of the remote file path.
+        """
+        return await asyncio.get_event_loop().run_in_executor(
+            None, read_remote_file, self.address,
+            configuration.get_legacy_log_file_path())
+
+    def fetch_legacy_log(self):
+        """This function is an implementation of the legacy behavior for
+        copying legacy ``experiment_log`` logs into an output directory.
+
+        Example:
+
+        .. code-block:: python
+
+           m_log = bot.fetch_legacy_log()
+           with open(f'my_log_dir/{bot.identifier}', 'wb') as f:
+               f.write(m_log)
+
+        Warning:
+            This function does not check if targets are online. Make sure you
+            are not attempting to copy from a target that is not online.
+
+        Returns:
+            bytes: The contents of the remote file path.
+        """
+        return asyncio.get_event_loop().run_until_complete(
+            self.async_fetch_legacy_log())
 
 
 def get_all_coachbots() -> List[Coachbot]:

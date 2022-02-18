@@ -2,12 +2,14 @@
 
 """Exposes network utilities."""
 
+from contextlib import contextmanager
 import socket
 import struct
 import asyncio
 import fcntl
 import platform
 import subprocess
+from typing import Union
 from paramiko.client import SSHClient
 
 SIOCGIFADDR = 0x8915  # See man netdevice 7
@@ -85,26 +87,57 @@ def host_is_reachable(hostname: str, max_attempts: int = 3) -> bool:
         async_host_is_reachable(hostname, max_attempts))
 
 
-def read_remote_file(hostname: str, remote_path: str) -> bytes:
+@contextmanager
+def sftp_client(hostname: str, *args, **kwargs):
+    """Opens up an SFTP client with sane defaults.
+
+    These defaults are:
+        * Read keys from the system ssh key store.
+    """
+    client = SSHClient()
+    client.load_system_host_keys()
+    client.connect(hostname)
+    try:
+        m_sftp_client = client.open_sftp(*args, **kwargs)
+        try:
+            yield m_sftp_client
+        finally:
+            sftp_client.close()
+    finally:
+        client.close()
+
+
+def read_remote_file(hostname: str, remote_path: str,
+                     mode: str = 'rb') -> bytes:
     """Reads a remote file in full.
 
     Parameters:
         hostname (str): The hostname of the remote.
         remote_path (str): The path to the remote file.
+        mode (str): The mode to read the file in, 'rb' by default.
 
     Returns:
         bytes: The file contents.
     """
-    client = SSHClient()
-    client.load_system_host_keys()
-    client.connect(hostname)
+    with sftp_client(hostname) as client:
+        with client.open(remote_path, mode) as r_file:
+            return r_file.read()
 
-    sftp_client = client.open_sftp()
-    data = sftp_client.open(remote_path).read()
-    sftp_client.close()
-    client.close()
 
-    return data
+def write_remote_file(hostname: str, remote_path: str,
+                      data: Union[bytes, str], mode: str = 'wb') -> None:
+    """Writes some data to a possibly remote file.
+
+    Parameters:
+        hostname (str): The hostname of the remote.
+        remote_path (str): The path to the remote file.
+        data (bytes | str): The data to write.
+        mode (str): The mode to write the file in, 'wb' by default.
+    """
+
+    with sftp_client(hostname) as client:
+        with client.open(remote_path, mode) as r_file:
+            r_file.write(data)
 
 
 def get_ip_address(ifname: str) -> str:
