@@ -168,7 +168,7 @@ def get_syslog_path() -> str:
     Returns:
         str: The user-configured syslog path.
     """
-    return config.get('log', 'syslog_path')
+    return config.get('logs', 'syslog_path')
 
 
 def get_legacy_log_file_path() -> str:
@@ -180,7 +180,7 @@ def get_legacy_log_file_path() -> str:
     Returns:
         str: The user configured legacy log filename.
     """
-    return config.get('log', 'legacy_log_file_path')
+    return config.get('logs', 'legacy_log_file_path')
 
 
 def get_coachswarm_ssh_user() -> str:

@@ -399,6 +399,9 @@ def boot_bots(bots: Union[Iterable[Coachbot], str],
 def blink_bots(bots: Union[Iterable[Coachbot], str]):
     """Blinks a plethora of bots.
 
+    Todo:
+        Broken
+
     Parameters:
         bots (Iterable[Coachbot] | str): The list of bots. This list can
             contain either Coachbots or a string 'all'. If this list contains
