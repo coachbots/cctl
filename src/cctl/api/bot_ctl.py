@@ -4,7 +4,7 @@
 This module exposes various functions for controlling robots.
 """
 
-from typing import Iterable, Tuple, Union, List
+from typing import Callable, Iterable, Tuple, Union, List
 from subprocess import DEVNULL, call
 import asyncio
 import os
@@ -486,11 +486,16 @@ def wait_until_bots_state(bots: Iterable[Coachbot],
 
 
 async def async_fetch_legacy_logs(
-        bots: Iterable[Coachbot]) -> Tuple[bytes]:
+        bots: Iterable[Coachbot],
+        on_fetch: Callable[[Coachbot, bytes], None] = lambda *_: None) \
+        -> Tuple[bytes]:
     """Asynchronously fetches legacy logs.
 
     Parameters:
         bots (Iterable[Coachbot]): The bots of which to fetch the logs.
+        on_fetch (Callable[[Coachbot, bytes], None]): Callable called when a
+            log is fetched. Note that this callable is called for each fetched
+            log, which enables much faster execution.
 
     Returns:
         Tuple[bytes]: The logs in the same order as bots.
@@ -498,15 +503,25 @@ async def async_fetch_legacy_logs(
     Raises:
         FileNotFoundError: If the experiment_log does not exist.
     """
-    return await asyncio.gather(
-        *(bot.async_fetch_legacy_log() for bot in bots))
+    async def _helper(bot: Coachbot) -> bytes:
+        logs = await bot.async_fetch_legacy_log()
+        on_fetch(bot, logs)
+        return logs
+
+    return await asyncio.gather(*(_helper(bot) for bot in bots))
 
 
-def fetch_legacy_logs(bots: Iterable[Coachbot]) -> Tuple[bytes]:
+def fetch_legacy_logs(
+        bots: Iterable[Coachbot],
+        on_fetch: Callable[[Coachbot, bytes], None] = lambda *_: None) \
+        -> Tuple[bytes]:
     """Synchronously fetches legacy logs.
 
     Parameters:
         bots (Iterable[Coachbot]): The bots of which to fetch the logs.
+        on_fetch (Callable[[Coachbot, bytes], None]): Callable called when a
+            log is fetched. Note that this callable is called for each fetched
+            log, which enables much faster execution.
 
     Returns:
         Tuple[bytes]: The logs in the same order as bots.
@@ -515,4 +530,4 @@ def fetch_legacy_logs(bots: Iterable[Coachbot]) -> Tuple[bytes]:
         FileNotFoundError: If the experiment_log does not exist.
     """
     return asyncio.get_event_loop().run_until_complete(
-        async_fetch_legacy_logs(bots))
+        async_fetch_legacy_logs(bots, on_fetch))
