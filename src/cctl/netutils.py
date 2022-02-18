@@ -118,7 +118,7 @@ def sftp_client(hostname: str, *args, **kwargs):
         try:
             yield m_sftp_client
         finally:
-            sftp_client.close()
+            m_sftp_client.close()
     finally:
         client.close()
 
