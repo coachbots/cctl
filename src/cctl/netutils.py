@@ -100,16 +100,17 @@ def sftp_client(hostname: str, *args, **kwargs):
     These defaults are:
         * Read key from the user configuration.
     """
-    key = configuration.get_path_to_ssh_key()
+    user = configuration.get_coachswarm_ssh_user()
+    key = configuration.get_coachswarm_path_to_ssh_key()
 
     client = SSHClient()
     client.load_system_host_keys()
     client.set_missing_host_key_policy(WarningPolicy())
 
     try:
-        client.connect(hostname, key_filename=key)
+        client.connect(hostname, username=user, key_filename=key)
     except paramiko.AuthenticationException as auth_ex:
-        logging.error(RES_STR['ssh_auth_error'], key)
+        logging.error(RES_STR['ssh_auth_error'], user, key)
         raise auth_ex
 
     try:

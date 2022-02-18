@@ -2,7 +2,7 @@
 
 """Defines the main class that handles all commands."""
 
-from typing import Union, List
+from typing import Callable, Union, List
 import re
 import logging
 from argparse import Namespace
@@ -114,6 +114,11 @@ class CommandAction:
             return 0
 
         return -1
+
+    def _bot_id_handler(self,
+            all_handler: Callable[[], None],
+            some_handler: Callable[[List[bot_ctl.Coachbot]], None]) -> None:
+        pass
 
     def _on_off_blink_handler(self) -> int:
         target_on = self._args.command == RES_STR['cmd_on']
