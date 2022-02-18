@@ -30,7 +30,7 @@ mandatory_keys = {
     'coachswarm': [
         'conf_path',
         'id_range_min',
-        'id_range_max'
+        'id_range_max',
         'priv_ssh_key'
     ],
     'camera': [
