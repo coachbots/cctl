@@ -70,10 +70,13 @@ RES_STR = {
     'invalid_bot_id_exception': 'Invalid Bot ID. Valid ids are integers or ' +
                                 'the string \'all\'.',
     'invalid_interface_exception': 'Invalid Interface Provided.',
+    'ssh_auth_error': 'Could not authenticate with key %s.',
     'cmd_fetch_logs': 'fetch-logs',
     'cmd_fetch_logs_desc': 'Retrieves the logs from each of the bots.',
     'cmd_fetch_logs_legacy': 'Performs legacy experiment_log retrieval. This' +
-                             ' flag must be used in conjunction with -d.'
+                             ' flag must be used in conjunction with -d.',
+    'cmd_fetch_logs_directory': 'Outputs the results into the specified ' +
+                                'directory.'
 }
 
 ERROR_CODES = {

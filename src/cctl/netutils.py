@@ -3,6 +3,7 @@
 """Exposes network utilities."""
 
 from contextlib import contextmanager
+import logging
 import socket
 import struct
 import asyncio
@@ -10,10 +11,12 @@ import fcntl
 import platform
 import subprocess
 from typing import Union
+import paramiko
 from paramiko.client import SSHClient
 from paramiko import WarningPolicy
 
 from cctl.api import configuration
+from cctl.res import RES_STR
 
 SIOCGIFADDR = 0x8915  # See man netdevice 7
 SIOCGIFBRDADDR = 0x8919  # See man netdevice 7
@@ -97,10 +100,18 @@ def sftp_client(hostname: str, *args, **kwargs):
     These defaults are:
         * Read key from the user configuration.
     """
+    key = configuration.get_path_to_ssh_key()
+
     client = SSHClient()
     client.load_system_host_keys()
     client.set_missing_host_key_policy(WarningPolicy())
-    client.connect(hostname, key_filename=configuration.get_path_to_ssh_key())
+
+    try:
+        client.connect(hostname, key_filename=key)
+    except paramiko.AuthenticationException as auth_ex:
+        logging.error(RES_STR['ssh_auth_error'], key)
+        raise auth_ex
+
     try:
         m_sftp_client = client.open_sftp(*args, **kwargs)
         try:

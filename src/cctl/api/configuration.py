@@ -183,7 +183,7 @@ def get_legacy_log_file_path() -> str:
 
 def get_path_to_ssh_key():
     """Returns the path to the coachbot ssh key."""
-    return config.get('coachswarm', 'priv_ssh_key')
+    return path.expanduser(config.get('coachswarm', 'priv_ssh_key'))
 
 
 def get_valid_coachbot_range():

@@ -51,6 +51,8 @@ def main():
 
     fetch_logs_parser.add_argument('--legacy', '-l',
                                    help=RES_STR['cmd_fetch_logs_legacy'])
+    fetch_logs_parser.add_argument('--directory', '-d', nargs=1, type=str,
+                                   help=RES_STR['cmd_fetch_logs_directory'])
 
     cam_subparser = camera_parser.add_subparsers(
         title=RES_STR['cmd_cam_cmd_title'],
