@@ -11,6 +11,9 @@ import platform
 import subprocess
 from typing import Union
 from paramiko.client import SSHClient
+from paramiko import WarningPolicy
+
+from cctl.api import configuration
 
 SIOCGIFADDR = 0x8915  # See man netdevice 7
 SIOCGIFBRDADDR = 0x8919  # See man netdevice 7
@@ -92,11 +95,12 @@ def sftp_client(hostname: str, *args, **kwargs):
     """Opens up an SFTP client with sane defaults.
 
     These defaults are:
-        * Read keys from the system ssh key store.
+        * Read key from the user configuration.
     """
     client = SSHClient()
     client.load_system_host_keys()
-    client.connect(hostname)
+    client.set_missing_host_key_policy(WarningPolicy())
+    client.connect(hostname, key_filename=configuration.get_path_to_ssh_key())
     try:
         m_sftp_client = client.open_sftp(*args, **kwargs)
         try:

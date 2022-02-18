@@ -31,6 +31,7 @@ mandatory_keys = {
         'conf_path',
         'id_range_min',
         'id_range_max'
+        'priv_ssh_key_path'
     ],
     'camera': [
         'raw_dev_name',
@@ -50,7 +51,8 @@ default_values = {
     'coachswarm': {
         'conf_path': path.join(usr_conf_dir, 'coachswarm.conf'),
         'id_range_min': 0,
-        'id_range_max': 99
+        'id_range_max': 99,
+        'priv_ssh_key_path': path.expanduser('~/.ssh/id_coachbot')
     },
     'camera': {
         'raw_dev_name': 'Piwebcam: UVC Camera',
@@ -173,6 +175,11 @@ def get_legacy_log_file_path() -> str:
         str: The user configured legacy log filename.
     """
     return config.get('log', 'legacy_log_file_path')
+
+
+def get_path_to_ssh_key():
+    """Returns the path to the coachbot ssh key."""
+    return config.get('coachswarm', 'priv_ssh_key_path')
 
 
 def get_valid_coachbot_range():

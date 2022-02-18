@@ -1,6 +1,57 @@
 Configuration
 =============
 
+**cctl** requires some minor manual configuration to be done before you can
+fully use it.
+
+Copying SSH Keys
+----------------
+
+If you were to SSH into the Coachbots, you would need to provide either an ssh
+key or a password. `Providing passwords is inherently difficult to securely
+achieve` and **cctl does not support password-based ssh authentication**.
+Consequently, you need to copy your ssh public id to all the coachbots.
+**Assuming you have a coachbot key you can use**, this task is as trivial as
+running:
+
+.. code-block:: bash
+
+   # You can use the -n flag with ssh-copy-id for a dry run.
+   for i in {3..102}; do \
+       echo "Installing key to 192.168.1.$i."; \
+       sshpass -p YOUR_PASSWORD -v \
+           ssh-copy-id -i path/to/id_coachbot.pub "pi@192.168.1.$i"; \
+   done
+
+.. warning:: Never run this command without the ``-i`` flag. If you run the
+   command without the ``-i`` flag, you will copy over all your ssh keys which
+   may potentially be leaking access to the coachbots depending on how
+   protected those ssh keys are.
+
+.. note:: You can run ``ssh-copy-id`` with the ``-n`` flag to perform a dry run
+   and check if everything behaves as expected before actually adding the key.
+
+.. note:: You may encounter that this snippet will ask you about the known
+   hosts for a 100 times or sshpass reporting issues with strict host checking.
+   You can skip these checks with ``-o "StrictHostKeyChecking=no"`` given to
+   ``ssh-copy-id``. You should, however, ensure that the IP addresses you are
+   connecting to are correct. 
+
+When you're done with that, you can simply run:
+
+.. code-block:: bash
+
+   for i in {3..102}; do \
+       echo -n "192.168.1.$i: "; \
+       ssh pi@192.168.1.$i 'echo "Successfully Connected."'; \
+   done
+
+to check if everything went as expected. You should get a printout of all
+coachbots reporting a successful connection.
+
+Configuration Files
+-------------------
+
 **cctl** exposes some configuration files that you can use to tweak its
 behavior. These configuration files are normally located either in
 ``~/.config/coachswarm/`` or ``/etc/coachswarm/``.
@@ -36,6 +87,10 @@ is an example file with all supported keys.
    # code but is fully necessary in running the coachswarm. The file specified
    # here will be used to control the coachbots.
    conf_path = /home/marko/.config/coachswarm/coachswarm.conf
+
+   # This is the path to the private ssh-key that you just registered with all
+   # the coachbots.
+   priv_ssh_key_path = /home/marko/.ssh/id_coachbot
    
    # These two configuration parameters specify the minimum and maximum ID of
    # the coachbots. id_range_min is the smallest ID in the coachswarm while
