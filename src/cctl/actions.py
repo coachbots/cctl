@@ -2,8 +2,9 @@
 
 """Defines the main class that handles all commands."""
 
-from typing import Callable, Union, List
+from typing import Callable, Iterable, Union, List
 import re
+from os import path
 import logging
 from argparse import Namespace
 from subprocess import call
@@ -116,50 +117,54 @@ class CommandAction:
         return -1
 
     def _bot_id_handler(self,
-            all_handler: Callable[[], None],
-            some_handler: Callable[[List[bot_ctl.Coachbot]], None]) -> None:
-        pass
+            all_handler: Callable[[], int],
+            some_handler: Callable[[List[bot_ctl.Coachbot]], int]) -> int:
+        """This small method iterates through all bot-ids and runs handlers
+        approperiately."""
+        targets = []
+        for identifier in self._args.id:
+            parsed = _parse_id(identifier)
 
-    def _on_off_blink_handler(self) -> int:
+            if isinstance(parsed, bool):
+                return all_handler()
+
+            targets += [bot_ctl.Coachbot(bot_id) for bot_id in parsed]
+
+        return some_handler(targets)
+
+    def _on_off_handler(self) -> int:
         target_on = self._args.command == RES_STR['cmd_on']
         target_str = RES_STR['cmd_on'] if target_on \
             else RES_STR['cmd_off']
 
-        # Assemble the targets list. If at any point we reach an 'all'
-        # as an input, it means we need to boot/blink all bots and end
-        # execution.
-        targets = []
-        for identifier in self._args.id:
-            parsed = _parse_id(identifier)
-            if isinstance(parsed, bool):
-                if self._args.command in (RES_STR['cmd_on'],
-                                          RES_STR['cmd_off']):
-                    logging.info(RES_STR['bot_all_booting_msg'],
-                                 target_str)
-                    bot_ctl.boot_bots('all', target_on)
-
-                if self._args.command == RES_STR['cmd_blink']:
-                    logging.info(RES_STR['bot_all_blink_msg'])
-                    bot_ctl.blink('all')
-
-                return 0
-
-            targets += [bot_ctl.Coachbot(bot_id) for bot_id in parsed]
-
-        if self._args.command in (RES_STR['cmd_on'], RES_STR['cmd_off']):
-            logging.info(RES_STR['bot_booting_many_msg'],
-                         ','.join([str(bot.identifier) for bot in targets]),
+        def _all_handler() -> int:
+            logging.info(RES_STR['bot_all_booting_msg'],
                          target_str)
-            bot_ctl.boot_bots(targets, target_on)
+            bot_ctl.boot_bots('all', target_on)
             return 0
 
-        if self._args.command == RES_STR['cmd_blink']:
+        def _some_handler(bots: Iterable[bot_ctl.Coachbot]) -> int:
+            logging.info(RES_STR['bot_booting_many_msg'],
+                         ','.join([str(bot.identifier) for bot in bots]),
+                         target_str)
+            bot_ctl.boot_bots(bots, target_on)
+            return 0
+
+        return self._bot_id_handler(_all_handler, _some_handler)
+
+    def _blink_handler(self) -> int:
+        def _all_handler() -> int:
+            logging.info(RES_STR['bot_all_blink_msg'])
+            bot_ctl.blink('all')
+            return 0
+
+        def _some_handler(bots: Iterable[bot_ctl.Coachbot]) -> int:
             logging.info(RES_STR['bot_blink_many_msg'],
-                         ','.join([str(bot.identifier) for bot in targets]))
-            bot_ctl.blink_bots(targets)
+                         ','.join([str(bot.identifier) for bot in bots]))
+            bot_ctl.blink_bots(bots)
             return 0
 
-        return 0
+        return self._bot_id_handler(_all_handler, _some_handler)
 
     def _start_pause_handler(self) -> int:
         target_on = self._args.command == RES_STR['cmd_start']
@@ -170,6 +175,29 @@ class CommandAction:
         bot_ctl.set_user_code_running(target_on)
         return 0
 
+    def _fetch_logs_handler(self):
+        dump_dir = path.abspath(self._args.fetch_logs_directory) \
+            if self._args.fetch_logs_directory else None
+
+        if self._args.fetch_logs_legacy:
+            if not self._args.fetch_logs_directory:
+                logging.error(RES_STR['fetch_logs_legacy_dir_not_specified'])
+                return ERROR_CODES['malformed_cli_args']
+
+            def _all_handler() -> int:
+                logging.info(RES_STR['fetch_logs_all_msg'], dump_dir)
+                # TODO: Fetch logs
+                return 0
+
+            def _some_handler(bots: Iterable[bot_ctl.Coachbot]) -> int:
+                logging.info(RES_STR['fetch_logs_some_msg'],
+                             ','.join(str(bot.identifier) for bot in bots),
+                             dump_dir)
+                # TODO: Fetch logs
+                return 0
+
+        return self._bot_id_handler(_all_handler, _some_handler)
+
     def exec(self) -> int:
         """Parses arguments automatically and handles booting."""
         def _uploader():
@@ -178,9 +206,10 @@ class CommandAction:
 
         handlers = {
             'cam': self._camera_command_handler,
-            RES_STR['cmd_on']: self._on_off_blink_handler,
-            RES_STR['cmd_off']: self._on_off_blink_handler,
-            RES_STR['cmd_blink']: self._on_off_blink_handler,
+            RES_STR['cmd_on']: self._on_off_handler,
+            RES_STR['cmd_off']: self._on_off_handler,
+            RES_STR['cmd_blink']: self._blink_handler,
+            RES_STR['cmd_fetch_logs']: self._fetch_logs_handler,
             RES_STR['cmd_start']: self._start_pause_handler,
             RES_STR['cmd_pause']: self._start_pause_handler,
             RES_STR['cmd_update']: _uploader,

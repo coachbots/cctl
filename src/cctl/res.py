@@ -76,7 +76,11 @@ RES_STR = {
     'cmd_fetch_logs_legacy': 'Performs legacy experiment_log retrieval. This' +
                              ' flag must be used in conjunction with -d.',
     'cmd_fetch_logs_directory': 'Outputs the results into the specified ' +
-                                'directory.'
+                                'directory.',
+    'fetch_logs_legacy_dir_not_specified': 'Invalid use of legacy. It must ' +
+                                           'be used with the -d flag.',
+    'fetch_logs_all_msg': 'Fetching logs from all coachbots into %s.',
+    'fetch_logs_some_msg': 'Fetching logs from bots %s into %s.'
 }
 
 ERROR_CODES = {
@@ -85,4 +89,5 @@ ERROR_CODES = {
     'unknown_camera_error': 121,
     'camera_raw_error': 122,
     'processed_stream_creating_error': 124,
+    'malformed_cli_args': 141
 }

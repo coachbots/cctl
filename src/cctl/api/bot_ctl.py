@@ -275,6 +275,9 @@ class Coachbot:
         """This function is an implementation of the legacy behavior for
         copying legacy ``experiment_log`` logs into an output directory.
 
+        Returns:
+            bytes: The contents of the remote file path.
+
         Example:
 
         .. code-block:: python
@@ -287,8 +290,8 @@ class Coachbot:
             This function does not check if targets are online. Make sure you
             are not attempting to copy from a target that is not online.
 
-        Returns:
-            bytes: The contents of the remote file path.
+        Raises:
+            FileNotFoundError: If the experiment_log does not exist.
         """
         return asyncio.get_event_loop().run_until_complete(
             self.async_fetch_legacy_log())

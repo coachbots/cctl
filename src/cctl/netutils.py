@@ -94,10 +94,11 @@ def host_is_reachable(hostname: str, max_attempts: int = 3) -> bool:
 
 
 @contextmanager
-def sftp_client(hostname: str, *args, **kwargs):
-    """Opens up an SFTP client with sane defaults.
+def ssh_client(hostname: str, *args, **kwargs):
+    """Opens up an SSH client with sane defaults.
 
     These defaults are:
+        * Read username from the user configuration.
         * Read key from the user configuration.
     """
     user = configuration.get_coachswarm_ssh_user()
@@ -108,19 +109,32 @@ def sftp_client(hostname: str, *args, **kwargs):
     client.set_missing_host_key_policy(WarningPolicy())
 
     try:
-        client.connect(hostname, username=user, key_filename=key)
+        client.connect(hostname, username=user, key_filename=key, *args,
+                       **kwargs)
     except paramiko.AuthenticationException as auth_ex:
         logging.error(RES_STR['ssh_auth_error'], user, key)
         raise auth_ex
 
     try:
+        yield client
+    finally:
+        client.close()
+
+
+@contextmanager
+def sftp_client(hostname: str, *args, **kwargs):
+    """Opens up an SFTP client with sane defaults.
+
+    These defaults are:
+        * Read username from the user configuration.
+        * Read key from the user configuration.
+    """
+    with ssh_client(hostname) as client:
         m_sftp_client = client.open_sftp(*args, **kwargs)
         try:
             yield m_sftp_client
         finally:
             m_sftp_client.close()
-    finally:
-        client.close()
 
 
 def read_remote_file(hostname: str, remote_path: str,
