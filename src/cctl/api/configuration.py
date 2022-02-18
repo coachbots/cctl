@@ -92,15 +92,19 @@ if len(files_found) == 0:
         with open(cs_conf_path, 'w') as conf_file:
             conf_file.write('{\n"COM_RANGE": 100.0\n}')
 
-try:
-    for key, values in mandatory_keys.items():
-        assert key in config
-        for value in values:
-            assert value in config[key]
-except AssertionError:
-    logging.error(RES_STR['conf_malformed'])
+
+def _exit_on_err_key(m_key: str):
+    logging.error(RES_STR['conf_malformed'], m_key)
     sys.exit(ERROR_CODES['conf_error'])
 
+
+for key, values in mandatory_keys.items():
+    if key not in config:
+        _exit_on_err_key(key)
+
+    for value in values:
+        if value not in config[key]:
+            _exit_on_err_key(value)
 
 def get_server_dir():
     """
