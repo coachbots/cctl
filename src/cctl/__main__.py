@@ -46,6 +46,12 @@ def main():
     update_parser.add_argument('usr_path', metavar='PATH', type=str,
                                nargs=1, help=RES_STR['usr_code_path_desc'])
 
+    fetch_logs_parser = command_parser.add_parser(
+        RES_STR['cmd_fetch_logs'], help=RES_STR['cmd_fetch_logs_desc'])
+
+    fetch_logs_parser.add_argument('--legacy', '-l',
+                                   help=RES_STR['cmd_fetch_logs_legacy'])
+
     cam_subparser = camera_parser.add_subparsers(
         title=RES_STR['cmd_cam_cmd_title'],
         help=RES_STR['cmd_cam_cmd_help'],

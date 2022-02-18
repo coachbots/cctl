@@ -69,7 +69,11 @@ RES_STR = {
     'running_ffmpeg': 'Running ffmpeg as:\n%s\n.',
     'invalid_bot_id_exception': 'Invalid Bot ID. Valid ids are integers or ' +
                                 'the string \'all\'.',
-    'invalid_interface_exception': 'Invalid Interface Provided.'
+    'invalid_interface_exception': 'Invalid Interface Provided.',
+    'cmd_fetch_logs': 'fetch-logs',
+    'cmd_fetch_logs_desc': 'Retrieves the logs from each of the bots.',
+    'cmd_fetch_logs_legacy': 'Performs legacy experiment_log retrieval. This' +
+                             ' flag must be used in conjunction with -d.'
 }
 
 ERROR_CODES = {
