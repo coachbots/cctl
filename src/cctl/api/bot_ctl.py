@@ -4,7 +4,7 @@
 This module exposes various functions for controlling robots.
 """
 
-from typing import Iterable, Union, List
+from typing import Iterable, Tuple, Union, List
 from subprocess import DEVNULL, call
 import asyncio
 import os
@@ -485,5 +485,34 @@ def wait_until_bots_state(bots: Iterable[Coachbot],
     asyncio.get_event_loop().run_until_complete(_internal())
 
 
-def async_fetch_logs_legacy(bots: Iterable[Coachbot]) -> List[bytes]:
-    pass
+async def async_fetch_legacy_logs(
+        bots: Iterable[Coachbot]) -> Tuple[bytes]:
+    """Asynchronously fetches legacy logs.
+
+    Parameters:
+        bots (Iterable[Coachbot]): The bots of which to fetch the logs.
+
+    Returns:
+        Tuple[bytes]: The logs in the same order as bots.
+
+    Raises:
+        FileNotFoundError: If the experiment_log does not exist.
+    """
+    return await asyncio.gather(
+        *(bot.async_fetch_legacy_log() for bot in bots))
+
+
+def fetch_legacy_logs(bots: Iterable[Coachbot]) -> Tuple[bytes]:
+    """Synchronously fetches legacy logs.
+
+    Parameters:
+        bots (Iterable[Coachbot]): The bots of which to fetch the logs.
+
+    Returns:
+        Tuple[bytes]: The logs in the same order as bots.
+
+    Raises:
+        FileNotFoundError: If the experiment_log does not exist.
+    """
+    return asyncio.get_event_loop().run_until_complete(
+        async_fetch_legacy_logs(bots))
