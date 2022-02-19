@@ -9,11 +9,11 @@ from .actions import CommandAction
 
 def main():
     """Main entry point of cctl."""
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.DEBUG,
+                        format='[%(levelname)] :%(message)s')
 
     parser = argparse.ArgumentParser(prog=RES_STR['app_name'],
-                                     description=RES_STR['app_desc'],
-                                     format='[%(levelname)] :%(message)s')
+                                     description=RES_STR['app_desc'])
 
     command_parser = parser.add_subparsers(title=RES_STR['cmd_command'],
                                            help=RES_STR['cmd_command_help'],
