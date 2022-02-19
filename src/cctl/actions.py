@@ -179,24 +179,38 @@ class CommandAction:
         dump_dir = path.abspath(self._args.fetch_logs_directory) \
             if self._args.fetch_logs_directory else None
 
+        if not isinstance(dump_dir, str):
+            raise RuntimeError
+
         if self._args.fetch_logs_legacy:
             if not self._args.fetch_logs_directory:
                 logging.error(RES_STR['fetch_logs_legacy_dir_not_specified'])
                 return ERROR_CODES['malformed_cli_args']
 
+            def _get_and_save_logs(bots: Iterable[bot_ctl.Coachbot]):
+                def on_fetch(bot: bot_ctl.Coachbot, data: bytes):
+                    dump_file = path.join(dump_dir, str(bot.identifier))
+                    with open(dump_file, 'w+b') as m_file:
+                        m_file.write(data)
+
+                bot_ctl.fetch_legacy_logs(bots, on_fetch)
+
             def _all_handler() -> int:
                 logging.info(RES_STR['fetch_logs_all_msg'], dump_dir)
-                # TODO: Fetch logs
+                _get_and_save_logs(bot_ctl.get_all_coachbots())
                 return 0
 
             def _some_handler(bots: Iterable[bot_ctl.Coachbot]) -> int:
                 logging.info(RES_STR['fetch_logs_some_msg'],
                              ','.join(str(bot.identifier) for bot in bots),
                              dump_dir)
-                # TODO: Fetch logs
+                _get_and_save_logs(bots)
                 return 0
 
-        return self._bot_id_handler(_all_handler, _some_handler)
+            return self._bot_id_handler(_all_handler, _some_handler)
+
+        # TODO: Implement
+        raise NotImplementedError
 
     def exec(self) -> int:
         """Parses arguments automatically and handles booting."""
