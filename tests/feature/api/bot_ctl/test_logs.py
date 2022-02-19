@@ -50,7 +50,10 @@ class TestLogs(BotTestCase):
 
         for bot, content in zip(self.test_bots, expected_contents):
             with netutils.sftp_client(bot.address) as client:
-                client.remove(configuration.get_legacy_log_file_path())
+                try:
+                    client.remove(configuration.get_legacy_log_file_path())
+                except IOError:
+                    pass
 
             netutils.write_remote_file(
                 bot.address, configuration.get_legacy_log_file_path(), content)

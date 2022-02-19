@@ -526,6 +526,28 @@ def fetch_legacy_logs(
             log is fetched. Note that this callable is called for each fetched
             log, which enables much faster execution.
 
+    Warning:
+        If you decide to use ``on_fetch`` make sure you use the Coachbot
+        parameter for testing for a target bot. For example:
+
+        .. code-block:: python
+
+           # This is invalid
+           counter = 4
+           def my_on_fetch_handler(bot, log_data):
+               nonlocal counter
+               with open('my_file.txt', 'w+b') as m_file:
+                   m_file.write(log_data)
+                   if counter == 4:
+                       m_file.write('Some more data for bot 4'.encode('utf-8'))
+
+           # This is valid
+           def my_on_fetch_handler(bot, log_data):
+               with open('my_file.txt', 'w+b') as m_file:
+                   m_file.write(log_data)
+                   if bot.identifier == 4:
+                       m_file.write('Some more data for bot 4'.encode('utf-8'))
+
     Returns:
         Tuple[bytes]: The logs in the same order as bots.
 
