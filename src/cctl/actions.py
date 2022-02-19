@@ -233,7 +233,7 @@ class CommandAction:
         }
 
         try:
-            return handlers[self._args.command]
+            return handlers[self._args.command]()
 
         except FileNotFoundError as fnf_err:
             logging.error(RES_STR['server_dir_missing'], fnf_err)
