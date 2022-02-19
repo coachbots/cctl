@@ -18,28 +18,28 @@ class TestLogs(BotTestCase):
     """Tests whether the logging functions operate as expected."""
     def test_fetch_legacy_logs(self):
         """Tests whether legacy logs are fetched as expected."""
-        self._test_bot = self.random_testing_bot
-        self._test_bot.boot(True)
+        test_bot = self.random_testing_bot
+        test_bot.boot(True)
         expected_content = 'my_content\n\r'.encode('utf-8')
-        netutils.write_remote_file(self._test_bot.address,
+        netutils.write_remote_file(test_bot.address,
                                    configuration.get_legacy_log_file_path(),
                                    expected_content)
-        actual_content = self._test_bot.fetch_legacy_log()
+        actual_content = test_bot.fetch_legacy_log()
         self.assertEqual(expected_content, actual_content)
 
     def test_fetch_legacy_logs_throws_error_if_no_file(self):
         """Tests whether errors are thrown if legacy logs do not exist."""
-        self._test_bot = self.random_testing_bot
-        self._test_bot.boot(True)
+        test_bot = self.random_testing_bot
+        test_bot.boot(True)
 
-        with netutils.sftp_client(self._test_bot.address) as client:
+        with netutils.sftp_client(test_bot.address) as client:
             try:
                 client.remove(configuration.get_legacy_log_file_path())
             except IOError:
                 pass
 
         with self.assertRaises(FileNotFoundError):
-            self._test_bot.fetch_legacy_log()
+            test_bot.fetch_legacy_log()
 
     def test_fetch_multiple_legacy(self):
         """Tests whether it is possible to fetch multiple legacy logs."""
