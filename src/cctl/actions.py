@@ -179,11 +179,8 @@ class CommandAction:
         dump_dir = path.abspath(self._args.fetch_logs_directory) \
             if self._args.fetch_logs_directory else None
 
-        if not isinstance(dump_dir, str):
-            raise RuntimeError
-
         if self._args.fetch_logs_legacy:
-            if not self._args.fetch_logs_directory:
+            if not dump_dir:
                 logging.error(RES_STR['fetch_logs_legacy_dir_not_specified'])
                 return ERROR_CODES['malformed_cli_args']
 
