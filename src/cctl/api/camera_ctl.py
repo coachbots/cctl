@@ -91,13 +91,13 @@ def make_processed_stream(
             # The module is already in kernel. The user should get rid of it.
             # We can't because we might break another loopback stream.
             logging.error(RES_STR['v4l2loopback_already_loaded'])
-            sys.exit(ERROR_CODES['processed_stream_creating_error'])
+            raise CameraError(CameraEnum.CAMERA_CORRECTED)
 
         if probe_attempt.returncode == 0:
             return
 
     logging.error(RES_STR['processed_stream_creating_error'])
-    sys.exit(ERROR_CODES['processed_stream_creating_error'])
+    raise CameraError(CameraEnum.CAMERA_CORRECTED)
 
 
 def start_processing_stream(

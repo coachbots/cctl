@@ -98,7 +98,10 @@ class CommandAction:
                 if v_err.identifier == \
                         camera_ctl.CameraEnum.CAMERA_CORRECTED.value:
                     logging.info(RES_STR['camera_stream_does_not_exist'])
-                    camera_ctl.make_processed_stream()
+                    try:
+                        camera_ctl.make_processed_stream()
+                    except camera_ctl.CameraError:
+                        return ERROR_CODES['processed_stream_creating_error']
 
                     try:
                         camera_ctl.start_processing_stream()
