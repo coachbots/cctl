@@ -88,9 +88,11 @@ is an example file with all supported keys.
    # here will be used to control the coachbots.
    conf_path = /home/marko/.config/coachswarm/coachswarm.conf
 
+   # The user running on the Coachbots.
+   ssh_user = pi
    # This is the path to the private ssh-key that you just registered with all
    # the coachbots.
-   priv_ssh_key_path = /home/marko/.ssh/id_coachbot
+   ssh_key = /home/marko/.ssh/id_coachbot
    
    # These two configuration parameters specify the minimum and maximum ID of
    # the coachbots. id_range_min is the smallest ID in the coachswarm while
