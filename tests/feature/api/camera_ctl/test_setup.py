@@ -15,6 +15,10 @@ from cctl.api import camera_ctl as cc
 class TestCameraSetup(unittest.TestCase):
     """Tests functions pertaining to setting up the camera and the video stream
     successfully."""
+    def tearDown(self) -> None:
+        super().tearDown()
+        cc.tear_down_processed_stream()
+
     def test_possible_to_get_camera_device(self):
         """Tests whether it is possible to successfully find the raw camera
         stream."""

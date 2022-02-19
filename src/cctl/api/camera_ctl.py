@@ -121,7 +121,8 @@ def start_processing_stream(
         process.
 
     Raises:
-        ValueError if either of the streams do not have an appropriate device.
+        CameraError if either of the streams do not have an appropriate device.
+        FileExistsError if there already exists one such stream.
 
     Note:
         This implementation merely calls `ffmpeg` as a subprocess.
@@ -129,6 +130,9 @@ def start_processing_stream(
 
     in_stream = get_raw_camera_stream_device()
     out_stream = get_processed_camera_stream_device()
+
+    if path.exists('/tmp/cctl-ffmpeg.pid'):
+        raise FileExistsError
 
     if in_stream is None:
         raise CameraError(CameraEnum.CAMERA_RAW.value)
@@ -143,11 +147,29 @@ def start_processing_stream(
     logging.info(RES_STR['running_ffmpeg'], ' '.join(command), out_stream)
     pid = Popen(command, stdout=DEVNULL, stderr=DEVNULL).pid
 
+    with open('/tmp/cctl-ffmpeg.pid', 'w+') as file:
+        file.write(str(pid))
+
     return out_stream, pid
+
+
+def tear_down_processed_stream() -> None:
+    """This function stops the processing ffmpeg stream if it can.
+
+    There is no guarantee that this function will be able to do this, but it
+    will try it's best.
+    """
+    if not path.exists('/tmp/cctl-ffmpeg.pid'):
+        return
+
+    with open('/tmp/cctl-ffmpeg.pid', 'r') as file:
+        os.kill(int(file.read()), 15)
 
 
 def start_processed_preview() -> Tuple[str, int]:
     """Attempts to start the processed preview.
+
+    Note, a call to this function makes a lock file in /var/lock.
 
     Returns:
         The device path and the pid of ffplay.
@@ -163,4 +185,20 @@ def start_processed_preview() -> Tuple[str, int]:
     command = ['ffplay', device]
     pid = Popen(command, stdout=DEVNULL, stderr=DEVNULL).pid
 
+    with open('/tmp/cctl-ffplay.pid', 'a+') as file:
+        file.write(str(pid))
+
     return device, pid
+
+
+def stop_processed_preview() -> None:
+    """Attempts to stop the processed preview. May not succeed, but it will try
+    its best.
+    """
+
+    if not path.exists('/tmp/cctl-ffplay.pid'):
+        return
+
+    with open('/tmp/cctl-ffplay.pid', 'r') as file:
+        for line in file:
+            os.kill(int(line), 15)

@@ -108,6 +108,8 @@ class CommandAction:
                     except camera_ctl.CameraError:
                         logging.error(RES_STR['unknown_camera_error'])
                         return ERROR_CODES['unknown_camera_error']
+            except FileExistsError:
+                pass
 
             return 0
         if self._args.cam_command == RES_STR['cmd_cam_preview']:
