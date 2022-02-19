@@ -10,7 +10,7 @@ from .actions import CommandAction
 def main():
     """Main entry point of cctl."""
     logging.basicConfig(level=logging.DEBUG,
-                        format='[%(levelname)s] :%(message)s')
+                        format='[%(levelname)s]: %(message)s')
 
     parser = argparse.ArgumentParser(prog=RES_STR['app_name'],
                                      description=RES_STR['app_desc'])
