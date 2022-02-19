@@ -2,9 +2,6 @@
 
 """
 Singleton module containing configuration values.
-
-Todo:
-    Not cross platform due to using UNIX-like configuration.
 """
 
 import sys
@@ -107,6 +104,7 @@ for key, values in mandatory_keys.items():
     for value in values:
         if value not in config[key]:
             _exit_on_err_key(value)
+
 
 def get_server_dir():
     """

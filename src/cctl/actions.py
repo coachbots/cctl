@@ -122,7 +122,8 @@ class CommandAction:
 
         return -1
 
-    def _bot_id_handler(self,
+    def _bot_id_handler(
+            self,
             all_handler: Callable[[], int],
             some_handler: Callable[[List[bot_ctl.Coachbot]], int]) -> int:
         """This small method iterates through all bot-ids and runs handlers
