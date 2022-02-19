@@ -221,7 +221,7 @@ class CommandAction:
                                 self._args.os_update)
 
         handlers = {
-            'cam': self._camera_command_handler,
+            RES_STR['cmd_cam']: self._camera_command_handler,
             RES_STR['cmd_on']: self._on_off_handler,
             RES_STR['cmd_off']: self._on_off_handler,
             RES_STR['cmd_blink']: self._blink_handler,

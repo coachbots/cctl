@@ -140,7 +140,7 @@ def start_processing_stream(
                f'lenscorrection=k1={k_1}:k2={k_2}:' +
                f'cx={c_x}:cy={c_y},format=yuv420p', '-f', 'v4l2', out_stream]
 
-    logging.info(RES_STR['running_ffmpeg'], ' '.join(command))
+    logging.info(RES_STR['running_ffmpeg'], ' '.join(command), out_stream)
     pid = Popen(command, stdout=DEVNULL, stderr=DEVNULL).pid
 
     return out_stream, pid
