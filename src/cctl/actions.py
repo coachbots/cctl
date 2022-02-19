@@ -2,10 +2,10 @@
 
 """Defines the main class that handles all commands."""
 
-from typing import Union
-import os
-import shutil
+from typing import Callable, Iterable, Union, List
 import re
+from os import path
+import os
 import logging
 from argparse import Namespace
 from subprocess import call
@@ -13,12 +13,10 @@ from multiprocessing import Process
 import time
 
 from cctl.res import ERROR_CODES, RES_STR
-from cctl import configuration
-
-BotTargets = Union[range, bool]
+from cctl.api import camera_ctl, bot_ctl, configuration
 
 
-def _parse_id(coach_id: str) -> BotTargets:
+def _parse_id(coach_id: str) -> Union[List[int], bool]:
     """Parses the id parameter ensuring that it fits the format:
         ^(\\d+)$ or ^(\\d+)-(\\d+)$. If 'all' is given, then the function
         returns true, otherwise returns a list of targets to be turned on.
@@ -32,106 +30,31 @@ def _parse_id(coach_id: str) -> BotTargets:
     # Try matching with range first:
     match = re.match(range_regex, coach_id)
     if match is not None:
-        return range(int(match.group(1)), int(match.group(2)) + 1)
+        return list(range(int(match.group(1)), int(match.group(2)) + 1))
 
     # Try matching with single:
     match = re.match(single_id_regex, coach_id)
     if match is not None:
         val = int(match.group(1))
-        return range(val, val + 1)
+        return list(range(val, val + 1))
 
     raise AttributeError(RES_STR['unsupported_argument'])
 
 
 class CommandAction:
-    """Class handling all actions that are supported by cctl. This class
+    """
+    Class handling all actions that are supported by cctl. This class
     automatically parses arguments that argparse cannot and switches execution
     appropriately.
     """
 
-    SERVER_DIR = configuration.get_server_dir()
-    INTERFACE_NAME = configuration.get_server_interface()
-
-    @staticmethod
-    def boot_bot(bot_id: int, state: bool) -> None:
-        """Changes the state of a bot to on or off.
-
-        Parameters:
-            bot_id - Target bot
-            state - Whether to boot on or off
-
-        FIXME:
-            Shouldn't be implemented the way it is. Should be calling a module
-            function.
-        """
-        call(['./ble_one.py', str(int(state)), str(bot_id)],
-             cwd=CommandAction.SERVER_DIR)
-
-    @staticmethod
-    def boot_all(state: bool) -> None:
-        """Turns all robots on or off.
-
-        Parameters:
-            state - Whether to boot on or off
-
-        FIXME:
-            Shouldn't be implemented the way it is. Should be calling a module
-            function.
-        """
-        if state:
-            call(['./reliable_ble_on.py'], cwd=CommandAction.SERVER_DIR)
-            return
-
-        call(['./reliable_ble_off.py'], cwd=CommandAction.SERVER_DIR)
-
-    @staticmethod
-    def set_operating(state: bool) -> None:
-        """Turns user code on robots on or off.
-
-        Parameters:
-            state - Whether to unpause or pause
-
-        FIXME:
-            Shouldn't be implemented the way it is. Should be calling a module
-            function.
-        """
-        if state:
-            call(['./start.py'], cwd=CommandAction.SERVER_DIR)
-            return
-
-        call(['./stop.py'], cwd=CommandAction.SERVER_DIR)
-
-    @staticmethod
-    def blink(robot_id: int) -> None:
-        """Blinks a robot.
-
-        Parameters:
-            bot_id - Target bot
-
-        FIXME:
-            Shouldn't be implemented the way it is. Should be calling a module
-            function.
-        """
-        call(['./led_on.py', str(robot_id)], cwd=CommandAction.SERVER_DIR)
-
-    @staticmethod
-    def blink_all() -> None:
-        """Blinks all robots.
-
-        FIXME:
-            - Shouldn't be implemented the way it is. Should be calling a
-              module function.
-            - Need to check whether bots are alive.
-        """
-        for i in range(0, 100):
-            call(['./led_on.py', str(i)], cwd=CommandAction.SERVER_DIR)
-
     @staticmethod
     def manage_system() -> None:
         """Boots up the coachbot driver system.
-        FIXME:
-            - Shouldn't be implemented the way it is. Should be calling a
-              module function.
+
+        Todo:
+            Shouldn't be implemented the way it is. Should be calling a
+            module function.
         """
         def _start_ftp_server():
             call(['./cloud.py', configuration.get_server_interface()],
@@ -151,108 +74,175 @@ class CommandAction:
         for proc in procs:
             proc.join()
 
-    @staticmethod
-    def upload_code(usr_code: str, os_update: bool) -> None:
-        """Uploads user code to all robots.
-
-        Parameters:
-            usr_code - The path to the target user code.
-
-        FIXME:
-            - Shouldn't be implemented the way it is. Should be calling a
-              module function.
-        """
-        server_tmp = os.path.join(configuration.get_server_dir(), 'temp')
-
-        shutil.copy2(usr_code, os.path.join(server_tmp, 'usr_code.py'))
-
-        if not os_update:
-            logging.info(RES_STR['upload_msg'])
-            call(['./update.py', CommandAction.INTERFACE_NAME],
-                 cwd=CommandAction.SERVER_DIR)
-            return
-
-        logging.info(RES_STR['upload_os_msg'])
-        shutil.copy2(configuration.get_coachswarm_conf_path(),
-                     os.path.join(server_tmp, 'coachswarm.conf'))
-        # TODO: Remove these sleeps with a while loop.
-        # TODO: I don't really know what this code does.
-        call(['./scan.py'], cwd=CommandAction.SERVER_DIR)
-        time.sleep(0.5)
-        call(['./hard_push.py', CommandAction.INTERFACE_NAME],
-             cwd=CommandAction.SERVER_DIR)
-        time.sleep(0.5)
-        call(['./reboot_batch.py', CommandAction.INTERFACE_NAME],
-             cwd=CommandAction.SERVER_DIR)
-
     def __init__(self, args: Namespace):
         self._args = args
 
+    def _camera_command_handler(self) -> int:
+        """Handles camera commands.
+
+        Note:
+            This function may exit prematurely using sys.exit if something
+            fails. This is expected behavior.
+
+        Returns:
+            0 for a successful invokation, -1 otherwise.
+        """
+        if self._args.cam_command == RES_STR['cmd_cam_setup']:
+            try:
+                camera_ctl.start_processing_stream()
+            except camera_ctl.CameraError as v_err:
+                if v_err.identifier == camera_ctl.CameraEnum.CAMERA_RAW.value:
+                    logging.error(RES_STR['camera_raw_error'])
+                    return ERROR_CODES['camera_raw_error']
+
+                if v_err.identifier == \
+                        camera_ctl.CameraEnum.CAMERA_CORRECTED.value:
+                    logging.info(RES_STR['camera_stream_does_not_exist'])
+                    try:
+                        camera_ctl.make_processed_stream()
+                    except camera_ctl.CameraError:
+                        return ERROR_CODES['processed_stream_creating_error']
+
+                    try:
+                        camera_ctl.start_processing_stream()
+                    except camera_ctl.CameraError:
+                        logging.error(RES_STR['unknown_camera_error'])
+                        return ERROR_CODES['unknown_camera_error']
+            except FileExistsError:
+                pass
+
+            return 0
+        if self._args.cam_command == RES_STR['cmd_cam_preview']:
+            try:
+                camera_ctl.start_processed_preview()
+            except camera_ctl.CameraError:
+                logging.error(RES_STR['unknown_camera_error'])
+                return ERROR_CODES['unknown_camera_error']
+            return 0
+
+        return -1
+
+    def _bot_id_handler(
+            self,
+            all_handler: Callable[[], int],
+            some_handler: Callable[[List[bot_ctl.Coachbot]], int]) -> int:
+        """This small method iterates through all bot-ids and runs handlers
+        approperiately."""
+        targets = []
+        for identifier in self._args.id:
+            parsed = _parse_id(identifier)
+
+            if isinstance(parsed, bool):
+                return all_handler()
+
+            targets += [bot_ctl.Coachbot(bot_id) for bot_id in parsed]
+
+        return some_handler(targets)
+
+    def _on_off_handler(self) -> int:
+        target_on = self._args.command == RES_STR['cmd_on']
+        target_str = RES_STR['cmd_on'] if target_on \
+            else RES_STR['cmd_off']
+
+        def _all_handler() -> int:
+            logging.info(RES_STR['bot_all_booting_msg'],
+                         target_str)
+            bot_ctl.boot_bots('all', target_on)
+            return 0
+
+        def _some_handler(bots: Iterable[bot_ctl.Coachbot]) -> int:
+            logging.info(RES_STR['bot_booting_many_msg'],
+                         ','.join([str(bot.identifier) for bot in bots]),
+                         target_str)
+            bot_ctl.boot_bots(bots, target_on)
+            return 0
+
+        return self._bot_id_handler(_all_handler, _some_handler)
+
+    def _blink_handler(self) -> int:
+        def _all_handler() -> int:
+            logging.info(RES_STR['bot_all_blink_msg'])
+            bot_ctl.blink('all')
+            return 0
+
+        def _some_handler(bots: Iterable[bot_ctl.Coachbot]) -> int:
+            logging.info(RES_STR['bot_blink_many_msg'],
+                         ','.join([str(bot.identifier) for bot in bots]))
+            bot_ctl.blink_bots(bots)
+            return 0
+
+        return self._bot_id_handler(_all_handler, _some_handler)
+
+    def _start_pause_handler(self) -> int:
+        target_on = self._args.command == RES_STR['cmd_start']
+        target_str = RES_STR['cmd_start'] if target_on \
+            else RES_STR['cmd_pause']
+
+        logging.info(RES_STR['bot_operating_msg'], target_str)
+        bot_ctl.set_user_code_running(target_on)
+        return 0
+
+    def _fetch_logs_handler(self):
+        dump_dir = path.abspath(self._args.fetch_logs_directory[0]) \
+            if self._args.fetch_logs_directory else None
+
+        if self._args.fetch_logs_legacy:
+            if not dump_dir:
+                logging.error(RES_STR['fetch_logs_legacy_dir_not_specified'])
+                return ERROR_CODES['malformed_cli_args']
+
+            def _get_and_save_logs(bots: Iterable[bot_ctl.Coachbot],
+                                   dump_dir: str):
+                def on_fetch(bot: bot_ctl.Coachbot, data: bytes):
+                    dump_file = path.join(dump_dir, str(bot.identifier))
+                    with open(dump_file, 'w+b') as m_file:
+                        m_file.write(data)
+
+                if not path.isdir(dump_dir):
+                    os.mkdir(dump_dir)
+
+                bot_ctl.fetch_legacy_logs(bots, on_fetch)
+
+            def _all_handler() -> int:
+                logging.info(RES_STR['fetch_logs_all_msg'], dump_dir)
+                _get_and_save_logs(bot_ctl.get_all_coachbots(), dump_dir)
+                return 0
+
+            def _some_handler(bots: Iterable[bot_ctl.Coachbot]) -> int:
+                logging.info(RES_STR['fetch_logs_some_msg'],
+                             ','.join(str(bot.identifier) for bot in bots),
+                             dump_dir)
+                _get_and_save_logs(bots, dump_dir)
+                return 0
+
+            return self._bot_id_handler(_all_handler, _some_handler)
+
+        # TODO: Implement
+        raise NotImplementedError
+
     def exec(self) -> int:
         """Parses arguments automatically and handles booting."""
+        def _uploader():
+            bot_ctl.upload_code(self._args.usr_path[0],
+                                self._args.os_update)
+
+        handlers = {
+            RES_STR['cmd_cam']: self._camera_command_handler,
+            RES_STR['cmd_on']: self._on_off_handler,
+            RES_STR['cmd_off']: self._on_off_handler,
+            RES_STR['cmd_blink']: self._blink_handler,
+            RES_STR['cmd_fetch_logs']: self._fetch_logs_handler,
+            RES_STR['cmd_start']: self._start_pause_handler,
+            RES_STR['cmd_pause']: self._start_pause_handler,
+            RES_STR['cmd_update']: _uploader,
+
+            # TODO: make this a member method
+            RES_STR['cmd_manage']: CommandAction.manage_system,
+        }
+
         try:
-            # Commands which contain ranges of robots.
-            if self._args.command in (RES_STR['cmd_on'],
-                                      RES_STR['cmd_off'],
-                                      RES_STR['cmd_blink']):
-                target_on = self._args.command == RES_STR['cmd_on']
-                target_str = RES_STR['cmd_on'] if target_on \
-                    else RES_STR['cmd_off']
-
-                for i in self._args.id:
-                    targets = _parse_id(i)
-
-                    # If one of the targets is a boolean, means we need to turn
-                    # on all.
-                    if isinstance(targets, bool):
-                        if self._args.command in (RES_STR['cmd_on'],
-                                                  RES_STR['cmd_off']):
-                            logging.info(RES_STR['bot_all_booting_msg'],
-                                         target_str)
-                            CommandAction.boot_all(target_on)
-
-                        if self._args.command == RES_STR['cmd_blink']:
-                            logging.info(RES_STR['bot_all_blink_msg'])
-                            CommandAction.blink_all()
-
-                        break
-
-                    # Else, go one-by-one turning robots on.
-                    for bot in targets:
-                        if self._args.command in (RES_STR['cmd_on'],
-                                                  RES_STR['cmd_off']):
-                            logging.info(RES_STR['bot_booting_msg'], bot,
-                                         target_str)
-                            CommandAction.boot_bot(bot, target_on)
-
-                        if self._args.command == RES_STR['cmd_blink']:
-                            logging.info(RES_STR['bot_blink_msg'], bot)
-                            CommandAction.blink(bot)
-                return 0
-
-            # Start/Pause command.
-            if self._args.command in (RES_STR['cmd_start'],
-                                      RES_STR['cmd_pause']):
-                target_on = self._args.command == RES_STR['cmd_start']
-                target_str = RES_STR['cmd_start'] if target_on \
-                    else RES_STR['cmd_pause']
-
-                logging.info(RES_STR['bot_operating_msg'], target_str)
-                CommandAction.set_operating(target_on)
-                return 0
-
-            # Upload command.
-            if self._args.command == RES_STR['cmd_update']:
-                CommandAction.upload_code(self._args.usr_path[0],
-                                          self._args.os_update)
-                return 0
-
-            if self._args.command == RES_STR['cmd_manage']:
-                CommandAction.manage_system()
-                return 0
+            return handlers[self._args.command]()
 
         except FileNotFoundError as fnf_err:
             logging.error(RES_STR['server_dir_missing'], fnf_err)
             return ERROR_CODES['server_dir_missing']
-
-        return 0
