@@ -35,17 +35,6 @@ def main():
     command_parser.add_parser(RES_STR['cmd_manage'],
                               help=RES_STR['cmd_manage_desc'])
 
-    for pars in (on_parser, off_parser, blink_parser):
-        pars.add_argument(RES_STR['cmd_id'], metavar='N', type=str, nargs='+',
-                          help=RES_STR['cmd_arg_id_help'])
-
-    update_parser.add_argument('--operating-system', '-o',
-                               help=RES_STR['cmd_update_os_desc'],
-                               action='store_true', dest='os_update',
-                               default=False)
-    update_parser.add_argument('usr_path', metavar='PATH', type=str,
-                               nargs=1, help=RES_STR['usr_code_path_desc'])
-
     fetch_logs_parser = command_parser.add_parser(
         RES_STR['cmd_fetch_logs'], help=RES_STR['cmd_fetch_logs_desc'])
 
@@ -55,6 +44,17 @@ def main():
     fetch_logs_parser.add_argument('--directory', '-d', nargs=1, type=str,
                                    dest='fetch_logs_directory',
                                    help=RES_STR['cmd_fetch_logs_directory'])
+
+    for pars in (on_parser, off_parser, blink_parser, fetch_logs_parser):
+        pars.add_argument(RES_STR['cmd_id'], metavar='N', type=str, nargs='+',
+                          help=RES_STR['cmd_arg_id_help'])
+
+    update_parser.add_argument('--operating-system', '-o',
+                               help=RES_STR['cmd_update_os_desc'],
+                               action='store_true', dest='os_update',
+                               default=False)
+    update_parser.add_argument('usr_path', metavar='PATH', type=str,
+                               nargs=1, help=RES_STR['usr_code_path_desc'])
 
     cam_subparser = camera_parser.add_subparsers(
         title=RES_STR['cmd_cam_cmd_title'],
