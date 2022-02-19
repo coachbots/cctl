@@ -5,6 +5,7 @@
 from typing import Callable, Iterable, Union, List
 import re
 from os import path
+import os
 import logging
 from argparse import Namespace
 from subprocess import call
@@ -176,7 +177,7 @@ class CommandAction:
         return 0
 
     def _fetch_logs_handler(self):
-        dump_dir = path.abspath(self._args.fetch_logs_directory) \
+        dump_dir = path.abspath(self._args.fetch_logs_directory[0]) \
             if self._args.fetch_logs_directory else None
 
         if self._args.fetch_logs_legacy:
@@ -184,24 +185,28 @@ class CommandAction:
                 logging.error(RES_STR['fetch_logs_legacy_dir_not_specified'])
                 return ERROR_CODES['malformed_cli_args']
 
-            def _get_and_save_logs(bots: Iterable[bot_ctl.Coachbot]):
+            def _get_and_save_logs(bots: Iterable[bot_ctl.Coachbot],
+                                   dump_dir: str):
                 def on_fetch(bot: bot_ctl.Coachbot, data: bytes):
                     dump_file = path.join(dump_dir, str(bot.identifier))
                     with open(dump_file, 'w+b') as m_file:
                         m_file.write(data)
 
+                if not path.isdir(dump_dir):
+                    os.mkdir(dump_dir)
+
                 bot_ctl.fetch_legacy_logs(bots, on_fetch)
 
             def _all_handler() -> int:
                 logging.info(RES_STR['fetch_logs_all_msg'], dump_dir)
-                _get_and_save_logs(bot_ctl.get_all_coachbots())
+                _get_and_save_logs(bot_ctl.get_all_coachbots(), dump_dir)
                 return 0
 
             def _some_handler(bots: Iterable[bot_ctl.Coachbot]) -> int:
                 logging.info(RES_STR['fetch_logs_some_msg'],
                              ','.join(str(bot.identifier) for bot in bots),
                              dump_dir)
-                _get_and_save_logs(bots)
+                _get_and_save_logs(bots, dump_dir)
                 return 0
 
             return self._bot_id_handler(_all_handler, _some_handler)
