@@ -4,7 +4,6 @@
 
 import os
 import sys
-import uuid
 from cctl.api import configuration
 from cctl.api.bot_ctl import boot_bots, fetch_legacy_logs
 

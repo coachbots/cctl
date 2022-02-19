@@ -462,7 +462,7 @@ def upload_code(path_to_usr_code: str, os_update: bool) -> None:
 
 
 def wait_until_bots_state(bots: Iterable[Coachbot],
-                          states: Iterable[bool]) -> None:
+                          states: Union[bool, Iterable[bool]]) -> None:
     """Blocks execution until all bots meet the specified state.
 
     Example:
@@ -477,11 +477,14 @@ def wait_until_bots_state(bots: Iterable[Coachbot],
 
     Parameters:
         bots (Iterable[Coachbot]): The bots to test.
-        states (Iterable[bool]): The states that those bots need to meet.
+        states (bool | Iterable[bool]): The states that those bots need tomeet.
     """
+    m_states = (True for _ in bots) if isinstance(states, bool) else states
+
     async def _internal():
         asyncio.gather(bot.async_wait_until_state(state)
-                       for bot, state in zip(bots, states))
+                       for bot, state in zip(bots, m_states))
+
     asyncio.get_event_loop().run_until_complete(_internal())
 
 

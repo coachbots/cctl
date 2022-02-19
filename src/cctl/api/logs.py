@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
-"""Presents logging manipulation functions and classes."""
+"""Presents logging manipulation functions and classes.
+
+Warning: This file is not currently finished. Please refrain from using it.
+"""
 
 from enum import Enum, IntEnum
 from typing import Generator, Iterable, Optional

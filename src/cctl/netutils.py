@@ -155,7 +155,7 @@ def read_remote_file(hostname: str, remote_path: str,
 
 
 def write_remote_file(hostname: str, remote_path: str,
-                      data: Union[bytes, str], mode: str = 'wb') -> None:
+                      data: Union[bytes, str], mode: str = 'w+b') -> None:
     """Writes some data to a possibly remote file.
 
     Parameters:
