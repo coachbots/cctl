@@ -2,7 +2,6 @@
 
 from enum import IntEnum
 import logging
-import sys
 import os
 from os import path
 from typing import Optional, Tuple
@@ -10,7 +9,11 @@ from subprocess import DEVNULL, PIPE, Popen, call
 from cctl.api.configuration import get_camera_device_name, \
     get_camera_lens_correction_factors, get_processed_video_device_name
 
-from cctl.res import ERROR_CODES, RES_STR
+from cctl.res import RES_STR
+
+
+FFMPEG_LOCK_PATH = '/tmp/cctl-ffmpeg.pid'
+FFPLAY_LOCK_PATH = '/tmp/cctl-ffplay.pid'
 
 
 class CameraEnum(IntEnum):
@@ -131,7 +134,7 @@ def start_processing_stream(
     in_stream = get_raw_camera_stream_device()
     out_stream = get_processed_camera_stream_device()
 
-    if path.exists('/tmp/cctl-ffmpeg.pid'):
+    if path.exists(FFMPEG_LOCK_PATH):
         raise FileExistsError
 
     if in_stream is None:
@@ -147,7 +150,7 @@ def start_processing_stream(
     logging.info(RES_STR['running_ffmpeg'], ' '.join(command), out_stream)
     pid = Popen(command, stdout=DEVNULL, stderr=DEVNULL).pid
 
-    with open('/tmp/cctl-ffmpeg.pid', 'w+') as file:
+    with open(FFMPEG_LOCK_PATH, 'w+') as file:
         file.write(str(pid))
 
     return out_stream, pid
@@ -159,11 +162,12 @@ def tear_down_processed_stream() -> None:
     There is no guarantee that this function will be able to do this, but it
     will try it's best.
     """
-    if not path.exists('/tmp/cctl-ffmpeg.pid'):
+    if not path.exists(FFMPEG_LOCK_PATH):
         return
 
-    with open('/tmp/cctl-ffmpeg.pid', 'r') as file:
+    with open(FFMPEG_LOCK_PATH, 'r') as file:
         os.kill(int(file.read()), 15)
+    os.remove(FFMPEG_LOCK_PATH)
 
 
 def start_processed_preview() -> Tuple[str, int]:
@@ -185,7 +189,7 @@ def start_processed_preview() -> Tuple[str, int]:
     command = ['ffplay', device]
     pid = Popen(command, stdout=DEVNULL, stderr=DEVNULL).pid
 
-    with open('/tmp/cctl-ffplay.pid', 'a+') as file:
+    with open(FFPLAY_LOCK_PATH, 'a+') as file:
         file.write(str(pid))
 
     return device, pid
@@ -196,9 +200,10 @@ def stop_processed_preview() -> None:
     its best.
     """
 
-    if not path.exists('/tmp/cctl-ffplay.pid'):
+    if not path.exists(FFPLAY_LOCK_PATH):
         return
 
-    with open('/tmp/cctl-ffplay.pid', 'r') as file:
+    with open(FFPLAY_LOCK_PATH, 'r') as file:
         for line in file:
             os.kill(int(line), 15)
+    os.remove(FFPLAY_LOCK_PATH)
