@@ -6,7 +6,7 @@ import sys
 import os
 from os import path
 from typing import Optional, Tuple
-from subprocess import PIPE, Popen, call
+from subprocess import DEVNULL, PIPE, Popen, call
 from cctl.api.configuration import get_camera_device_name, \
     get_camera_lens_correction_factors, get_processed_video_device_name
 
@@ -141,7 +141,7 @@ def start_processing_stream(
                f'cx={c_x}:cy={c_y},format=yuv420p', '-f', 'v4l2', out_stream]
 
     logging.info(RES_STR['running_ffmpeg'], ' '.join(command))
-    pid = Popen(command).pid
+    pid = Popen(command, stdout=DEVNULL, stderr=DEVNULL).pid
 
     return out_stream, pid
 
@@ -161,6 +161,6 @@ def start_processed_preview() -> Tuple[str, int]:
         raise CameraError(CameraEnum.CAMERA_CORRECTED.value)
 
     command = ['ffplay', device]
-    pid = Popen(command).pid
+    pid = Popen(command, stdout=DEVNULL, stderr=DEVNULL).pid
 
     return device, pid
