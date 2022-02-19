@@ -50,6 +50,7 @@ def main():
         RES_STR['cmd_fetch_logs'], help=RES_STR['cmd_fetch_logs_desc'])
 
     fetch_logs_parser.add_argument('--legacy', '-l', dest='fetch_logs_legacy',
+                                   action='store_true',
                                    help=RES_STR['cmd_fetch_logs_legacy'])
     fetch_logs_parser.add_argument('--directory', '-d', nargs=1, type=str,
                                    dest='fetch_logs_directory',
