@@ -124,7 +124,8 @@ class NetworkEventHandler:
     def get_handlers(self, signal: str) \
             -> List[Callable[[str, bytes], Optional[NetworkResponses]]]:
         """Returns the handler for the given signal."""
-        return self._handlers[signal]
+        handlers = self._handlers.get(signal)
+        return [] if handlers is None else handlers
 
     def exec_handler(self, signal: str, message: bytes) \
             -> NetworkResponses:
