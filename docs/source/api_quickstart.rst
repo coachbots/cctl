@@ -81,6 +81,9 @@ For example:
 .. code-block:: python
 
    # On CCTL's end:
+   from cctl.api.network import Network
+   from cctl.network.signals import USER_CODE_BEGIN, USER_CODE_END
+
    my_network = Network()
 
    counter = 0
@@ -93,6 +96,14 @@ For example:
        print(f'Received signal: {signal}, with message: {data}')
        print(f'So far, I\'ve received {counter} messages.')
 
+   def _on_begin(signal: str, _):
+      print('User code is starting on a coachbot.')
+
+   def _on_end(signal: str, data: bytes):
+      print('User code has ended on a robot (but I don\'t know which one).')
+
+   my_network.user.add_slot(USER_CODE_BEGIN, _on_begin)
+   my_network.user.add_slot(USER_CODE_END, _on_end)
    my_network.user.add_slot('my_custom_signal', _handler)
 
 
@@ -103,6 +114,12 @@ For example:
 
 Now, whenever ``my_custom_signal`` is fired, **cctl** will call
 ``_my_signal_handler`` and your code will execute.
+
+There is a couple of signals you mind find useful that come by default:
+``cctl.network.signals.{USER_CODE_BEGIN,USER_CODE_END}``. These are fired when
+user code begins and ends (successfully). If an error is found, some catch-all
+exception handler somewhere in coach-os catches it and USER_CODE_END may not be
+fired. If you return from ``usr``, it should be fired.
 
 You can do the exact converse as well (in theory, but there's a bug):
 
