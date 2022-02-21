@@ -68,7 +68,7 @@ class NetworkEventHandler:
                 result = self.network_handler.exec_handler(signal, message)
                 result = result if result is not None \
                     else NetworkResponses.SUCCESS
-                self.network_handler.rep_socket.send(result)
+                self.network_handler.rep_socket.send(result.value)
 
     def __init__(self):
         self._zmq_contexts = {
