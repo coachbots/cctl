@@ -30,7 +30,8 @@ mandatory_keys = {
         'id_range_max',
         'ssh_user',
         'ssh_key',
-        'net_server_port'
+        'net_server_port_pub',
+        'net_server_port_rep'
     ],
     'camera': [
         'raw_dev_name',
@@ -53,7 +54,8 @@ default_values = {
         'id_range_max': 99,
         'ssh_user': 'pi',
         'ssh_key': path.join(path.expanduser('~'), '.ssh', 'id_coachbot'),
-        'net_server_port': 16891
+        'net_server_port_rep': 16891,
+        'net_server_port_pub': 16892
     },
     'camera': {
         'raw_dev_name': 'Piwebcam: UVC Camera',
@@ -202,5 +204,12 @@ def get_valid_coachbot_range():
 
 
 def get_coachswarm_net_rep_port() -> int:
-    """Returns the port used for the networking with user code."""
-    return config.getint('coachswarm', 'net_server_port')
+    """Returns the port used for the networking with the coachbots on the REP
+    transport."""
+    return config.getint('coachswarm', 'net_server_port_rep')
+
+
+def get_coachswarm_net_pub_port() -> int:
+    """Returns the port used for networking with the coachbots on the PUB
+    transport."""
+    return config.getint('coachswarm', 'net_server_port_pub')

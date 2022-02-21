@@ -2,16 +2,23 @@
 
 """This module exposes the base NetworkEventHandler."""
 
+from enum import Enum
 from logging import Logger
 import base64
 from threading import Thread
 import threading
-from typing import Callable, Tuple
+from typing import Callable, Optional, Tuple
 import zmq
 
 from cctl.api.configuration import get_coachswarm_net_rep_port, \
-    get_server_interface
+    get_coachswarm_net_pub_port, get_server_interface
 from cctl.netutils import get_ip_address
+
+
+class NetworkResponses(Enum):
+    """Presents the valid responses a handler may return."""
+    SUCCESS = 0
+    ERR_REPEAT = 1
 
 
 class NetworkEventHandler:
@@ -58,7 +65,10 @@ class NetworkEventHandler:
                 # TODO: Test this
                 data = self.network_handler.rep_socket.recv()
                 signal, message = NetworkEventHandler.decode_signal_msg(data)
-                self.network_handler.exec_handler(signal, message)
+                result = self.network_handler.exec_handler(signal, message)
+                result = result if result is not None \
+                    else NetworkResponses.SUCCESS
+                self.network_handler.rep_socket.send(result)
 
     def __init__(self):
         self._zmq_contexts = {
@@ -74,7 +84,20 @@ class NetworkEventHandler:
         self._handlers = {}
 
         self._bind_rep_socket()
+        self._bind_pub_socket()
         self.worker = NetworkEventHandler.WorkerThread(self)
+
+    def _bind_rep_socket(self) -> None:
+        """Binds the REP socket."""
+        self.rep_socket.bind(
+            f'tcp://{get_ip_address(get_server_interface())}:' +
+            str(get_coachswarm_net_rep_port()))
+
+    def _bind_pub_socket(self) -> None:
+        """Binds the PUB socket."""
+        self.pub_socket.bind(
+            f'tcp://{get_ip_address(get_server_interface())}:' +
+            str(get_coachswarm_net_pub_port()))
 
     @property
     def req_socket(self) -> zmq.Socket:
@@ -91,19 +114,14 @@ class NetworkEventHandler:
         """The ZMQ pub socket."""
         return self._sockets['pub']
 
-    def get_handler(self, signal: str) -> Callable[[str, bytes], None]:
+    def get_handler(self, signal: str) \
+            -> Callable[[str, bytes], NetworkResponses]:
         """Returns the handler for the given signal."""
         return self._handlers[signal]
 
     def exec_handler(self, signal: str, message: bytes) -> None:
         """Executes the handler for the given signal."""
         self.get_handler(signal)(signal, message)
-
-    def _bind_rep_socket(self) -> None:
-        """Binds the REP socket."""
-        self.rep_socket.bind(
-            f'tcp://{get_ip_address(get_server_interface())}:' +
-            str(get_coachswarm_net_rep_port()))
 
     def signal(self, sig_type: str, message: bytes) -> None:
         """This method sends out a signal.
@@ -123,8 +141,10 @@ class NetworkEventHandler:
         self.pub_socket.send(
             NetworkEventHandler.encode_signal_msg(sig_type, message))
 
-    def add_slot(self, sig_type: str,
-                 handler: Callable[[str, bytes], None]) -> None:
+    def add_slot(
+            self, sig_type: str,
+            handler: Callable[[str, bytes], Optional[NetworkResponses]]) \
+            -> None:
         """Registers a slot to handle the specified sig_type.
 
         Parameters:
@@ -154,7 +174,7 @@ class NetworkEventHandler:
         if len(sig_bytes) > NetworkEventHandler.SIGNAL_NAME_SIZE:
             raise ValueError
 
-        sig = sig_bytes.ljust(NetworkEventHandler.SIGNAL_NAME_SIZE, b'\0')
+        sig = sig_bytes.rjust(NetworkEventHandler.SIGNAL_NAME_SIZE, b'\0')
 
         return base64.b64encode(sig + message)
 
@@ -168,10 +188,13 @@ class NetworkEventHandler:
         Returns:
             Tuple[str, bytes]: The signal name and the message data
         """
-        signal_b = data[:NetworkEventHandler.SIGNAL_NAME_SIZE].lstrip(b'\0')
+        data_dec = base64.decodebytes(data)
+
+        signal_b = \
+            data_dec[:NetworkEventHandler.SIGNAL_NAME_SIZE].lstrip(b'\0')
 
         signal = signal_b.decode('ascii')
-        message = data[:NetworkEventHandler.SIGNAL_NAME_SIZE]
+        message = data_dec[:NetworkEventHandler.SIGNAL_NAME_SIZE]
 
         return signal, message
 
