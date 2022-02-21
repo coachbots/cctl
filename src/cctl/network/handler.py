@@ -203,7 +203,7 @@ class NetworkEventHandler:
             data_dec[:NetworkEventHandler.SIGNAL_NAME_SIZE].lstrip(b'\0')
 
         signal = signal_b.decode('ascii')
-        message = data_dec[:NetworkEventHandler.SIGNAL_NAME_SIZE]
+        message = data_dec[NetworkEventHandler.SIGNAL_NAME_SIZE:]
 
         return signal, message
 
