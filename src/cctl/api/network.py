@@ -25,9 +25,20 @@ class Network:
     def __init__(self) -> None:
         self._user = None
 
+    @property
     def user(self) -> UserNetworkEventHandler:
         """Returns the UserNetworkEventHandler for communicating with user
         code."""
         if self._user is None:
             self._user = UserNetworkEventHandler()
         return self._user
+
+    def tear_down(self) -> None:
+        """Stops all operating network event handlers. You don't usually need
+        to call this because it is hooked into __del__
+        """
+        if self._user is not None:
+            self._user.tear_down()
+
+    def __del__(self) -> None:
+        self.tear_down()

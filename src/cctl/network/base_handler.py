@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 from logging import Logger
 import base64
 from threading import Thread
+import threading
 from typing import Callable, Tuple
 import zmq
 
@@ -41,10 +42,21 @@ class NetworkEventHandler(ABC):
             Thread.__init__(self, *args, **kwargs)
             self.network_handler = network_handler
             self.daemon = True
+            self._stop_event = threading.Event()
             self.start()
 
+        def stop(self) -> None:
+            """Raises the flag that stops the thread. If the thread is
+            currently processing a message, it will first finish processing it
+            and then close."""
+            self._stop_event.set()
+
+        def get_is_stopped(self) -> bool:
+            """Returns whether the thread is stopped."""
+            return self._stop_event.is_set()
+
         def run(self):
-            while True:
+            while not self.get_is_stopped():
                 # TODO: Test this
                 data = self.network_handler.socket.recv()
                 signal, message = NetworkEventHandler.decode_signal_msg(data)
@@ -158,3 +170,11 @@ class NetworkEventHandler(ABC):
         message = data[:NetworkEventHandler.SIGNAL_NAME_SIZE]
 
         return signal, message
+
+    def tear_down(self) -> None:
+        """Tears down the NetworkEventHandler. This is also hooked into
+        __del__, so you don't necessarily need to call this manually."""
+        self.worker.stop()
+
+    def __del__(self):
+        self.tear_down()
