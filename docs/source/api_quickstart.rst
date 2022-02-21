@@ -106,6 +106,10 @@ For example:
    my_network.user.add_slot(USER_CODE_END, _on_end)
    my_network.user.add_slot('my_custom_signal', _handler)
 
+   # If you're not going to do anything here, you need to wait for the Network
+   # thread to finish. If you do nothing, your program will just exit.
+   my_network.user.worker.join()  # This call will be improved sometime.
+
 
    # In the coachbot user code
    # ...
