@@ -201,6 +201,6 @@ def get_valid_coachbot_range():
     )
 
 
-def get_coachswarm_net_user_port() -> int:
+def get_coachswarm_net_rep_port() -> int:
     """Returns the port used for the networking with user code."""
-    return config.getint('coachswarm', 'net_user_port')
+    return config.getint('coachswarm', 'net_server_port')

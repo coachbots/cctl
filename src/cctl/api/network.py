@@ -11,13 +11,14 @@ The only exposed class is Network and it can be used like so:
    net.user.signal('custom_signal', b'my_byte_data')
    net.user.add_slot('other_signal', lambda signal, data: print(data))
 
-If custom_signal is registered on the coachbots, it will force each coachbot
-registered for 'custom_signal' to run the event handler. If other_signal is
-ever fired by any coachbot, then the data will be printed.
+If custom_signal is registered (with the same mechanic) on the coachbots, it
+will force each coachbot registered for 'custom_signal' to run the event
+handler. If other_signal is ever fired by any coachbot, then the data will be
+printed.
 """
 
 
-from cctl.network.user_code_com import UserNetworkEventHandler
+from cctl.network.handler import NetworkEventHandler
 
 
 class Network:
@@ -26,11 +27,11 @@ class Network:
         self._user = None
 
     @property
-    def user(self) -> UserNetworkEventHandler:
+    def user(self) -> NetworkEventHandler:
         """Returns the UserNetworkEventHandler for communicating with user
         code."""
         if self._user is None:
-            self._user = UserNetworkEventHandler()
+            self._user = NetworkEventHandler()
         return self._user
 
     def tear_down(self) -> None:

@@ -2,7 +2,6 @@
 
 """This module exposes the base NetworkEventHandler."""
 
-from abc import ABC, abstractmethod
 from logging import Logger
 import base64
 from threading import Thread
@@ -10,8 +9,12 @@ import threading
 from typing import Callable, Tuple
 import zmq
 
+from cctl.api.configuration import get_coachswarm_net_rep_port, \
+    get_server_interface
+from cctl.netutils import get_ip_address
 
-class NetworkEventHandler(ABC):
+
+class NetworkEventHandler:
     """This class exposes functions for handling network events, including
     sending signals and registering for events.
 
@@ -23,11 +26,6 @@ class NetworkEventHandler(ABC):
     Sending signals raises the signal on all devices managed by this handler.
     When this signal is raised, all slots registered for that sig_type are
     called.
-
-    Note:
-        Because python2.7 does not have clean asyncio, this class implements
-        most of its work with threading. I don't like threads and neither
-        should you, but this is the best we've got.
     """
 
     # The maximum signal type size.
@@ -58,23 +56,40 @@ class NetworkEventHandler(ABC):
         def run(self):
             while not self.get_is_stopped():
                 # TODO: Test this
-                data = self.network_handler.socket.recv()
+                data = self.network_handler.rep_socket.recv()
                 signal, message = NetworkEventHandler.decode_signal_msg(data)
                 self.network_handler.exec_handler(signal, message)
 
     def __init__(self):
-        self._zmq_ctx = zmq.Context()
-        self._socket = self.build_socket(self._zmq_ctx)
+        self._zmq_contexts = {
+            'req': zmq.Context(),
+            'rep': zmq.Context(),
+            'pub': zmq.Context()
+        }
+        self._sockets = {
+            'req': self._zmq_contexts['req'].socket(zmq.REQ),
+            'rep': self._zmq_contexts['rep'].socket(zmq.REP),
+            'pub': self._zmq_contexts['pub'].socket(zmq.PUB)
+        }
         self._handlers = {}
 
-        self.connect_socket(self._socket)
-
+        self._bind_rep_socket()
         self.worker = NetworkEventHandler.WorkerThread(self)
 
     @property
-    def socket(self) -> zmq.Socket:
-        """The ZMQ socket"""
-        return self._socket
+    def req_socket(self) -> zmq.Socket:
+        """The ZMQ request socket."""
+        return self._sockets['req']
+
+    @property
+    def rep_socket(self) -> zmq.Socket:
+        """The ZMQ response socket."""
+        return self._sockets['rep']
+
+    @property
+    def pub_socket(self) -> zmq.Socket:
+        """The ZMQ pub socket."""
+        return self._sockets['pub']
 
     def get_handler(self, signal: str) -> Callable[[str, bytes], None]:
         """Returns the handler for the given signal."""
@@ -84,22 +99,11 @@ class NetworkEventHandler(ABC):
         """Executes the handler for the given signal."""
         self.get_handler(signal)(signal, message)
 
-    @abstractmethod
-    def build_socket(self, zmq_ctx: zmq.Context) -> zmq.Socket:
-        """Builds a socket from a ZMQ context.
-
-        Override this method to build a socket. Ensure you return the correct
-        ZMQ socket.
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def connect_socket(self, socket: zmq.Socket) -> None:
-        """Connects the socket to the correct host.
-
-        Override this method to connect your socket to the appropriate
-        device."""
-        raise NotImplementedError
+    def _bind_rep_socket(self) -> None:
+        """Binds the REP socket."""
+        self.rep_socket.bind(
+            f'tcp://{get_ip_address(get_server_interface())}:' +
+            str(get_coachswarm_net_rep_port()))
 
     def signal(self, sig_type: str, message: bytes) -> None:
         """This method sends out a signal.
@@ -116,7 +120,7 @@ class NetworkEventHandler(ABC):
             ValueError: If sig_type is not ascii encodable or its size is
             greater than NetworkEventHandler.SIGNAL_NAME_SIZE
         """
-        self._socket.send(
+        self.pub_socket.send(
             NetworkEventHandler.encode_signal_msg(sig_type, message))
 
     def add_slot(self, sig_type: str,
