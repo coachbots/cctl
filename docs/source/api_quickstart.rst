@@ -56,3 +56,78 @@ functions from it:
    sleep(5)
 
    cctl_bots.set_user_code_running(False)  # Pauses user code
+
+Networking
+^^^^^^^^^^
+
+Networking is a whole can of worms on this project, but **cctl** and
+**coach-os** theoretically have a nice API that you can use. Most of the API
+right now is broken, but the following is fully functional and usable.
+
+Briefly, communication between the Coachbots and **cctl** is done in an
+event-based system. What this means is that you have two main functions that
+you can use for handling data. These functions are, in spirit, similar to QTs
+``signal``'s and ``slot``'s, hence the two functions are named ``signal`` and
+``add_slot``. These functions are basically an event-trigger and an
+event-handler registration hooks.
+
+The core idea is that when you fire a ``signal``, every ``slot`` registered for
+that ``signal`` will be fired and an appropriate handler will be called. This
+works both when firing signals from the Coachbot and when firing from CCTL
+(although the latter has a bug).
+
+For example:
+
+.. code-block:: python
+
+   # On CCTL's end:
+   my_network = Network()
+
+   counter = 0
+   # Note, the handler does not tell you which robot is messaging you. I will
+   # fix this. A dirty hack you can use now is to encode this in data (ie. copy
+   # the legacy implementation).
+   def _my_signal_handler(signal: str, data: bytes):
+       nonlocal counter
+       counter += 1
+       print(f'Received signal: {signal}, with message: {data}')
+       print(f'So far, I\'ve received {counter} messages.')
+
+   my_network.user.add_slot('my_custom_signal', _handler)
+
+
+   # In the coachbot user code
+   # ...
+   robot.net.cctl.signal('my_custom_signal', b'my_data')
+   # ...
+
+Now, whenever ``my_custom_signal`` is fired, **cctl** will call
+``_my_signal_handler`` and your code will execute.
+
+You can do the exact converse as well (in theory, but there's a bug):
+
+.. code-block:: python
+
+   # On CCTL's end:
+   my_network = Network()
+   my_network.user.signal('my_custom_signal', b'my_data')
+
+
+   # In the coachbot user code
+   # ...
+   def _handler(signal_type, data):
+       robot.logger.info('Received signal %s', signal_type)
+   robot.net.cctl.add_slot('my_custom_signal', _handler)
+   # ...
+
+
+.. note:: This transport will signal ``my_custom_signal`` to all robots on the
+   network. This means that all robots will receive this.
+
+.. warning:: Sadly, the last code-example won't work. It's currently broken
+   somewhere, and I don't know where. I used a PUB-SUB architecture here to
+   make all robots respond to the signal, but I have a bug somewhere.
+
+Finally, you can talk directly to Coachbots...
+
+.. warning:: Not implemented.
