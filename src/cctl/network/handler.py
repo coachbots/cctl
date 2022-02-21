@@ -7,7 +7,7 @@ from logging import Logger
 import base64
 from threading import Thread
 import threading
-from typing import Callable, Optional, Tuple
+from typing import Callable, Optional, Tuple, List
 import zmq
 
 from cctl.api.configuration import get_coachswarm_net_rep_port, \
@@ -114,14 +114,23 @@ class NetworkEventHandler:
         """The ZMQ pub socket."""
         return self._sockets['pub']
 
-    def get_handler(self, signal: str) \
-            -> Callable[[str, bytes], NetworkResponses]:
+    def get_handlers(self, signal: str) \
+            -> List[Callable[[str, bytes], Optional[NetworkResponses]]]:
         """Returns the handler for the given signal."""
         return self._handlers[signal]
 
-    def exec_handler(self, signal: str, message: bytes) -> None:
-        """Executes the handler for the given signal."""
-        self.get_handler(signal)(signal, message)
+    def exec_handler(self, signal: str, message: bytes) \
+            -> NetworkResponses:
+        """Executes the handler for the given signal.
+
+        Only the highest NetworkResponse is kept.
+        """
+        ret_val = NetworkResponses.SUCCESS
+        for handler in self.get_handlers(signal):
+            result = handler(signal, message)
+            if result is not None and result.value > ret_val.value:
+                ret_val = result
+        return ret_val
 
     def signal(self, sig_type: str, message: bytes) -> None:
         """This method sends out a signal.
