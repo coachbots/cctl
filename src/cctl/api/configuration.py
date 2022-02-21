@@ -29,7 +29,8 @@ mandatory_keys = {
         'id_range_min',
         'id_range_max',
         'ssh_user',
-        'ssh_key'
+        'ssh_key',
+        'net_user_port'
     ],
     'camera': [
         'raw_dev_name',
@@ -51,7 +52,8 @@ default_values = {
         'id_range_min': 0,
         'id_range_max': 99,
         'ssh_user': 'pi',
-        'ssh_key': path.join(path.expanduser('~'), '.ssh', 'id_coachbot')
+        'ssh_key': path.join(path.expanduser('~'), '.ssh', 'id_coachbot'),
+        'net_user_port': 16891
     },
     'camera': {
         'raw_dev_name': 'Piwebcam: UVC Camera',
@@ -197,3 +199,8 @@ def get_valid_coachbot_range():
         config.getint('coachswarm', 'id_range_min'),
         config.getint('coachswarm', 'id_range_max') + 1
     )
+
+
+def get_coachswarm_net_user_port() -> int:
+    """Returns the port used for the networking with user code."""
+    return config.getint('coachswarm', 'net_user_port')
