@@ -30,7 +30,7 @@ mandatory_keys = {
         'id_range_max',
         'ssh_user',
         'ssh_key',
-        'net_user_port'
+        'net_server_port'
     ],
     'camera': [
         'raw_dev_name',
@@ -53,7 +53,7 @@ default_values = {
         'id_range_max': 99,
         'ssh_user': 'pi',
         'ssh_key': path.join(path.expanduser('~'), '.ssh', 'id_coachbot'),
-        'net_user_port': 16891
+        'net_server_port': 16891
     },
     'camera': {
         'raw_dev_name': 'Piwebcam: UVC Camera',
