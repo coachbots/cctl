@@ -5,6 +5,7 @@
 from enum import Enum
 from logging import Logger
 import base64
+import logging
 from threading import Thread
 import threading
 from typing import Callable, Optional, Tuple, List
@@ -13,6 +14,10 @@ import zmq
 from cctl.api.configuration import get_coachswarm_net_rep_port, \
     get_coachswarm_net_pub_port, get_server_interface
 from cctl.netutils import get_ip_address
+
+
+def _tcpurl(address: str, port: int) -> str:
+    return f'tcp://{address}:{port}'
 
 
 class NetworkResponses(Enum):
@@ -89,15 +94,17 @@ class NetworkEventHandler:
 
     def _bind_rep_socket(self) -> None:
         """Binds the REP socket."""
-        self.rep_socket.bind(
-            f'tcp://{get_ip_address(get_server_interface())}:' +
-            str(get_coachswarm_net_rep_port()))
+        address = _tcpurl(get_ip_address(get_server_interface()),
+                          get_coachswarm_net_rep_port())
+        logging.debug('About to bind REP to %s', address)  # TODO: Localize
+        self.rep_socket.bind(address)
 
     def _bind_pub_socket(self) -> None:
         """Binds the PUB socket."""
-        self.pub_socket.bind(
-            f'tcp://{get_ip_address(get_server_interface())}:' +
-            str(get_coachswarm_net_pub_port()))
+        address = _tcpurl(get_ip_address(get_server_interface()),
+                          get_coachswarm_net_pub_port())
+        logging.debug('About to bind PUB to %s', address)  # TODO: Localize
+        self.pub_socket.bind(address)
 
     @property
     def req_socket(self) -> zmq.Socket:
@@ -147,6 +154,7 @@ class NetworkEventHandler:
             ValueError: If sig_type is not ascii encodable or its size is
             greater than NetworkEventHandler.SIGNAL_NAME_SIZE
         """
+        logging.debug('Sending signal %s over PUB transport.', sig_type)
         self.pub_socket.send(
             NetworkEventHandler.encode_signal_msg(sig_type, message))
 
