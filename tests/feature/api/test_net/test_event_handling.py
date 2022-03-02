@@ -43,8 +43,11 @@ class TestNetwork(BotTestCase):
             upload_code(usr_file.name, False)
 
             network = Network()
-            network.user.direct_signal('testsig', target_bot, b'',
-                                       on_success=on_success)
+            try:
+                network.user.direct_signal('testsig', target_bot, b'',
+                                           on_success=on_success)
+            finally:
+                del network
 
     def test_direct_signal_invalid_status(self):
         """Tests whether coachbots can be messaged directly and whether they
@@ -73,5 +76,8 @@ class TestNetwork(BotTestCase):
             upload_code(usr_file.name, False)
 
             network = Network()
-            network.user.direct_signal('testsig', target_bot, b'',
-                                       on_error=on_error)
+            try:
+                network.user.direct_signal('testsig', target_bot, b'',
+                                           on_error=on_error)
+            finally:
+                del network
