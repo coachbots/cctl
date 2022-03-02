@@ -222,6 +222,8 @@ class NetworkEventHandler:
                                     result_raw)
                     return on_error(NetStatus.INVALID_RESPONSE)
 
+            logging.warning(RES_STR['logging']['req_retry'],
+                            coachbot.identifier)
             retries_left -= 1
 
         # If we don't get a response, let us simply close the socket.
