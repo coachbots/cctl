@@ -14,6 +14,7 @@ import zmq
 from cctl.api.configuration import get_coachswarm_net_rep_port, \
     get_coachswarm_net_pub_port, get_server_interface
 from cctl.netutils import get_ip_address
+from cctl.res import RES_STR
 
 
 def _tcpurl(address: str, port: int) -> str:
@@ -96,14 +97,14 @@ class NetworkEventHandler:
         """Binds the REP socket."""
         address = _tcpurl(get_ip_address(get_server_interface()),
                           get_coachswarm_net_rep_port())
-        logging.debug('About to bind REP to %s', address)  # TODO: Localize
+        logging.debug(RES_STR['logging']['rep_bind'], address)
         self.rep_socket.bind(address)
 
     def _bind_pub_socket(self) -> None:
         """Binds the PUB socket."""
         address = _tcpurl(get_ip_address(get_server_interface()),
                           get_coachswarm_net_pub_port())
-        logging.debug('About to bind PUB to %s', address)  # TODO: Localize
+        logging.debug(RES_STR['logging']['pub_bind'], address)
         self.pub_socket.bind(address)
 
     @property
