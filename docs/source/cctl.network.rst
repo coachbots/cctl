@@ -12,6 +12,14 @@ cctl.network.handler module
    :undoc-members:
    :show-inheritance:
 
+cctl.network.net\_status module
+-------------------------------
+
+.. automodule:: cctl.network.net_status
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 cctl.network.signals module
 ---------------------------
 
