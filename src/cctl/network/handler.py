@@ -10,7 +10,6 @@ from threading import Thread
 import threading
 from typing import Callable, Optional, Tuple, List
 import zmq
-from time import time
 from cctl.api.bot_ctl import Coachbot
 
 from cctl.api.configuration import get_coachswarm_net_rep_port, \
@@ -23,12 +22,6 @@ from cctl.res import RES_STR
 
 def _tcpurl(address: str, port: int) -> str:
     return f'tcp://{address}:{port}'
-
-
-class NetworkResponses(Enum):
-    """Presents the valid responses a handler may return."""
-    SUCCESS = 0
-    ERR_REPEAT = 1
 
 
 class NetworkEventHandler:
@@ -83,7 +76,7 @@ class NetworkEventHandler:
                 result = self.network_handler.exec_handler(
                     *NetworkEventHandler.decode_signal_msg(data))
                 result = result if result is not None \
-                    else NetworkResponses.SUCCESS
+                    else NetStatus.SUCCESS
                 self.network_handler.rep_socket.send(bytes(result.value))
 
     def __init__(self):
@@ -134,18 +127,18 @@ class NetworkEventHandler:
 
     def get_handlers(self, signal: str) \
             -> List[Callable[[str, Coachbot, bytes],
-                             Optional[NetworkResponses]]]:
+                             Optional[NetStatus]]]:
         """Returns the handler for the given signal."""
         handlers = self._handlers.get(signal)
         return [] if handlers is None else handlers
 
     def exec_handler(self, signal: str, coachbot: Coachbot, message: bytes) \
-            -> NetworkResponses:
+            -> NetStatus:
         """Executes the handler for the given signal.
 
         Only the highest NetworkResponse is kept.
         """
-        ret_val = NetworkResponses.SUCCESS
+        ret_val = NetStatus.SUCCESS
         for handler in self.get_handlers(signal):
             result = handler(signal, coachbot, message)
             if result is not None and result.value > ret_val.value:
@@ -233,13 +226,12 @@ class NetworkEventHandler:
 
         # If we don't get a response, let us simply close the socket.
         logging.warning(RES_STR['logging']['req_signal_timeout'])
-        self.req_socket.setsockopt(zmq.LINGER, 0)
-        self.req_socket.close()
+        self.req_socket.close(0)
         return on_error(NetStatus.TIMEOUT)
 
     def add_slot(
             self, sig_type: str,
-            handler: Callable[[str, bytes], Optional[NetworkResponses]]) \
+            handler: Callable[[str, bytes], Optional[NetStatus]]) \
             -> None:
         """Registers a slot to handle the specified sig_type.
 
@@ -302,7 +294,9 @@ class NetworkEventHandler:
     def tear_down(self) -> None:
         """Tears down the NetworkEventHandler. This is also hooked into
         __del__, so you don't necessarily need to call this manually."""
-        self.worker.stop()
+        if self.worker is not None:
+            self.worker.stop()
+        self.rep_socket.close(0)
 
     def __del__(self):
         self.tear_down()
