@@ -298,8 +298,6 @@ class NetworkEventHandler:
         __del__, so you don't necessarily need to call this manually."""
         if self.worker is not None:
             self.worker.stop()
-        self.rep_socket.setsockopt(zmq.LINGER, 0)
-        self.rep_socket.close()
 
     def __del__(self):
         self.tear_down()
