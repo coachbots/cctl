@@ -16,9 +16,9 @@ sys.path.insert(0, os.path.abspath('./src'))
 class TestNetwork(BotTestCase):
     """Tests whether the network operates as expected."""
 
-    def test_direct_signal_success_status(self):
-        """Tests whether coachbots can be messaged directly and whether they
-        reply to signals as expected."""
+    def test_slot_success_status(self):
+        """Tests whether bots can be directly messaged and whether they reply
+        correctly for a correct status."""
 
         target_bot = self.random_testing_bot
         target_bot.boot(True)
@@ -26,7 +26,7 @@ class TestNetwork(BotTestCase):
         test_code = """
             def usr(robot):
                 def _handler(sig_type, message):
-                    return 0
+                    return robot.net.results.SUCCESS
                 robot.net.cctl.add_slot('testsig', _handler)
 
                 while True:
@@ -47,11 +47,11 @@ class TestNetwork(BotTestCase):
                 network.user.direct_signal('testsig', target_bot, b'',
                                            on_success=on_success)
             finally:
-                del network
+                network.tear_down()
 
     def test_direct_signal_invalid_status(self):
-        """Tests whether coachbots can be messaged directly and whether they
-        reply to signals as expected."""
+        """Tests whether coachbots can be messaged directly and whether an
+        invalid status is raised if they return an invalid result code."""
 
         target_bot = self.random_testing_bot
         target_bot.boot(True)
@@ -59,7 +59,7 @@ class TestNetwork(BotTestCase):
         test_code = """
             def usr(robot):
                 def _handler(sig_type, message):
-                    return 15
+                    return robot.net.results.INVALID_RESPONSE
                 robot.net.cctl.add_slot('testsig', _handler)
 
                 while True:
@@ -80,4 +80,4 @@ class TestNetwork(BotTestCase):
                 network.user.direct_signal('testsig', target_bot, b'',
                                            on_error=on_error)
             finally:
-                del network
+                network.tear_down()
