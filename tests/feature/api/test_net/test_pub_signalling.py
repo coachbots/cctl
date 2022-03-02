@@ -6,13 +6,13 @@ import textwrap
 import sys
 
 from zmq.error import ZMQError
+
+sys.path.insert(0, os.path.abspath('./src'))
+
 from cctl.api.bot_ctl import boot_bots, set_user_code_running, upload_code
 
 from cctl.api.network import Network
-from cctl.network.net_status import NetStatus
 from tests.feature.bot_test_case import BotTestCase
-
-sys.path.insert(0, os.path.abspath('./src'))
 
 
 class TestNetwork(BotTestCase):
