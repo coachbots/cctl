@@ -209,7 +209,8 @@ class NetworkEventHandler:
 
         retries_left = max_retries
         while retries_left > 0:
-            if (self.req_socket.poll(timeout / max_retries) & zmq.POLLIN) != 0:
+            if (self.req_socket.poll(int(1000 * timeout / max_retries))
+                    & zmq.POLLIN) != 0:
                 result_raw = int(self.req_socket.recv())
                 try:
                     result = NetStatus(result_raw)
