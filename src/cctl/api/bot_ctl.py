@@ -8,10 +8,14 @@ from typing import Callable, Iterable, Tuple, Union, List
 from subprocess import DEVNULL, call
 import asyncio
 import os
+from os import path
 import shutil
 import time
 import logging
 import socket
+
+import paramiko
+from cctl import netutils
 
 from cctl.api import configuration
 from cctl.res import RES_STR
@@ -257,6 +261,51 @@ class Coachbot:
         return asyncio.get_event_loop().run_until_complete(
             self.async_fetch_legacy_log())
 
+    async def async_upload_user_code(self,
+            path_to_usr_code: str, os_update: bool,
+            path_to_os: str = path.join(configuration.get_server_dir(),
+                                        'temp')) -> bool:
+        """Asynchronously uploads code to the specified Coachbot if it is
+        alive.
+
+        Checks whether the coachbot is online.
+
+        Parameters:
+            path_to_usr_code (str): The path to the user code to upload.
+            os_update (bool): Flag indicating whether an os update should be
+                performed.
+
+        Returns:
+            bool: Whether the Coachbot was updated.
+        """
+        if not self.is_alive():
+            return False
+
+        remote_path = configuration.get_coachswarm_remote_path()
+
+        if os_update:
+            try:
+                # TODO: Not really async
+                with netutils.sftp_client(self.address) as sftp:
+                    for file in sftp.listdir(remote_path):
+                        sftp.remove(path.join(remote_path, file))
+                    for file in os.listdir(path_to_os):
+                        sftp.put(path.join(path_to_os, file),
+                                 path.join(remote_path, file))
+            except paramiko.SFTPError as sftp_err:
+                logging.error(sftp_err)
+
+            await self.async_boot(False)
+            await self.async_boot(True)
+
+        # Not really async.
+        with open(path_to_usr_code, 'rb') as usr_code:
+            netutils.write_remote_file(
+                self.address, configuration.get_coachswarm_remote_path(),
+                usr_code.read())
+
+        return True
+
 
 def get_all_coachbots() -> List[Coachbot]:
     """Returns a list of all Coachbots."""
@@ -419,6 +468,26 @@ def blink(robot_id: Union[int, str]) -> None:
         raise ValueError(RES_STR['invalid_bot_id_exception'])
 
     _blink_internal(robot_id)
+
+
+async def async_upload_codes(path_to_usr_code: str, os_update: bool,
+                             targets: Union[List[Coachbot], str]) -> None:
+    """Uploads user code and possibly OS code in an asynchronous manner to the
+    specified targets.
+
+    Parameters:
+        path_to_usr_code (str): The path to the user code to upload.
+        os_update (bool): Flag indicating whether an os update should be
+            performed.
+        targets (Iterable[Coachbot] | str): The targets to upload to. If this
+            is a string, then the function uploads to all online bots.
+    """
+
+    m_targets = targets if isinstance(targets, List) \
+        else await async_get_alives(get_all_coachbots())
+
+    asyncio.gather(bot.async_upload_user_code(path_to_usr_code, os_update)
+                   for bot in m_targets)
 
 
 def upload_code(path_to_usr_code: str, os_update: bool) -> None:

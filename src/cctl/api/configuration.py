@@ -26,6 +26,7 @@ mandatory_keys = {
     ],
     'coachswarm': [
         'conf_path',
+        'remote_path',
         'id_range_min',
         'id_range_max',
         'ssh_user',
@@ -51,6 +52,7 @@ default_values = {
     },
     'coachswarm': {
         'conf_path': path.join(usr_conf_dir, 'coachswarm.conf'),
+        'remote_path': '/home/hanlin/control',
         'id_range_min': 0,
         'id_range_max': 99,
         'ssh_user': 'pi',
@@ -221,3 +223,8 @@ def get_coachswarm_net_req_port() -> int:
     """Returns the port used for networking with the coachbots on the REQ
     transport."""
     return config.getint('coachswarm', 'net_server_port_req')
+
+
+def get_coachswarm_remote_path() -> str:
+    """Returns the path to the remote directory."""
+    return config.get('coachswarm', 'remote_path')
