@@ -5,8 +5,7 @@ RES_STR = {
     'app_desc': 'cctl is the utility for coachbot control.',
     'cmd_command_help': 'Control Robot State',
     'cmd_command': 'command',
-    'cmd_on': 'on',
-    'cmd_off': 'off',
+    'cmd_on': 'on', 'cmd_off': 'off',
     'cmd_id': 'id',
     'cmd_on_help': 'Boot a range of robots up.',
     'cmd_off_help': 'Boot a range of robots down.',
@@ -84,7 +83,11 @@ RES_STR = {
     'fetch_logs_some_msg': 'Fetching logs from bots %s into %s.',
     'logging': {
         'rep_bind': 'About to bind REP transport to %s',
-        'pub_bind': 'About to bind PUB transport to %s'
+        'pub_bind': 'About to bind PUB transport to %s',
+        'pub_signal': 'Sending signal %s over PUB transport.',
+        'req_signal_timeout': 'direct_signal did not receive a reply.',
+        'req_retry': 'Could not reach robot %d. Retrying.',
+        'req_invalid_status': 'direct_signal received an invalid response: %d.'
     }
 }
 

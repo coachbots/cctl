@@ -26,12 +26,14 @@ mandatory_keys = {
     ],
     'coachswarm': [
         'conf_path',
+        'remote_path',
         'id_range_min',
         'id_range_max',
         'ssh_user',
         'ssh_key',
         'net_server_port_pub',
-        'net_server_port_rep'
+        'net_server_port_rep',
+        'net_server_port_req'
     ],
     'camera': [
         'raw_dev_name',
@@ -50,12 +52,14 @@ default_values = {
     },
     'coachswarm': {
         'conf_path': path.join(usr_conf_dir, 'coachswarm.conf'),
+        'remote_path': '/home/hanlin/control',
         'id_range_min': 0,
         'id_range_max': 99,
         'ssh_user': 'pi',
         'ssh_key': path.join(path.expanduser('~'), '.ssh', 'id_coachbot'),
         'net_server_port_rep': 16891,
-        'net_server_port_pub': 16892
+        'net_server_port_pub': 16892,
+        'net_server_port_req': 16893
     },
     'camera': {
         'raw_dev_name': 'Piwebcam: UVC Camera',
@@ -213,3 +217,14 @@ def get_coachswarm_net_pub_port() -> int:
     """Returns the port used for networking with the coachbots on the PUB
     transport."""
     return config.getint('coachswarm', 'net_server_port_pub')
+
+
+def get_coachswarm_net_req_port() -> int:
+    """Returns the port used for networking with the coachbots on the REQ
+    transport."""
+    return config.getint('coachswarm', 'net_server_port_req')
+
+
+def get_coachswarm_remote_path() -> str:
+    """Returns the path to the remote directory."""
+    return config.get('coachswarm', 'remote_path')
