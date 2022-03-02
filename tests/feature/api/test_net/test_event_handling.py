@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.abspath('./src'))
 class TestNetwork(BotTestCase):
     """Tests whether the network operates as expected."""
 
-    def test_slot_success_status(self):
+    def test_direct_signal_success_status(self):
         """Tests whether bots can be directly messaged and whether they reply
         correctly for a correct status."""
 
@@ -83,3 +83,19 @@ class TestNetwork(BotTestCase):
                                            on_error=on_error)
             except ZMQError as zmqerr:
                 self.fail(zmqerr)
+
+    def test_direct_signal_timeout(self):
+        """Tests whether an unreachable coachbot does not crash anything."""
+
+        target_bot = self.random_testing_bot
+        target_bot.boot(False)
+
+        def on_error(status: NetStatus):
+            self.assertEqual(NetStatus.TIMEOUT, status)
+
+        try:
+            network = Network()
+            network.user.direct_signal('testsig', target_bot, b'',
+                                       on_error=on_error)
+        except ZMQError as zmqerr:
+            self.fail(zmqerr)
