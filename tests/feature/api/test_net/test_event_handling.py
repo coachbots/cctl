@@ -36,7 +36,7 @@ class TestNetwork(BotTestCase):
         def on_success(status: NetStatus):
             self.assertTrue(NetStatus.SUCCESS, status)
 
-        with tempfile.TemporaryFile('w') as usr_file:
+        with tempfile.NamedTemporaryFile('w') as usr_file:
             usr_file.write(textwrap.dedent(test_code))
             usr_file.flush()
 
@@ -66,7 +66,7 @@ class TestNetwork(BotTestCase):
         def on_error(status: NetStatus):
             self.assertTrue(NetStatus.INVALID_RESPONSE, status)
 
-        with tempfile.TemporaryFile('w') as usr_file:
+        with tempfile.NamedTemporaryFile('w') as usr_file:
             usr_file.write(textwrap.dedent(test_code))
             usr_file.flush()
 
