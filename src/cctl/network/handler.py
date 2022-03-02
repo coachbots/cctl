@@ -85,7 +85,6 @@ class NetworkEventHandler:
             'pub': zmq.Context()
         }
         self._sockets = {
-            'req': self._zmq_contexts['req'].socket(zmq.REQ),
             'rep': self._zmq_contexts['rep'].socket(zmq.REP),
             'pub': self._zmq_contexts['pub'].socket(zmq.PUB)
         }
@@ -108,11 +107,6 @@ class NetworkEventHandler:
                           get_coachswarm_net_pub_port())
         logging.debug(RES_STR['logging']['pub_bind'], address)
         self.pub_socket.bind(address)
-
-    @property
-    def req_socket(self) -> zmq.Socket:
-        """The ZMQ request socket."""
-        return self._sockets['req']
 
     @property
     def rep_socket(self) -> zmq.Socket:
@@ -202,15 +196,16 @@ class NetworkEventHandler:
             ValueError: If sig_type is not ascii encodable or its size is
             greater than NetworkEventHandler.SIGNAL_NAME_SIZE
         """
-        self.req_socket.connect(_tcpurl(coachbot.address,
-                                        get_coachswarm_net_req_port()))
-        self.req_socket.send(
-            NetworkEventHandler.encode_signal_msg(sig_type, message))
+        req_socket = self._zmq_contexts['req'].socket(zmq.REQ)
+        req_socket.connect(_tcpurl(coachbot.address,
+                                   get_coachswarm_net_req_port()))
+        req_socket.send(NetworkEventHandler.encode_signal_msg(sig_type,
+                                                              message))
 
         retries_left = max_retries
         while retries_left > 0:
-            if (self.req_socket.poll(int(1000 * timeout)) & zmq.POLLIN) != 0:
-                result_raw = int(self.req_socket.recv())
+            if (req_socket.poll(int(1000 * timeout)) & zmq.POLLIN) != 0:
+                result_raw = int(req_socket.recv())
                 try:
                     result = NetStatus(result_raw)
                     return on_success(result)
@@ -220,6 +215,8 @@ class NetworkEventHandler:
                     logging.warning(RES_STR['logging']['req_invalid_status'],
                                     result_raw)
                     return on_error(NetStatus.INVALID_RESPONSE)
+                finally:
+                    req_socket.close()
 
             logging.warning(RES_STR['logging']['req_retry'],
                             coachbot.identifier)
@@ -227,8 +224,8 @@ class NetworkEventHandler:
 
         # If we don't get a response, let us simply close the socket.
         logging.warning(RES_STR['logging']['req_signal_timeout'])
-        self.req_socket.setsockopt(zmq.LINGER, 0)
-        self.req_socket.close()
+        req_socket.setsockopt(zmq.LINGER, 0)
+        req_socket.close()
         return on_error(NetStatus.TIMEOUT)
 
     def add_slot(
