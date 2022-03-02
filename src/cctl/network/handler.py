@@ -2,7 +2,6 @@
 
 """This module exposes the base NetworkEventHandler."""
 
-from enum import Enum
 from logging import Logger
 import base64
 import logging
