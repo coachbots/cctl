@@ -6,7 +6,7 @@ import textwrap
 import sys
 
 from zmq.error import ZMQError
-from cctl.api.bot_ctl import upload_code
+from cctl.api.bot_ctl import set_user_code_running, upload_code
 
 from cctl.api.network import Network
 from cctl.network.net_status import NetStatus
@@ -43,6 +43,7 @@ class TestNetwork(BotTestCase):
             usr_file.flush()
 
             upload_code(usr_file.name, False)
+            set_user_code_running(True)
 
             try:
                 network = Network()
@@ -76,6 +77,7 @@ class TestNetwork(BotTestCase):
             usr_file.flush()
 
             upload_code(usr_file.name, False)
+            set_user_code_running(True)
 
             try:
                 network = Network()
