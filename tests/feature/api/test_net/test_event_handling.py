@@ -4,6 +4,8 @@ import os
 import tempfile
 import textwrap
 import sys
+
+from zmq.error import ZMQError
 from cctl.api.bot_ctl import upload_code
 
 from cctl.api.network import Network
@@ -42,9 +44,12 @@ class TestNetwork(BotTestCase):
 
             upload_code(usr_file.name, False)
 
-            network = Network()
-            network.user.direct_signal('testsig', target_bot, b'',
-                                       on_success=on_success)
+            try:
+                network = Network()
+                network.user.direct_signal('testsig', target_bot, b'',
+                                           on_success=on_success)
+            except ZMQError as zmqerr:
+                self.fail(zmqerr)
 
     def test_direct_signal_invalid_status(self):
         """Tests whether coachbots can be messaged directly and whether an
@@ -72,6 +77,9 @@ class TestNetwork(BotTestCase):
 
             upload_code(usr_file.name, False)
 
-            network = Network()
-            network.user.direct_signal('testsig', target_bot, b'',
-                                       on_error=on_error)
+            try:
+                network = Network()
+                network.user.direct_signal('testsig', target_bot, b'',
+                                           on_error=on_error)
+            except ZMQError as zmqerr:
+                self.fail(zmqerr)
