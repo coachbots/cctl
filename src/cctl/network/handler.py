@@ -92,7 +92,7 @@ class NetworkEventHandler:
 
         self._bind_rep_socket()
         self._bind_pub_socket()
-        self.worker = NetworkEventHandler.WorkerThread(self)
+        self.rep_worker = NetworkEventHandler.WorkerThread(self)
 
     def _bind_rep_socket(self) -> None:
         """Binds the REP socket."""
@@ -293,8 +293,8 @@ class NetworkEventHandler:
     def tear_down(self) -> None:
         """Tears down the NetworkEventHandler. This is also hooked into
         __del__, so you don't necessarily need to call this manually."""
-        if self.worker is not None:
-            self.worker.stop()
+        if self.rep_worker is not None:
+            self.rep_worker.stop()
 
     def __del__(self):
         self.tear_down()
