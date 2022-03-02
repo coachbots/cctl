@@ -225,7 +225,8 @@ class NetworkEventHandler:
 
         # If we don't get a response, let us simply close the socket.
         logging.warning(RES_STR['logging']['req_signal_timeout'])
-        self.req_socket.close(0)
+        self.req_socket.setsockopt(zmq.LINGER, 0)
+        self.req_socket.close()
         return on_error(NetStatus.TIMEOUT)
 
     def add_slot(
@@ -295,7 +296,8 @@ class NetworkEventHandler:
         __del__, so you don't necessarily need to call this manually."""
         if self.worker is not None:
             self.worker.stop()
-        self.rep_socket.close(0)
+        self.rep_socket.setsockopt(zmq.LINGER, 0)
+        self.rep_socket.close()
 
     def __del__(self):
         self.tear_down()
