@@ -84,7 +84,10 @@ RES_STR = {
     'fetch_logs_some_msg': 'Fetching logs from bots %s into %s.',
     'logging': {
         'rep_bind': 'About to bind REP transport to %s',
-        'pub_bind': 'About to bind PUB transport to %s'
+        'pub_bind': 'About to bind PUB transport to %s',
+        'pub_signal': 'Sending signal %s over PUB transport.',
+        'req_signal_timeout': 'direct_signal did not receive a reply.',
+        'req_invalid_status': 'direct_signal received an invalid response: %d.'
     }
 }
 
