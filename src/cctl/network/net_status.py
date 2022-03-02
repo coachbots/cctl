@@ -4,8 +4,14 @@ coach-os."""
 from enum import IntEnum
 
 
+MAX_SUCCESSFUL_VALUE = 32
+
+
 class NetStatus(IntEnum):
     """Describes a NetStatus.
+
+    All successful network statues must have values less than
+        MAX_SUCCESSFUL_VALUE.
 
     Note:
         NetStatus values need to be in order of severity because only the last
