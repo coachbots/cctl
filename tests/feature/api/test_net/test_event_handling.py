@@ -45,12 +45,14 @@ class TestNetwork(BotTestCase):
             upload_code(usr_file.name, False)
             set_user_code_running(True)
 
+            network = Network()
             try:
-                network = Network()
                 network.user.direct_signal('testsig', target_bot, b'',
                                            on_success=on_success)
             except ZMQError as zmqerr:
                 self.fail(zmqerr)
+            finally:
+                network.tear_down()
 
     def test_direct_signal_invalid_status(self):
         """Tests whether coachbots can be messaged directly and whether an
@@ -79,12 +81,14 @@ class TestNetwork(BotTestCase):
             upload_code(usr_file.name, False)
             set_user_code_running(True)
 
+            network = Network()
             try:
-                network = Network()
                 network.user.direct_signal('testsig', target_bot, b'',
                                            on_error=on_error)
             except ZMQError as zmqerr:
                 self.fail(zmqerr)
+            finally:
+                network.tear_down()
 
     def test_direct_signal_timeout(self):
         """Tests whether an unreachable coachbot does not crash anything."""
@@ -95,9 +99,11 @@ class TestNetwork(BotTestCase):
         def on_error(status: NetStatus):
             self.assertEqual(NetStatus.TIMEOUT, status)
 
+        network = Network()
         try:
-            network = Network()
             network.user.direct_signal('testsig', target_bot, b'',
                                        on_error=on_error)
         except ZMQError as zmqerr:
             self.fail(zmqerr)
+        finally:
+            network.tear_down()
