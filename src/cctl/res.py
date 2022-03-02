@@ -81,7 +81,11 @@ RES_STR = {
     'fetch_logs_legacy_dir_not_specified': 'Invalid use of legacy. It must ' +
                                            'be used with the -d flag.',
     'fetch_logs_all_msg': 'Fetching logs from all coachbots into %s.',
-    'fetch_logs_some_msg': 'Fetching logs from bots %s into %s.'
+    'fetch_logs_some_msg': 'Fetching logs from bots %s into %s.',
+    'logging': {
+        'rep_bind': 'About to bind REP transport to %s',
+        'pub_bind': 'About to bind PUB transport to %s'
+    }
 }
 
 ERROR_CODES = {
