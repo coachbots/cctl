@@ -5,8 +5,13 @@ from enum import IntEnum
 
 
 class NetStatus(IntEnum):
-    """Describes a NetStatus."""
+    """Describes a NetStatus.
+
+    Note:
+        NetStatus values need to be in order of severity because only the last
+        error result after multiple handlers is kept.
+    """
     SUCCESS = 0
 
-    INVALID_RESPONSE = -10
-    TIMEOUT = -11
+    TIMEOUT = 100
+    INVALID_RESPONSE = 110

@@ -35,7 +35,11 @@ class TestNetwork(BotTestCase):
                     robot.delay()
         """
 
+        successful = False
+
         def on_success(status: NetStatus):
+            nonlocal successful
+            successful = True
             self.assertTrue(NetStatus.SUCCESS, status)
 
         with tempfile.NamedTemporaryFile('w') as usr_file:
@@ -53,6 +57,9 @@ class TestNetwork(BotTestCase):
                 self.fail(zmqerr)
             finally:
                 network.tear_down()
+
+        if not successful:
+            self.fail('on_success was not called.')
 
     def test_direct_signal_invalid_status(self):
         """Tests whether coachbots can be messaged directly and whether an
