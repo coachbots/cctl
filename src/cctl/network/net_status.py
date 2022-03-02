@@ -8,5 +8,5 @@ class NetStatus(IntEnum):
     """Describes a NetStatus."""
     SUCCESS = 0
 
-    INVALID_RESPONSE = 10
-    TIMEOUT = 11
+    INVALID_RESPONSE = -10
+    TIMEOUT = -11
