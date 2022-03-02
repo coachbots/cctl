@@ -44,7 +44,7 @@ class NetworkEventHandler:
     IDENTIFIER_SIZE = 4
 
     # The total size of the receive header
-    RECV_SIZE = SIGNAL_NAME_SIZE + IDENTIFIER_SIZE
+    RECV_HEADER_SIZE = SIGNAL_NAME_SIZE + IDENTIFIER_SIZE
 
     class WorkerThread(Thread):
         """The actual worker thread of the NetworkEventHandler."""
@@ -285,11 +285,11 @@ class NetworkEventHandler:
             data_dec[:NetworkEventHandler.SIGNAL_NAME_SIZE].lstrip(b'\0')
         coachbot_id_b = \
             data_dec[NetworkEventHandler.SIGNAL_NAME_SIZE:
-                     NetworkEventHandler.IDENTIFIER_SIZE].lstrip(b'\0')
+                     NetworkEventHandler.RECV_HEADER_SIZE].lstrip(b'\0')
 
         signal = signal_b.decode('ascii')
         coachbot_id = int(coachbot_id_b)
-        message = data_dec[NetworkEventHandler.RECV_SIZE:]
+        message = data_dec[NetworkEventHandler.RECV_HEADER_SIZE:]
 
         return signal, Coachbot(coachbot_id), message
 
