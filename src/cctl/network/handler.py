@@ -230,7 +230,7 @@ class NetworkEventHandler:
 
     def add_slot(
             self, sig_type: str,
-            handler: Callable[[str, bytes], Optional[NetStatus]]) \
+            handler: Callable[[str, Coachbot, bytes], Optional[NetStatus]]) \
             -> None:
         """Registers a slot to handle the specified sig_type.
 
