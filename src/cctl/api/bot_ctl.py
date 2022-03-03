@@ -15,6 +15,7 @@ import logging
 import socket
 
 import paramiko
+from paramiko.channel import ChannelFile
 from cctl import netutils
 
 from cctl.api import configuration
@@ -306,7 +307,7 @@ class Coachbot:
 
         return True
 
-    def run_ssh(self, command: str, back_proxy: int) -> None:
+    def run_ssh(self, command: str, back_proxy: int) -> ChannelFile:
         """Synchronously runs a command over ssh.
 
         Parameters:
@@ -328,11 +329,14 @@ class Coachbot:
                 if should_proxy:
                     _, stdout, _ = client.exec_command(
                         f'ssh -D {back_proxy} -f -C -q -N & echo $!')
+                    stdout.channel.recv_exit_status()
                     proxy_pid = int(stdout.read().strip())
-                client.exec_command(command)
+                _, stdout, _ = client.exec_command(command)
+                return stdout
             finally:
                 if should_proxy and proxy_pid is not None:
-                    client.exec_command(f'kill -15 {proxy_pid}')
+                    _, stdout, _ = client.exec_command(f'kill -15 {proxy_pid}')
+                    stdout.channel.recv_exit_status()
 
 
 def get_all_coachbots() -> List[Coachbot]:

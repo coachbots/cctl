@@ -188,7 +188,9 @@ class CommandAction:
 
         def _some_handler(bots: List[bot_ctl.Coachbot]) -> int:
             for bot in bots:
-                bot.run_ssh(command, prox_port)
+                stdout = bot.run_ssh(command, prox_port)
+                stdout.channel.recv_exit_status()
+                print(stdout.read())
             return 0
 
         return self._bot_id_handler(
@@ -213,10 +215,15 @@ class CommandAction:
                         remote_path = f'/tmp/{pkg_name}'
                         with sftp_client(bot.address) as client:
                             client.put(full_path, remote_path)
-                        bot.run_ssh('pip install {remote_path}', prox_port)
+                        stdout = bot.run_ssh('pip install {remote_path}',
+                                             prox_port)
+                        stdout.channel.recv_exit_status()
+                        print(stdout.read())
                         continue
 
-                    bot.run_ssh('pip install package', prox_port)
+                    stdout = bot.run_ssh('pip install package', prox_port)
+                    stdout.channel.recv_exit_status()
+                    print(stdout.read())
             return 0
 
         return self._bot_id_handler(
