@@ -210,11 +210,11 @@ class CommandAction:
                     full_path = path.abspath(package)
                     if path.exists(full_path):
                         pkg_name = path.basename(full_path)
+                        remote_path = f'/tmp/{pkg_name}'
                         with sftp_client(bot.address) as client:
-                            remote_path = f'/tmp/{pkg_name}'
                             client.put(full_path, remote_path)
-                            bot.run_ssh('pip install {remote_path}', prox_port)
-                            continue
+                        bot.run_ssh('pip install {remote_path}', prox_port)
+                        continue
 
                     bot.run_ssh('pip install package', prox_port)
             return 0
