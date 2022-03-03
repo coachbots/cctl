@@ -328,7 +328,6 @@ class Coachbot:
         """
         with ssh_client(self.address) as client:
             should_proxy = back_proxy > 0
-            proxy_pid = None
             try:
                 if should_proxy:
                     interface = configuration.get_server_interface()
@@ -340,11 +339,11 @@ class Coachbot:
                         f'{proxy_user}@{get_ip_address(interface)} ' +
                         '& echo $!"')
                     stdout.channel.recv_exit_status()
-                    proxy_pid = int(stdout.read().strip())
                 yield client.exec_command(command)
             finally:
-                if should_proxy and proxy_pid is not None:
-                    _, stdout, _ = client.exec_command(f'kill -15 {proxy_pid}')
+                if should_proxy is not None:
+                    # TODO: Change this nonsense command
+                    _, stdout, _ = client.exec_command('pkill -15 ssh')
                     stdout.channel.recv_exit_status()
 
 

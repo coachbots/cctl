@@ -63,3 +63,14 @@ It is also necessary to register the public keys of the coachbots with the
            cat /tmp/id_coachbot_proxy.pub >> \
            /home/coachbot_proxy/.ssh/authorized_keys"
    done
+
+When you're done with that, let us setup the proxy settings for **apt-get** on
+the coachbots:
+
+.. code-block:: bash
+
+   for bot in {93..102}; do
+       ssh pi@192.168.1.$bot 'echo pi | sudo -S sh -c
+           echo Acquire::http::proxy\ \\\"socks5h://localhost:16899\\\"\; > \
+               /etc/apt/apt.conf.d/12proxy;'
+   done

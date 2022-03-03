@@ -32,6 +32,50 @@ subcommands to control the swarm. These commands are:
        upload              Updates the code on all on robots.
        manage              Starts the management console. This was called
                            init.py in legacy code.
+       install
+       exec
+
+Installation and Remote Execution
+---------------------------------
+
+**cctl** can help you run commands on the Coachbots that may require internet
+access. The commands ``install`` and ``exec`` are precisely such commands.
+
+The ``install`` command can be used to install `PyPi` packages and effectivelly
+amounts to running:
+
+.. code-block:: bash
+
+   cctl install --bots=90,91,93-96 my_package
+   # Equivalent to running
+   pip install my_package
+
+Note that this command will automatically connect the coachbot to the internet,
+by proxying its connection through **cctl**'s host machine.
+
+The ``exec`` command is similar in that it runs an arbitrary command, spawning
+a SOCKS5 proxy for you and destroying it automatically. The proxy is on port
+``16899`` by default (configurable in the config file). You can do that for
+arbitrary commands you might want to run. Note that you get a shell here, so
+pipes work as they should.
+
+.. code-block:: bash
+
+   cctl exec --bots=90 --proxy 'echo pi | sudo -S sh -c
+      echo Acquire::http::proxy\ \\\"socks5h://localhost:16899\\\"\; > \
+          /etc/apt/apt.conf.d/12proxy;
+      apt-get install -y gfortran libopenblas-dev liblapack-dev;
+      '
+
+You can run arbitrary commands (but be careful with character escapes, those
+are known to be tricky) with this. The one I've provided is an example of
+setting up the sock proxy and running ``apt-get``. This is for example
+purposes. If you've followed the installation guide, you won't need to manually
+fiddle with ``12proxy`` and can just install with ``apt-get`` by running:
+
+.. code-block:: bash
+
+   cctl exec --bots=90 --proxy 'echo pi | sudo -S apt-get install -y pkg'
 
 Powering
 --------
