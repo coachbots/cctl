@@ -307,7 +307,9 @@ class Coachbot:
 
         return True
 
-    def run_ssh(self, command: str, back_proxy: int) -> ChannelFile:
+    def run_ssh(self, command: str,
+                back_proxy: int) -> Tuple[ChannelFile, ChannelFile,
+                                          ChannelFile]:
         """Runs a command over ssh. This command invokes a shell.
 
         Parameters:
@@ -337,8 +339,7 @@ class Coachbot:
                         '& echo $!"')
                     stdout.channel.recv_exit_status()
                     proxy_pid = int(stdout.read().strip())
-                _, stdout, _ = client.exec_command(command)
-                return stdout
+                return client.exec_command(command)
             finally:
                 if should_proxy and proxy_pid is not None:
                     _, stdout, _ = client.exec_command(f'kill -15 {proxy_pid}')

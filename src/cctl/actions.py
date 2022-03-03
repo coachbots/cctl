@@ -2,6 +2,7 @@
 
 """Defines the main class that handles all commands."""
 
+import sys
 from typing import Callable, Iterable, Union, List
 import re
 from os import path
@@ -219,13 +220,17 @@ class CommandAction:
                         remote_path = f'/tmp/{pkg_name}'
                         with sftp_client(bot.address) as client:
                             client.put(full_path, remote_path)
-                        stdout = bot.run_ssh(pip_cmd_fmt % (remote_path),
-                                             prox_port)
+                        _, stdout, stderr = bot.run_ssh(
+                            pip_cmd_fmt % (remote_path), prox_port)
+                        sys.stdout.write(stdout.read())
+                        sys.stderr.write(stderr.read())
                         stdout.channel.recv_exit_status()
                         continue
 
-                    stdout = bot.run_ssh(pip_cmd_fmt % (package),
-                                         prox_port)
+                    _, stdout, stderr = bot.run_ssh(
+                        pip_cmd_fmt % (package), prox_port)
+                    sys.stdout.write(stdout.read())
+                    sys.stderr.write(stderr.read())
                     stdout.channel.recv_exit_status()
             return 0
 
