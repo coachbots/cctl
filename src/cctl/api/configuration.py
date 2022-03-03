@@ -34,7 +34,8 @@ mandatory_keys = {
         'net_server_port_pub',
         'net_server_port_rep',
         'net_server_port_req',
-        'socks5_port'
+        'socks5_port',
+        'pi_password'
     ],
     'camera': [
         'raw_dev_name',
@@ -61,7 +62,10 @@ default_values = {
         'net_server_port_rep': 16891,
         'net_server_port_pub': 16892,
         'net_server_port_req': 16893,
-        'socks5_port': 16899
+        'socks5_port': 16899,
+        'pi_password': 'pi'  # TODO: This is so insecure. Problem is, there is
+                             # no dedicated linux user running on the
+                             # coachbots.
     },
     'camera': {
         'raw_dev_name': 'Piwebcam: UVC Camera',
@@ -235,3 +239,10 @@ def get_coachswarm_remote_path() -> str:
 def get_socks5_port() -> int:
     """Returns the default socks5 port used when creating a proxy to cctl."""
     return config.getint('coachswarm', 'socks5_port')
+
+
+def get_pi_password() -> str:
+    """Returns the pi user password. This is insecure, but a necessary evil
+    because code is executed as root on the legacy implementation.
+    """
+    return config.get('coachswarm', 'pi_password')

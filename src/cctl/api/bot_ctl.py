@@ -308,7 +308,7 @@ class Coachbot:
         return True
 
     def run_ssh(self, command: str, back_proxy: int) -> ChannelFile:
-        """Synchronously runs a command over ssh.
+        """Runs a command over ssh. This command invokes a shell.
 
         Parameters:
             command (str): The command to execute on the Coachbot.
@@ -328,7 +328,7 @@ class Coachbot:
             try:
                 if should_proxy:
                     _, stdout, _ = client.exec_command(
-                        f'ssh -D {back_proxy} -f -C -q -N & echo $!')
+                        f'sh -c "ssh -D {back_proxy} -f -C -q -N & echo $!"')
                     stdout.channel.recv_exit_status()
                     proxy_pid = int(stdout.read().strip())
                 _, stdout, _ = client.exec_command(command)
