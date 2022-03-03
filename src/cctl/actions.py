@@ -189,9 +189,11 @@ class CommandAction:
 
         def _some_handler(bots: List[bot_ctl.Coachbot]) -> int:
             for bot in bots:
-                stdout = bot.run_ssh(command, prox_port)
-                stdout.channel.recv_exit_status()
-                print(stdout.read())
+                with bot.run_ssh(command, prox_port) as conn:
+                    _, stdout, stderr = conn
+                    print(stdout.read().decode())
+                    print(stderr.read().decode(), file=sys.stderr)
+                    stdout.channel.recv_exit_status()
             return 0
 
         return self._bot_id_handler(
