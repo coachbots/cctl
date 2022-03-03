@@ -182,7 +182,7 @@ class CommandAction:
         Returns:
             The exit code.
         """
-        command = self._args.exec_command
+        command = ' '.join(self._args.exec_command)
         bots = self._args.bots.split(',')
         prox_port = configuration.get_socks5_port() if self._args.proxy else -1
 
@@ -200,7 +200,7 @@ class CommandAction:
         Returns:
             The exit code.
         """
-        packages = self._args.install_packages
+        packages = ' '.join(self._args.install_packages)
         bots = self._args.bots.split(',')
         prox_port = configuration.get_socks5_port()
 
