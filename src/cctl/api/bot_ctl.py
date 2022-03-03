@@ -20,7 +20,7 @@ from cctl import netutils
 
 from cctl.api import configuration
 from cctl.res import RES_STR
-from cctl.netutils import async_host_is_reachable, get_broadcast_address, \
+from cctl.netutils import async_host_is_reachable, get_broadcast_address, get_ip_address, \
     read_remote_file, ssh_client
 
 
@@ -327,8 +327,14 @@ class Coachbot:
             proxy_pid = None
             try:
                 if should_proxy:
+                    interface = configuration.get_server_interface()
+                    proxy_user = configuration.get_socks5_proxy_user()
+
                     _, stdout, _ = client.exec_command(
-                        f'sh -c "ssh -D {back_proxy} -f -C -q -N & echo $!"')
+                        f'sh -c "ssh -D {back_proxy} -f -C -q -N ' +
+                        f'-i ~/.ssh/id_{proxy_user} ' +
+                        f'{proxy_user}@{get_ip_address(interface)} ' +
+                        '& echo $!"')
                     stdout.channel.recv_exit_status()
                     proxy_pid = int(stdout.read().strip())
                 _, stdout, _ = client.exec_command(command)

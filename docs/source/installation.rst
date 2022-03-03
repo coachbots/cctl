@@ -36,3 +36,30 @@ installing all of the required files.
 
 When you're done installing **cctl** see the `Configuration
 <cofiguration.html>`_ for information on configuring it.
+
+Setting up a Proxy User
+^^^^^^^^^^^^^^^^^^^^^^^
+
+**cctl** also requires a specific user it can use to setup secure proxying
+between **coach-os** and itself. You can create this user by running:
+
+.. code-block:: bash
+
+   useradd coachbot_proxy
+
+Take note of the password you create.
+It is also necessary to register the public keys of the coachbots with the
+``coachbot_proxy`` user, so, you can do that with:
+
+.. code-block:: bash
+
+   for bot in {93..102}; do
+       ssh pi@192.168.1.$bot \
+           "ssh-keygen -t ed25519 -N '' -f ~/.ssh/id_coachbot_proxy"
+       ssh pi@192.168.1.$bot "cat ~/.ssh/id_coachbot_proxy.pub" | \
+           cat > /tmp/id_coachbot_proxy.pub
+       echo <COACHBOT-PROXY-PASS> | sudo -S -u coachbot_proxy sh -c \
+           "mkdir -p /home/coachbot_proxy/.ssh; \
+           cat /tmp/id_coachbot_proxy.pub >> \
+           /home/coachbot_proxy/.ssh/authorized_keys"
+   done

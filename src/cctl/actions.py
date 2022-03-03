@@ -207,7 +207,8 @@ class CommandAction:
         prox_port = configuration.get_socks5_port()
 
         pip_cmd_fmt = f'echo {configuration.get_pi_password()} | sudo -S ' + \
-                      'pip install %s'
+            'pip install %s ' + \
+            f'--proxy socks5:127.0.0.1:{configuration.get_socks5_port()}'
 
         def _some_handler(bots: List[bot_ctl.Coachbot]) -> int:
             for bot in bots:

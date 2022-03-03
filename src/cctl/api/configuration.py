@@ -35,6 +35,7 @@ mandatory_keys = {
         'net_server_port_rep',
         'net_server_port_req',
         'socks5_port',
+        'socks5_proxy_user'
         'pi_password'
     ],
     'camera': [
@@ -63,6 +64,7 @@ default_values = {
         'net_server_port_pub': 16892,
         'net_server_port_req': 16893,
         'socks5_port': 16899,
+        'socks5_proxy_user': 'coachbot_proxy',
         'pi_password': 'pi'  # TODO: This is so insecure. Problem is, there is
                              # no dedicated linux user running on the
                              # coachbots.
@@ -246,3 +248,8 @@ def get_pi_password() -> str:
     because code is executed as root on the legacy implementation.
     """
     return config.get('coachswarm', 'pi_password')
+
+
+def get_socks5_proxy_user() -> str:
+    """Returns the cctl user setup for proxying the internet."""
+    return config.get('coachswarm', 'socks5_proxy_user')
