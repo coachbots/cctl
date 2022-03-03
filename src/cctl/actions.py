@@ -125,11 +125,13 @@ class CommandAction:
     def _bot_id_handler(
             self,
             all_handler: Callable[[], int],
-            some_handler: Callable[[List[bot_ctl.Coachbot]], int]) -> int:
+            some_handler: Callable[[List[bot_ctl.Coachbot]], int],
+            identifiers=None) -> int:
         """This small method iterates through all bot-ids and runs handlers
         approperiately."""
         targets = []
-        for identifier in self._args.id:
+        target_ids = identifiers if identifiers is not None else self._args.id
+        for identifier in target_ids:
             parsed = _parse_id(identifier)
 
             if isinstance(parsed, bool):
@@ -172,6 +174,26 @@ class CommandAction:
             return 0
 
         return self._bot_id_handler(_all_handler, _some_handler)
+
+    def run_command_handler(self) -> int:
+        """Handles the case of cctl run 'my command args'.
+
+        Returns:
+            The exit code.
+        """
+        command = self._args.exec_command
+        bots = self._args.bots.split(',')
+        prox_port = configuration.get_socks5_port() if self._args.proxy else -1
+
+        def _all_handler() -> int:
+            raise NotImplementedError  # TODO: Implement
+
+        def _some_handler(bots: List[bot_ctl.Coachbot]) -> int:
+            for bot in bots:
+                bot.run_ssh(command, prox_port)
+            return 0
+
+        return self._bot_id_handler(_all_handler, _some_handler, bots)
 
     def _start_pause_handler(self) -> int:
         target_on = self._args.command == RES_STR['cmd_start']
@@ -235,6 +257,7 @@ class CommandAction:
             RES_STR['cmd_start']: self._start_pause_handler,
             RES_STR['cmd_pause']: self._start_pause_handler,
             RES_STR['cmd_update']: _uploader,
+            RES_STR['cli']['exec']['name']: self.run_command_handler,
 
             # TODO: make this a member method
             RES_STR['cmd_manage']: CommandAction.manage_system,

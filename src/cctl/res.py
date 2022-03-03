@@ -88,6 +88,28 @@ RES_STR = {
         'req_signal_timeout': 'direct_signal did not receive a reply.',
         'req_retry': 'Could not reach robot %d. Retrying.',
         'req_invalid_status': 'direct_signal received an invalid response: %d.'
+    },
+
+    'cli': {
+        'exec': {
+            'name': 'exec',
+            'help': 'Executes the given command on the coachbot.',
+            'command': {
+                'name': 'exec_command',
+                'help': 'The command to execute on the coachbots.',
+                'metavar': 'COMMAND'
+            },
+            'bots': {
+                'name': '--bots',
+                'help': 'The bots to run the command on.',
+                'metavar': 'BOTS...'
+            },
+            'proxy': {
+                'name': '--proxy',
+                'help': 'Whether to create a proxy pointing back to cctl ' +
+                        'enabling internet access.'
+            }
+        }
     }
 }
 

@@ -33,7 +33,8 @@ mandatory_keys = {
         'ssh_key',
         'net_server_port_pub',
         'net_server_port_rep',
-        'net_server_port_req'
+        'net_server_port_req',
+        'socks5_port'
     ],
     'camera': [
         'raw_dev_name',
@@ -59,7 +60,8 @@ default_values = {
         'ssh_key': path.join(path.expanduser('~'), '.ssh', 'id_coachbot'),
         'net_server_port_rep': 16891,
         'net_server_port_pub': 16892,
-        'net_server_port_req': 16893
+        'net_server_port_req': 16893,
+        'socks5_port': 16899
     },
     'camera': {
         'raw_dev_name': 'Piwebcam: UVC Camera',
@@ -228,3 +230,8 @@ def get_coachswarm_net_req_port() -> int:
 def get_coachswarm_remote_path() -> str:
     """Returns the path to the remote directory."""
     return config.get('coachswarm', 'remote_path')
+
+
+def get_socks5_port() -> int:
+    """Returns the default socks5 port used when creating a proxy to cctl."""
+    return config.getint('coachswarm', 'socks5_port')

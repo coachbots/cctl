@@ -66,6 +66,25 @@ def main():
     cam_subparser.add_parser(RES_STR['cmd_cam_preview'],
                              help=RES_STR['cmd_cam_preview_desc'])
 
+    exec_parser = command_parser.add_parser(
+        RES_STR['cli']['exec']['name'], help=RES_STR['cli']['exec']['help'])
+    exec_parser.add_argument(
+        RES_STR['cli']['exec']['bots']['name'],
+        help=RES_STR['cli']['exec']['bots']['help'],
+        metavar=RES_STR['cli']['exec']['bots']['metavar']
+    )
+    exec_parser.add_argument(
+        RES_STR['cli']['exec']['command']['name'],
+        help=RES_STR['cli']['exec']['command']['help'],
+        metavar=RES_STR['cli']['exec']['command']['metavar'],
+        nargs='+'
+    )
+    exec_parser.add_argument(
+        RES_STR['cli']['exec']['proxy']['name'],
+        help=RES_STR['cli']['exec']['proxy']['help'],
+        action='store_true'
+    )
+
     args = parser.parse_args()
     if args.command is None:
         parser.print_help()
