@@ -183,7 +183,7 @@ class CommandAction:
             The exit code.
         """
         command = ' '.join(self._args.exec_command)
-        bots = self._args.bots.split(',')
+        bots = self._args.bots[0].split(',')
         prox_port = configuration.get_socks5_port() if self._args.proxy else -1
 
         def _some_handler(bots: List[bot_ctl.Coachbot]) -> int:
@@ -201,7 +201,7 @@ class CommandAction:
             The exit code.
         """
         packages = ' '.join(self._args.install_packages)
-        bots = self._args.bots.split(',')
+        bots = self._args.bots[0].split(',')
         prox_port = configuration.get_socks5_port()
 
         def _some_handler(bots: List[bot_ctl.Coachbot]) -> int:

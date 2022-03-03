@@ -72,7 +72,7 @@ def main():
         RES_STR['cli']['exec']['bots']['name'],
         help=RES_STR['cli']['exec']['bots']['help'],
         metavar=RES_STR['cli']['exec']['bots']['metavar'],
-        nargs='1'
+        nargs=1
     )
     exec_parser.add_argument(
         RES_STR['cli']['exec']['command']['name'],
