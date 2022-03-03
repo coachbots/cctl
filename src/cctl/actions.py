@@ -202,7 +202,7 @@ class CommandAction:
         Returns:
             The exit code.
         """
-        packages = ' '.join(self._args.install_packages)
+        packages = self._args.install_packages
         bots = self._args.bots[0].split(',')
         prox_port = configuration.get_socks5_port()
 
