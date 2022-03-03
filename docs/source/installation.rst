@@ -54,7 +54,7 @@ It is also necessary to register the public keys of the coachbots with the
 .. code-block:: bash
 
    export MY_PASS=<YOUR-PASSWORD>
-   for bot in {93..102}; do
+   for bot in {93..103}; do
        ssh pi@192.168.1.$bot \
            "ssh-keygen -t ed25519 -N '' -f ~/.ssh/id_coachbot_proxy"
        ssh pi@192.168.1.$bot "cat ~/.ssh/id_coachbot_proxy.pub" | \
@@ -65,6 +65,15 @@ It is also necessary to register the public keys of the coachbots with the
            /home/coachbot_proxy/.ssh/authorized_keys"
    done
    export MY_PASS=""
+
+We need to ensure the Coachbots can ``ssh`` proxy into the **cctl** machine,
+so you should do something like:
+
+.. code-block:: bash
+
+   export PROXY_USER=coachbot_proxy
+   cctl exec --bots=90-99 "ssh -o \"StrictHostKeyChecking=no\" \
+       $PROXY_USER@192.168.1.2 'exit'"
 
 When you're done with that, let us setup the proxy settings for **apt-get** on
 the coachbots:
