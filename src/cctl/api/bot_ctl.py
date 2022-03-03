@@ -4,7 +4,8 @@
 This module exposes various functions for controlling robots.
 """
 
-from typing import Callable, Iterable, Tuple, Union, List
+from contextlib import contextmanager
+from typing import Callable, Generator, Iterable, Tuple, Union, List
 from subprocess import DEVNULL, call
 import asyncio
 import os
@@ -15,12 +16,13 @@ import logging
 import socket
 
 import paramiko
+from paramiko.channel import ChannelFile
 from cctl import netutils
 
 from cctl.api import configuration
 from cctl.res import RES_STR
-from cctl.netutils import async_host_is_reachable, get_broadcast_address, \
-    read_remote_file
+from cctl.netutils import async_host_is_reachable, get_broadcast_address, get_ip_address, \
+    read_remote_file, ssh_client
 
 
 class Coachbot:
@@ -305,6 +307,44 @@ class Coachbot:
                 usr_code.read())
 
         return True
+
+    @contextmanager
+    def run_ssh(self, command: str,
+                back_proxy: int) -> Generator[Tuple[ChannelFile, ChannelFile,
+                                                    ChannelFile], None, None]:
+        """Runs a command over ssh. This command invokes a shell.
+
+        Parameters:
+            command (str): The command to execute on the Coachbot.
+            back_proxy (int): A flag that controls whether the Coachbot should
+                be connected back to cctl. If this flag is set to a non-zero
+                number, then the Coachbot will open up a SOCKS5 proxy back to
+                the machine running cctl. The number given is the port the
+                machine will open its proxy to. This flag is useful when you
+                want to execute a command that requires internet access.
+
+        Raises:
+            SSHError: If an error is thrown during command execution.
+        """
+        with ssh_client(self.address) as client:
+            should_proxy = back_proxy > 0
+            try:
+                if should_proxy:
+                    interface = configuration.get_server_interface()
+                    proxy_user = configuration.get_socks5_proxy_user()
+
+                    _, stdout, _ = client.exec_command(
+                        f'sh -c "ssh -D {back_proxy} -f -C -q -N ' +
+                        f'-i ~/.ssh/id_{proxy_user} ' +
+                        f'{proxy_user}@{get_ip_address(interface)} ' +
+                        '& echo $!"')
+                    stdout.channel.recv_exit_status()
+                yield client.exec_command(command)
+            finally:
+                if should_proxy is not None:
+                    # TODO: Change this nonsense command
+                    _, stdout, _ = client.exec_command('pkill -15 ssh')
+                    stdout.channel.recv_exit_status()
 
 
 def get_all_coachbots() -> List[Coachbot]:
