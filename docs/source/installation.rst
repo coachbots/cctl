@@ -53,16 +53,18 @@ It is also necessary to register the public keys of the coachbots with the
 
 .. code-block:: bash
 
+   export MY_PASS=<YOUR-PASSWORD>
    for bot in {93..102}; do
        ssh pi@192.168.1.$bot \
            "ssh-keygen -t ed25519 -N '' -f ~/.ssh/id_coachbot_proxy"
        ssh pi@192.168.1.$bot "cat ~/.ssh/id_coachbot_proxy.pub" | \
            cat > /tmp/id_coachbot_proxy.pub
-       echo <COACHBOT-PROXY-PASS> | sudo -S -u coachbot_proxy sh -c \
+       echo $MY_PASS | sudo -S -u coachbot_proxy sh -c \
            "mkdir -p /home/coachbot_proxy/.ssh; \
            cat /tmp/id_coachbot_proxy.pub >> \
            /home/coachbot_proxy/.ssh/authorized_keys"
    done
+   export MY_PASS=""
 
 When you're done with that, let us setup the proxy settings for **apt-get** on
 the coachbots:
