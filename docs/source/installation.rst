@@ -71,8 +71,6 @@ the coachbots:
 
 .. code-block:: bash
 
-   for bot in {93..102}; do
-       ssh pi@192.168.1.$bot 'echo pi | sudo -S sh -c
-           "echo Acquire::http::proxy\ \\\"socks5h://localhost:16899\\\"\; > \
-               /etc/apt/apt.conf.d/12proxy;'"
-   done
+   cctl exec --bots=90 'echo pi | sudo -S sh -c
+      echo Acquire::http::proxy\ \\\"socks5h://localhost:16899\\\"\; > \
+          /etc/apt/apt.conf.d/12proxy;'
