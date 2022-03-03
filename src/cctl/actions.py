@@ -202,7 +202,7 @@ class CommandAction:
         """
         packages = self._args.install_packages
         bots = self._args.bots.split(',')
-        prox_port = configuration.get_socks5_port() if self._args.proxy else -1
+        prox_port = configuration.get_socks5_port()
 
         def _some_handler(bots: List[bot_ctl.Coachbot]) -> int:
             for bot in bots:
@@ -213,7 +213,7 @@ class CommandAction:
                         with sftp_client(bot.address) as client:
                             remote_path = f'/tmp/{pkg_name}'
                             client.put(full_path, remote_path)
-                            bot.run_ssh('pip install {remote_path}', -1)
+                            bot.run_ssh('pip install {remote_path}', prox_port)
                             continue
 
                     bot.run_ssh('pip install package', prox_port)
