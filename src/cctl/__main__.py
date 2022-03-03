@@ -94,7 +94,7 @@ def main():
         RES_STR['cli']['install']['bots']['name'],
         help=RES_STR['cli']['install']['bots']['help'],
         metavar=RES_STR['cli']['install']['bots']['metavar'],
-        nargs='1'
+        nargs=1
     )
     install_parser.add_argument(
         RES_STR['cli']['install']['packages']['name'],
