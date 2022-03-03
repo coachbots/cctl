@@ -85,6 +85,22 @@ def main():
         action='store_true'
     )
 
+    install_parser = command_parser.add_parser(
+        RES_STR['cli']['install']['name'],
+        help=RES_STR['cli']['install']['help']
+    )
+    install_parser.add_argument(
+        RES_STR['cli']['install']['bots']['name'],
+        help=RES_STR['cli']['install']['bots']['help'],
+        metavar=RES_STR['cli']['install']['bots']['metavar']
+    )
+    install_parser.add_argument(
+        RES_STR['cli']['install']['packages']['name'],
+        help=RES_STR['cli']['install']['packages']['help'],
+        metavar=RES_STR['cli']['install']['packages']['metavar'],
+        nargs='+'
+    )
+
     args = parser.parse_args()
     if args.command is None:
         parser.print_help()

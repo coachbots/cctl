@@ -11,6 +11,7 @@ from argparse import Namespace
 from subprocess import call
 from multiprocessing import Process
 import time
+from cctl.netutils import sftp_client
 
 from cctl.res import ERROR_CODES, RES_STR
 from cctl.api import camera_ctl, bot_ctl, configuration
@@ -176,7 +177,7 @@ class CommandAction:
         return self._bot_id_handler(_all_handler, _some_handler)
 
     def run_command_handler(self) -> int:
-        """Handles the case of cctl run 'my command args'.
+        """Handles the case of cctl exec.
 
         Returns:
             The exit code.
@@ -185,15 +186,41 @@ class CommandAction:
         bots = self._args.bots.split(',')
         prox_port = configuration.get_socks5_port() if self._args.proxy else -1
 
-        def _all_handler() -> int:
-            raise NotImplementedError  # TODO: Implement
-
         def _some_handler(bots: List[bot_ctl.Coachbot]) -> int:
             for bot in bots:
                 bot.run_ssh(command, prox_port)
             return 0
 
-        return self._bot_id_handler(_all_handler, _some_handler, bots)
+        return self._bot_id_handler(
+            lambda: _some_handler(bot_ctl.get_alives()), _some_handler, bots)
+
+    def install_packages_handler(self) -> int:
+        """Handles the case of 'cctl install packages'
+
+        Returns:
+            The exit code.
+        """
+        packages = self._args.install_packages
+        bots = self._args.bots.split(',')
+        prox_port = configuration.get_socks5_port() if self._args.proxy else -1
+
+        def _some_handler(bots: List[bot_ctl.Coachbot]) -> int:
+            for bot in bots:
+                for package in packages:
+                    full_path = path.abspath(package)
+                    if path.exists(full_path):
+                        pkg_name = path.basename(full_path)
+                        with sftp_client(bot.address) as client:
+                            remote_path = f'/tmp/{pkg_name}'
+                            client.put(full_path, remote_path)
+                            bot.run_ssh('pip install {remote_path}', -1)
+                            continue
+
+                    bot.run_ssh('pip install package', prox_port)
+            return 0
+
+        return self._bot_id_handler(
+            lambda: _some_handler(bot_ctl.get_alives()), _some_handler, bots)
 
     def _start_pause_handler(self) -> int:
         target_on = self._args.command == RES_STR['cmd_start']
@@ -258,6 +285,7 @@ class CommandAction:
             RES_STR['cmd_pause']: self._start_pause_handler,
             RES_STR['cmd_update']: _uploader,
             RES_STR['cli']['exec']['name']: self.run_command_handler,
+            RES_STR['cli']['install']['name']: self.install_packages_handler,
 
             # TODO: make this a member method
             RES_STR['cmd_manage']: CommandAction.manage_system,

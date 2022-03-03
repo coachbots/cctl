@@ -109,6 +109,20 @@ RES_STR = {
                 'help': 'Whether to create a proxy pointing back to cctl ' +
                         'enabling internet access.'
             }
+        },
+        'install': {
+            'name': 'install',
+            'help': 'Installs the given packages on the specified coachbots.',
+            'packages': {
+                'name': 'install_packages',
+                'help': 'The packages to install on the coachbots.',
+                'metavar': 'PACKAGES'
+            },
+            'bots': {
+                'name': '--bots',
+                'help': 'The bots to run the command on.',
+                'metavar': 'BOTS...'
+            },
         }
     }
 }
