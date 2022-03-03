@@ -35,7 +35,7 @@ mandatory_keys = {
         'net_server_port_rep',
         'net_server_port_req',
         'socks5_port',
-        'socks5_proxy_user'
+        'socks5_proxy_user',
         'pi_password'
     ],
     'camera': [
