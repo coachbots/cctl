@@ -4,7 +4,8 @@
 This module exposes various functions for controlling robots.
 """
 
-from typing import Callable, Iterable, Tuple, Union, List
+from contextlib import contextmanager
+from typing import Callable, Generator, Iterable, Tuple, Union, List
 from subprocess import DEVNULL, call
 import asyncio
 import os
@@ -307,9 +308,10 @@ class Coachbot:
 
         return True
 
+    @contextmanager
     def run_ssh(self, command: str,
-                back_proxy: int) -> Tuple[ChannelFile, ChannelFile,
-                                          ChannelFile]:
+                back_proxy: int) -> Generator[Tuple[ChannelFile, ChannelFile,
+                                                    ChannelFile], None, None]:
         """Runs a command over ssh. This command invokes a shell.
 
         Parameters:
@@ -339,7 +341,7 @@ class Coachbot:
                         '& echo $!"')
                     stdout.channel.recv_exit_status()
                     proxy_pid = int(stdout.read().strip())
-                return client.exec_command(command)
+                yield client.exec_command(command)
             finally:
                 if should_proxy and proxy_pid is not None:
                     _, stdout, _ = client.exec_command(f'kill -15 {proxy_pid}')

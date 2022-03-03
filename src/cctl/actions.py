@@ -220,18 +220,20 @@ class CommandAction:
                         remote_path = f'/tmp/{pkg_name}'
                         with sftp_client(bot.address) as client:
                             client.put(full_path, remote_path)
-                        _, stdout, stderr = bot.run_ssh(
-                            pip_cmd_fmt % (remote_path), prox_port)
+                            with bot.run_ssh(pip_cmd_fmt % (remote_path),
+                                             prox_port) as conn:
+                                _, sout, serr = conn
+                                print(sout.read().decode())
+                                print(serr.read().decode(), file=sys.stderr)
+                                sout.channel.recv_exit_status()
+                                continue
+
+                    with bot.run_ssh(pip_cmd_fmt % (package),
+                                     prox_port) as conn:
+                        _, stdout, stderr = conn
                         print(stdout.read().decode())
                         print(stderr.read().decode(), file=sys.stderr)
                         stdout.channel.recv_exit_status()
-                        continue
-
-                    _, stdout, stderr = bot.run_ssh(
-                        pip_cmd_fmt % (package), prox_port)
-                    print(stdout.read().decode())
-                    print(stderr.read().decode(), file=sys.stderr)
-                    stdout.channel.recv_exit_status()
             return 0
 
         return self._bot_id_handler(
