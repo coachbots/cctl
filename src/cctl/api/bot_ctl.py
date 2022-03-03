@@ -20,7 +20,7 @@ from cctl import netutils
 from cctl.api import configuration
 from cctl.res import RES_STR
 from cctl.netutils import async_host_is_reachable, get_broadcast_address, \
-    read_remote_file
+    read_remote_file, ssh_client
 
 
 class Coachbot:
@@ -305,6 +305,34 @@ class Coachbot:
                 usr_code.read())
 
         return True
+
+    def run_ssh(self, command: str, back_proxy: int) -> None:
+        """Synchronously runs a command over ssh.
+
+        Parameters:
+            command (str): The command to execute on the Coachbot.
+            back_proxy (int): A flag that controls whether the Coachbot should
+                be connected back to cctl. If this flag is set to a non-zero
+                number, then the Coachbot will open up a SOCKS5 proxy back to
+                the machine running cctl. The number given is the port the
+                machine will open its proxy to. This flag is useful when you
+                want to execute a command that requires internet access.
+
+        Raises:
+            SSHError: If an error is thrown during command execution.
+        """
+        with ssh_client(self.address) as client:
+            should_proxy = back_proxy > 0
+            proxy_pid = None
+            try:
+                if should_proxy:
+                    _, stdout, _ = client.exec_command(
+                        f'ssh -D {back_proxy} -f -C -q -N & echo $!')
+                    proxy_pid = int(stdout.read().strip())
+                client.exec_command(command)
+            finally:
+                if should_proxy and proxy_pid is not None:
+                    client.exec_command(f'kill -15 {proxy_pid}')
 
 
 def get_all_coachbots() -> List[Coachbot]:
