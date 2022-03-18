@@ -69,6 +69,8 @@ class NetworkEventHandler:
             return self._stop_event.is_set()
 
         def run(self):
+            self.network_handler._bind_rep_socket()
+
             while not self.get_is_stopped():
                 # TODO: Test this
                 data = self.network_handler.rep_socket.recv()
@@ -77,6 +79,9 @@ class NetworkEventHandler:
                 result = result if result is not None \
                     else NetStatus.SUCCESS
                 self.network_handler.rep_socket.send(bytes(result.value))
+
+            self.network_handler.rep_socket.setsockopt_string(zmq.LINGER, 0)
+            self.network_handler.rep_socket.close()
 
     def __init__(self):
         self._zmq_contexts = {
@@ -90,7 +95,6 @@ class NetworkEventHandler:
         }
         self._handlers = {}
 
-        self._bind_rep_socket()
         self._bind_pub_socket()
         self.rep_worker = NetworkEventHandler.WorkerThread(self)
 
