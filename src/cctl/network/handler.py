@@ -295,5 +295,6 @@ class NetworkEventHandler:
     def tear_down(self) -> None:
         """Tears down the NetworkEventHandler. This is also hooked into
         __del__, so you don't necessarily need to call this manually."""
-        if hasattr(self, 'rep_worker') and self.rep_worker is not None:
+        if self.rep_worker is not None:
             self.rep_worker.stop()
+        self.rep_worker.join()
