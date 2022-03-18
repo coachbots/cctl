@@ -193,6 +193,7 @@ class Coachbot:
                               self.identifier)
             except ProcessLookupError:
                 # The process finished successfully, we can leave this fxn.
+                await self.async_wait_until_state(state)
                 return
             count += 1
 
