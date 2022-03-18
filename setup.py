@@ -27,5 +27,6 @@ setuptools.setup(
         'console_scripts': [
             'cctl = cctl.__main__:main'
         ]
-    }
+    },
+    include_package_data=True
 )

@@ -15,14 +15,21 @@ import time
 import logging
 import socket
 
+try:
+    import importlib.resources as pkg_resources
+except ImportError:
+    import importlib_resources as pkg_resources
+
 import paramiko
 from paramiko.channel import ChannelFile
 from cctl import netutils
 
 from cctl.api import configuration
 from cctl.res import RES_STR
-from cctl.netutils import async_host_is_reachable, get_broadcast_address, get_ip_address, \
-    read_remote_file, ssh_client
+from cctl.netutils import async_host_is_reachable, get_broadcast_address, \
+    get_ip_address, read_remote_file, ssh_client
+import static
+
 
 
 class Coachbot:
@@ -132,6 +139,13 @@ class Coachbot:
         """
         return Coachbot(int(address.split('.')[-1]) -
                         Coachbot.IP_ADDRESS_SHIFT)
+
+    @property
+    def mac_address(self) -> str:
+        """Returns the MAC address of self."""
+        # TODO: Not sure if pkg_resources caches or not, this could be costly.
+        file = pkg_resources.read_text(static, 'mac_addresses').split('\n')
+        return file[self.identifier - 1]
 
     async def async_boot(self, state: bool) -> None:
         """
