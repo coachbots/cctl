@@ -40,6 +40,3 @@ class Network:
         """
         if self._user is not None:
             self._user.tear_down()
-
-    def __del__(self) -> None:
-        self.tear_down()
