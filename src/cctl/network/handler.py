@@ -69,7 +69,7 @@ class NetworkEventHandler:
             return self._stop_event.is_set()
 
         def run(self):
-            self.network_handler._bind_rep_socket()
+            self.network_handler.bind_rep_socket()
 
             while not self.get_is_stopped():
                 # TODO: Test this
@@ -80,7 +80,6 @@ class NetworkEventHandler:
                     else NetStatus.SUCCESS
                 self.network_handler.rep_socket.send(bytes(result.value))
 
-            self.network_handler.rep_socket.setsockopt(zmq.LINGER, 0)
             self.network_handler.rep_socket.close()
 
     def __init__(self):
@@ -95,17 +94,17 @@ class NetworkEventHandler:
         }
         self._handlers = {}
 
-        self._bind_pub_socket()
+        self.bind_pub_socket()
         self.rep_worker = NetworkEventHandler.WorkerThread(self)
 
-    def _bind_rep_socket(self) -> None:
+    def bind_rep_socket(self) -> None:
         """Binds the REP socket."""
         address = _tcpurl(get_ip_address(get_server_interface()),
                           get_coachswarm_net_rep_port())
         logging.debug(RES_STR['logging']['rep_bind'], address)
         self.rep_socket.bind(address)
 
-    def _bind_pub_socket(self) -> None:
+    def bind_pub_socket(self) -> None:
         """Binds the PUB socket."""
         address = _tcpurl(get_ip_address(get_server_interface()),
                           get_coachswarm_net_pub_port())
@@ -299,6 +298,12 @@ class NetworkEventHandler:
     def tear_down(self) -> None:
         """Tears down the NetworkEventHandler. This is also hooked into
         __del__, so you don't necessarily need to call this manually."""
+        self.pub_socket.close()
+
         if self.rep_worker is not None:
             self.rep_worker.stop()
         self.rep_worker.join()
+
+        self._zmq_contexts['pub'].term()
+        self._zmq_contexts['req'].term()
+        self._zmq_contexts['rep'].term()
