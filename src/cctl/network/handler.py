@@ -72,7 +72,6 @@ class NetworkEventHandler:
             self.network_handler.bind_rep_socket()
 
             while not self.get_is_stopped():
-                # TODO: Test this
                 data = self.network_handler.rep_socket.recv()
                 result = self.network_handler.exec_handler(
                     *NetworkEventHandler.decode_signal_msg(data))
@@ -80,6 +79,7 @@ class NetworkEventHandler:
                     else NetStatus.SUCCESS
                 self.network_handler.rep_socket.send(bytes(result.value))
 
+            self.network_handler.rep_socket.setsockopt(zmq.LINGER, 1000)
             self.network_handler.rep_socket.close()
 
     def __init__(self):
