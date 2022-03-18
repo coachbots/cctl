@@ -186,8 +186,7 @@ class Coachbot:
                 stdout=asyncio.subprocess.DEVNULL,
                 stderr=asyncio.subprocess.DEVNULL
             )
-            await asyncio.wait([asyncio.sleep(10), process.wait()],
-                               return_when=asyncio.FIRST_COMPLETED)
+            await asyncio.wait([process.wait()], timeout=10)
             try:
                 process.terminate()
                 logging.debug(RES_STR['state_change_retry'], self.identifier)
