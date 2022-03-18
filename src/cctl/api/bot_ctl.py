@@ -175,7 +175,7 @@ class Coachbot:
             rather, be invoking it as a function from the module.
         """
         while not await self.async_is_alive():
-            process = asyncio.create_subprocess_exec(
+            process = await asyncio.create_subprocess_exec(
                 './ble_one.py',
                 str(int(state)),
                 str(self.identifier),
