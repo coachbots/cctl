@@ -80,7 +80,7 @@ class NetworkEventHandler:
                     else NetStatus.SUCCESS
                 self.network_handler.rep_socket.send(bytes(result.value))
 
-            self.network_handler.rep_socket.setsockopt_string(zmq.LINGER, 0)
+            self.network_handler.rep_socket.setsockopt(zmq.LINGER, 0)
             self.network_handler.rep_socket.close()
 
     def __init__(self):
