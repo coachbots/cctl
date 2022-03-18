@@ -174,7 +174,10 @@ class Coachbot:
             Currently, this function calls an extrenal script. It should,
             rather, be invoking it as a function from the module.
         """
-        while not await self.async_is_alive():
+        MAX_ATTEMPTS = 4
+
+        count = 0
+        while not await self.async_is_alive() or count < MAX_ATTEMPTS:
             process = await asyncio.create_subprocess_exec(
                 './ble_one.py',
                 str(int(state)),
@@ -183,8 +186,16 @@ class Coachbot:
                 stdout=asyncio.subprocess.DEVNULL,
                 stderr=asyncio.subprocess.DEVNULL
             )
-            await asyncio.sleep(3)
-            process.terminate()
+            await asyncio.wait([asyncio.sleep(10), process.wait()],
+                               return_when=asyncio.FIRST_COMPLETED)
+            try:
+                process.terminate()
+            except ProcessLookupError:
+                # The process finished successfully, we can leave this fxn.
+                return
+            count += 1
+
+        logging.error(RES_STR['state_change_max_attempts'], self.identifier)
 
     def boot(self, state: bool) -> None:
         """
