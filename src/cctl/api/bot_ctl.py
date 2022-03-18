@@ -189,13 +189,15 @@ class Coachbot:
             await asyncio.wait([process.wait()], timeout=10)
             try:
                 process.terminate()
-                logging.debug(RES_STR['state_change_retry'], self.identifier)
+                logging.debug(RES_STR['logging']['state_change_retry'],
+                              self.identifier)
             except ProcessLookupError:
                 # The process finished successfully, we can leave this fxn.
                 return
             count += 1
 
-        logging.error(RES_STR['state_change_max_attempts'], self.identifier)
+        logging.error(RES_STR['logging']['state_change_max_attempts'],
+                      self.identifier)
 
     def boot(self, state: bool) -> None:
         """
