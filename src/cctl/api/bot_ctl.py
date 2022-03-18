@@ -31,7 +31,6 @@ from cctl.netutils import async_host_is_reachable, get_broadcast_address, \
 import static
 
 
-
 class Coachbot:
     """Class representing a Coachbot. Use this class for Coachbot
     operations.
@@ -175,15 +174,17 @@ class Coachbot:
             Currently, this function calls an extrenal script. It should,
             rather, be invoking it as a function from the module.
         """
-        await asyncio.create_subprocess_exec(
-            './ble_one.py',
-            str(int(state)),
-            str(self.identifier),
-            cwd=configuration.get_server_dir(),
-            stdout=asyncio.subprocess.DEVNULL,
-            stderr=asyncio.subprocess.DEVNULL
-        )
-        await self.async_wait_until_state(state)
+        while not await self.async_is_alive():
+            process = asyncio.create_subprocess_exec(
+                './ble_one.py',
+                str(int(state)),
+                str(self.identifier),
+                cwd=configuration.get_server_dir(),
+                stdout=asyncio.subprocess.DEVNULL,
+                stderr=asyncio.subprocess.DEVNULL
+            )
+            await asyncio.sleep(3)
+            process.terminate()
 
     def boot(self, state: bool) -> None:
         """

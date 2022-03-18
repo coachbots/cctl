@@ -11,7 +11,8 @@ Dependencies
 Before installing **cctl** ensure you have ``ffmpeg``, ``v4l2loopback``,
 ``python3.6``, ``pandoc`` and the appropriate ``pip`` version.
 
-Alongside this, ``cctl`` depends on ``bluepy``.
+Alongside this, ``cctl`` depends on ``bluepy``, ``importlib-resources`` and
+``python-daemon``.
 
 Distro-specific Guides
 ----------------------
@@ -25,7 +26,7 @@ On Ubuntu, you can install all of the dependencies with:
 
    sudo apt-get install ffmpeg python3.6 v4l2loopback-dkms pandoc \
        libglib2.0-dev
-   pip install --user build bluepy
+   pip install --user build bluepy python-daemon
 
 The task of installation is then simply cloning the repository, building it and
 installing all of the required files.
