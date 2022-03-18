@@ -7,6 +7,7 @@ import base64
 import logging
 from threading import Thread
 import threading
+from time import sleep
 from typing import Callable, Optional, Tuple, List
 import zmq
 from cctl.api.bot_ctl import Coachbot
@@ -72,12 +73,15 @@ class NetworkEventHandler:
             self.network_handler.bind_rep_socket()
 
             while not self.get_is_stopped():
-                data = self.network_handler.rep_socket.recv()
-                result = self.network_handler.exec_handler(
-                    *NetworkEventHandler.decode_signal_msg(data))
-                result = result if result is not None \
-                    else NetStatus.SUCCESS
-                self.network_handler.rep_socket.send(bytes(result.value))
+                try:
+                    data = self.network_handler.rep_socket.recv(zmq.NOBLOCK)
+                    result = self.network_handler.exec_handler(
+                        *NetworkEventHandler.decode_signal_msg(data))
+                    result = result if result is not None \
+                        else NetStatus.SUCCESS
+                    self.network_handler.rep_socket.send(bytes(result.value))
+                except zmq.Again:
+                    sleep(1e-2)
 
             self.network_handler.rep_socket.setsockopt(zmq.LINGER, 0)
             self.network_handler.rep_socket.close()
