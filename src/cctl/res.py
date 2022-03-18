@@ -89,7 +89,8 @@ RES_STR = {
         'req_retry': 'Could not reach robot %d. Retrying.',
         'req_invalid_status': 'direct_signal received an invalid ' +
                               'response: %d.',
-        'state_change_max_attempts': 'Could not change state of bot %d.'
+        'state_change_max_attempts': 'Could not change state of bot %d.',
+        'state_change_retry': 'Could not change state of bot %d. Trying again.'
     },
 
     'cli': {

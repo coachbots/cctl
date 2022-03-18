@@ -190,6 +190,7 @@ class Coachbot:
                                return_when=asyncio.FIRST_COMPLETED)
             try:
                 process.terminate()
+                logging.debug(RES_STR['state_change_retry'], self.identifier)
             except ProcessLookupError:
                 # The process finished successfully, we can leave this fxn.
                 return
