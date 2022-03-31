@@ -49,6 +49,7 @@ class TestNetwork(BotTestCase):
 
             upload_code(usr_file.name, False)
             set_user_code_running(True)
+            sleep(2)  # Wait for the server to actually start.
 
         network = Network()
         try:
