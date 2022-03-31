@@ -20,8 +20,7 @@ class TestNetwork(BotTestCase):
     """Tests whether the network operates as expected."""
 
     def test_direct_signal_success_status(self):
-        """Tests whether bots can be directly messaged and whether they reply
-        correctly for a correct status."""
+        """Tests whether bots reply for a success."""
 
         target_bot = self.random_testing_bot
         target_bot.boot(True)
@@ -64,8 +63,7 @@ class TestNetwork(BotTestCase):
         self.assertTrue(on_success_called)
 
     def test_direct_signal_invalid_status(self):
-        """Tests whether coachbots can be messaged directly and whether an
-        invalid status is raised if they return an invalid result code."""
+        """Tests whether bots raise invalid status on an invalid result"""
 
         target_bot = self.random_testing_bot
         target_bot.boot(True)
