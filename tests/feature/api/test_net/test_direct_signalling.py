@@ -40,7 +40,7 @@ class TestNetwork(BotTestCase):
         def on_success(status: NetStatus):
             nonlocal on_success_called
             on_success_called = True
-            self.assertTrue(NetStatus.SUCCESS, status)
+            self.assertEqual(NetStatus.SUCCESS, status)
 
         with tempfile.NamedTemporaryFile('w') as usr_file:
             usr_file.write(textwrap.dedent(test_code))
@@ -92,9 +92,10 @@ class TestNetwork(BotTestCase):
             usr_file.flush()
 
             upload_code(usr_file.name, False)
-            set_user_code_running(True)
 
         network = Network()
+        set_user_code_running(True)
+
         try:
             network.user.direct_signal('testsig', target_bot, b'',
                                        on_error=on_error)
@@ -120,6 +121,7 @@ class TestNetwork(BotTestCase):
             self.assertEqual(NetStatus.TIMEOUT, status)
 
         network = Network()
+
         try:
             network.user.direct_signal('testsig', target_bot, b'',
                                        on_error=on_error)
