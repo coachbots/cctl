@@ -45,11 +45,11 @@ class TestNetwork(BotTestCase):
         with tempfile.NamedTemporaryFile('w') as usr_file:
             usr_file.write(textwrap.dedent(test_code))
             usr_file.flush()
-
             upload_code(usr_file.name, False)
 
         network = Network()
 
+        set_user_code_running(False)
         set_user_code_running(True)
         sleep(2)  # Wait for the server to actually start.
 
