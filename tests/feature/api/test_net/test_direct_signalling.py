@@ -47,10 +47,12 @@ class TestNetwork(BotTestCase):
             usr_file.flush()
 
             upload_code(usr_file.name, False)
-            set_user_code_running(True)
-            sleep(2)  # Wait for the server to actually start.
 
         network = Network()
+
+        set_user_code_running(True)
+        sleep(2)  # Wait for the server to actually start.
+
         try:
             network.user.direct_signal('testsig', target_bot, b'',
                                        on_success=on_success)
