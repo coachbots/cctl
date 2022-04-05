@@ -212,9 +212,12 @@ class NetworkEventHandler:
         retries_left = max_retries
         while retries_left > 0:
             if (req_socket.poll(int(1000 * timeout)) & zmq.POLLIN) != 0:
-                result_raw = int(req_socket.recv())
+                result_raw = req_socket.recv()
+                logging.debug(RES_STR['logging']['req_response_raw'],
+                              result_raw)
+                result_int = int(result_raw)
                 try:
-                    result = NetStatus(result_raw)
+                    result = NetStatus(result_int)
                     return on_success(result) \
                         if result < MAX_SUCCESSFUL_VALUE \
                         else on_error(result)
@@ -222,7 +225,7 @@ class NetworkEventHandler:
                     # Building the NetStatus failed. Means we received a
                     # malfored response.
                     logging.warning(RES_STR['logging']['req_invalid_status'],
-                                    result_raw)
+                                    result_int)
                     return on_error(NetStatus.INVALID_RESPONSE)
                 finally:
                     req_socket.close()
