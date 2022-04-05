@@ -87,6 +87,9 @@ class TestNetwork(BotTestCase):
             on_error_called = True
             self.assertTrue(NetStatus.INVALID_RESPONSE, status)
 
+        def on_success(status: NetStatus):
+            self.fail(f'on_success called with result: {status}')
+
         with tempfile.NamedTemporaryFile('w') as usr_file:
             usr_file.write(textwrap.dedent(test_code))
             usr_file.flush()
@@ -99,6 +102,7 @@ class TestNetwork(BotTestCase):
 
         try:
             network.user.direct_signal('testsig', target_bot, b'',
+                                       on_success=on_success,
                                        on_error=on_error)
             sleep(2)
         except ZMQError as zmqerr:
