@@ -95,6 +95,7 @@ class TestNetwork(BotTestCase):
 
         network = Network()
         set_user_code_running(True)
+        sleep(2)
 
         try:
             network.user.direct_signal('testsig', target_bot, b'',
@@ -121,6 +122,7 @@ class TestNetwork(BotTestCase):
             self.assertEqual(NetStatus.TIMEOUT, status)
 
         network = Network()
+        sleep(2)
 
         try:
             network.user.direct_signal('testsig', target_bot, b'',
