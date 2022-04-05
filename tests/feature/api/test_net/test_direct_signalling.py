@@ -28,7 +28,7 @@ class TestNetwork(BotTestCase):
         test_code = """
             def usr(robot):
                 def _handler(sig_type, message):
-                    robot.logger.info('(signal=%s, message=%s) -> %s' %
+                    robot.logger.info('(signal=%s, message=%s) -> %s',
                                       (sig_type, message,
                                       robot.net.results.SUCCESS))
                     return robot.net.results.SUCCESS
@@ -76,7 +76,7 @@ class TestNetwork(BotTestCase):
         test_code = """
             def usr(robot):
                 def _handler(sig_type, message):
-                    robot.logger.info('(signal=%s, message=%s) -> %s' %
+                    robot.logger.info('(signal=%s, message=%s) -> %s',
                                       (sig_type, message,
                                       robot.net.results.INVALID_RESPONSE))
                     return robot.net.results.INVALID_RESPONSE
