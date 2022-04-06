@@ -30,7 +30,7 @@ class TestNetwork(BotTestCase):
                 def _handler(sig_type, message):
                     robot.logger.info('(signal=%s, message=%s) -> %s',
                                       (sig_type, message,
-                                      robot.net.results.SUCCESS))
+                                       robot.net.results.SUCCESS))
                     return robot.net.results.SUCCESS
                 robot.net.cctl.add_slot('testsig', _handler)
 
@@ -78,7 +78,7 @@ class TestNetwork(BotTestCase):
                 def _handler(sig_type, message):
                     robot.logger.info('(signal=%s, message=%s) -> %s',
                                       (sig_type, message,
-                                      robot.net.results.INVALID_RESPONSE))
+                                       robot.net.results.INVALID_RESPONSE))
                     return robot.net.results.INVALID_RESPONSE
                 robot.net.cctl.add_slot('testsig', _handler)
 
