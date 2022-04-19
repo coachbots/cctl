@@ -90,7 +90,12 @@ RES_STR = {
         'req_invalid_status': 'direct_signal received an invalid ' +
                               'response: %d.',
         'state_change_max_attempts': 'Could not change state of bot %d.',
-        'state_change_retry': 'Could not change state of bot %d. Trying again.'
+        'state_change_retry': 'Could not change state of bot %d. Trying ' +
+                              'again.',
+        'arduino_upload_err': 'Could not successfully upload the Arduino ' +
+                              'script. The error-code was %d and stderr: %s',
+        'arduino_upload_success': 'Successfully uploaded the Arduino ' +
+                                  'script: %s.'
     },
 
     'cli': {

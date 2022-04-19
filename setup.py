@@ -3,14 +3,19 @@
 
 """Setup Script for cctl"""
 
+import sys
+from os import path
 import setuptools
+
+sys.path.insert(0, path.abspath('./src'))
+import cctl
 
 with open('README.md', 'r', encoding='utf-8') as fh:
     long_description = fh.read()
 
 setuptools.setup(
     name='cctl',
-    version='0.4.0',
+    version=cctl.__VERSION__,
     author='Marko Vejnovic',
     author_email='contact@markovejnovic.com',
     description='Coachbot Control Software',

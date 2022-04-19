@@ -1,33 +1,23 @@
-"""This module provides functions for controlling the coachbot charging rails"""
+"""
+This module provides functions for controlling the coachbot charging rails
+"""
 
-from serial import Serial
+__author__ = 'Billie Strong'
+__copyright__ = 'Copyright 2022, Northwestern University'
+__credits__ = ['Marko Vejnovic', 'Lin Liu', 'Billie Strong']
+__license__ = 'Proprietary'
+__version__ = '0.5.1'
+__maintainer__ = 'Marko Vejnovic'
+__email__ = 'contact@markovejnovic.com'
+__status__ = 'Development'
+
+from cctl.daughters import arduino
 
 
+async def charge_rail_set(power: bool) -> None:
+    """Changes the state of the charging rail
 
-class ChargeRail:
-    """Class representing the charging rail. Use this class for charging rail
-    operations.
+    Parameters:
+        power (bool): Whether to set the power on or off.
     """
-
-    def __init__(self, port):
-        """Constructs a ChargeRail.
-        Parameters:
-            port: the serial port to which the charge controller is connected
-        """
-
-        self.serial = Serial(port,115200)
-
-    def charge_rail_set(self, power):
-        """Changes the state of the charging rail
-
-        Parameters:
-            power: if true, the charger will turn on; if false, the charger will turn off
-        """
-        if power:
-            self.serial.write(b'A')
-        else:
-            self.serial.write(b'D')
-        
-
-
-
+    await arduino.charge_rail_set(power)

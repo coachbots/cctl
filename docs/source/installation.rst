@@ -11,6 +11,18 @@ Dependencies
 Before installing **cctl** ensure you have ``ffmpeg``, ``v4l2loopback``,
 ``python3.6``, ``pandoc`` and the appropriate ``pip`` version.
 
+You also need to have ``arduino-cli`` installed. To do this, you should run
+this in a root shell:
+
+.. code-block:: bash
+
+   curl -fsSL \
+       https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh \
+       | BINDIR=/usr/local/bin sh
+
+Then, install the ``arduino:avr`` toolchain with ``arduino-cli core install
+arduino:avr``.
+
 Alongside this, ``cctl`` depends on ``bluepy``, ``importlib-resources`` and
 ``python-daemon``.
 
