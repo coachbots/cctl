@@ -51,9 +51,9 @@ async def __upload_arduino_script() -> None:
         ]
 
         with ARDUINO_SCRIPT_PATH_MANAGER as script_path:
-            proc = await asyncio.create_subprocess_shell(' '.join([
+            proc = await asyncio.create_subprocess_exec([
                 ARDUINO_EXECUTABLE, operation, *flags, str(script_path)
-            ]), stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+            ], stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
             stdout, stderr = await proc.communicate()
 
             if proc.returncode != 0:
