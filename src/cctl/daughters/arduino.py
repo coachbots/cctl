@@ -11,7 +11,7 @@ except ImportError:
     import importlib_resources as pkg_resources
 from serial import Serial
 import cctl
-from cctl.util.async import uses_lock
+from cctl.util.asynctools import uses_lock
 from cctl.api import configuration as config
 from cctl.res import RES_STR
 import static
@@ -45,7 +45,7 @@ async def __upload_arduino_script() -> None:
             '-p', str(PORT),
         ] + ([
             '--build-property',
-            f'build.extra_flags="-DVERSION=\\"{cctl.__VERSION__}\\"'
+            f'build.extra_flags="-DVERSION=\"{cctl.__VERSION__}\""'
         ] if operation == 'compile' else [])
 
         with ARDUINO_SCRIPT_PATH_MANAGER as script_path:
