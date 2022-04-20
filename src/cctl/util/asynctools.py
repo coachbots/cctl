@@ -22,7 +22,7 @@ def uses_lock(lock: Lock):
     def decorator(function):
         @functools.wraps(function)
         async def wrapper(*args, **kwargs):
-            with await lock:
+            async with lock:
                 return await function(*args, **kwargs)
         return wrapper
     return decorator
