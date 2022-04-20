@@ -44,7 +44,7 @@ async def __upload_arduino_script() -> None:
             f'--fqbn {BOARD_TYPE}',
             f'-p {PORT}',
             '--build-property ' +
-            f'"build.extra_flags=\\"-DVERSION={cctl.__VERSION__}\\""'
+            f'build.extra_flags="-DVERSION=\\"{cctl.__VERSION__}\\""'
         ] if operation == 'compile' else [
             f'--fqbn {BOARD_TYPE}',
             f'-p {PORT}',

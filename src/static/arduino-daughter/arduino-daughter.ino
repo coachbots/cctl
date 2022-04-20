@@ -51,7 +51,7 @@ namespace ChargeRelays {
 /**
  * Communication-related functions.
  */
-namespace {
+namespace Comm {
     /**
      * Initializes serial communication.
      */
