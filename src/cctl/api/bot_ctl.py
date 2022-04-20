@@ -292,10 +292,11 @@ class Coachbot:
         return asyncio.get_event_loop().run_until_complete(
             self.async_fetch_legacy_log())
 
-    async def async_upload_user_code(self,
-            path_to_usr_code: str, os_update: bool,
-            path_to_os: str = path.join(configuration.get_server_dir(),
-                                        'temp')) -> bool:
+    async def async_upload_user_code(
+        self,
+        path_to_usr_code: str, os_update: bool,
+        path_to_os: str = path.join(configuration.get_server_dir(),
+                                    'temp')) -> bool:
         """Asynchronously uploads code to the specified Coachbot if it is
         alive.
 

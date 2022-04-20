@@ -9,9 +9,6 @@ import setuptools
 sys.path.insert(0, path.abspath('./src'))
 import cctl
 
-sys.path.insert(0, path.abspath('./src'))
-import cctl
-
 with open('README.md', 'r', encoding='utf-8') as fh:
     long_description = fh.read()
 
