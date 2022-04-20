@@ -4,6 +4,7 @@
 """This module exposes programming and control of the Arduino daughterboard."""
 
 import asyncio
+import time
 import logging
 try:
     import importlib.resources as pkg_resources
@@ -77,7 +78,7 @@ async def query_version() -> str:
     """
     with Serial(PORT, BAUD_RATE, timeout=3.0) as ser:
         ser.write(b'V')  # Ask for the daughterboard to return the version.
-        return ser.readline()[:1]  # Remove the last newline character.
+        return ser.readline()[:-2].decode('ascii')  # Last characters are \r\n
 
 
 async def update(force: bool = False) -> None:
