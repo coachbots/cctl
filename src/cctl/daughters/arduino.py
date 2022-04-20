@@ -49,9 +49,10 @@ async def __upload_arduino_script() -> None:
             f'--fqbn {BOARD_TYPE}',
             f'-p {PORT}',
         ]
+
         with ARDUINO_SCRIPT_PATH_MANAGER as script_path:
             proc = await asyncio.create_subprocess_shell(' '.join([
-                ARDUINO_EXECUTABLE, operation, *flags, script_path
+                ARDUINO_EXECUTABLE, operation, *flags, str(script_path)
             ]), stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
             stdout, stderr = await proc.communicate()
 
