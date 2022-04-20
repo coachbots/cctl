@@ -4,15 +4,14 @@
 """This module exposes programming and control of the Arduino daughterboard."""
 
 import asyncio
-from typing import Union
 import logging
-from functools import wraps
 try:
     import importlib.resources as pkg_resources
 except ImportError:
     import importlib_resources as pkg_resources
 from serial import Serial
 import cctl
+from cctl.util.async import uses_lock
 from cctl.api import configuration as config
 from cctl.res import RES_STR
 import static
@@ -35,22 +34,11 @@ BOARD_TYPE = config.get_arduino_daughterboard_board()
 ACCESS_LOCK = asyncio.Lock()
 
 
-def __uses_lock(function):
-    @wraps(function)
-    async def wrapper(*args, **kwargs):
-        ACCESS_LOCK.acquire()
-        try:
-            return await function(*args, **kwargs)
-        finally:
-            ACCESS_LOCK.release()
-    return wrapper
-
-
-@__uses_lock
 async def __upload_arduino_script() -> None:
     """Uploads the static/arduino-daughter.ino script. Internal use only. This
     function automatically compiles it as required.
     """
+    @uses_lock(ACCESS_LOCK)
     async def exec_operation(operation: str) -> int:
         flags = [
             f'--fqbn {BOARD_TYPE}',
@@ -78,7 +66,7 @@ async def __upload_arduino_script() -> None:
         await exec_operation('upload')
 
 
-@__uses_lock
+@uses_lock(ACCESS_LOCK)
 async def query_version() -> str:
     """Queries the current version loaded on the arduino daughterboard.
 
@@ -104,7 +92,7 @@ async def update(force: bool = False) -> None:
     await __upload_arduino_script()
 
 
-@__uses_lock
+@uses_lock(ACCESS_LOCK)
 async def charge_rail_set(power: bool) -> None:
     """Changes the state of the charging rail
 
