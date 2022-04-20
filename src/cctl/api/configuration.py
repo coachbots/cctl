@@ -91,7 +91,7 @@ default_values = {
         'port': '/dev/cctl-arduino',
         'baudrate': 115200,
         'board': 'arduino:avr:uno',
-        'arduino-executable': 'arduino-cli'
+        'arduino-executable': '/usr/local/bin/arduino-cli'
     }
 }
 

@@ -154,8 +154,8 @@ is an example file with all supported keys.
    baudrate = 115200
    # The fully qualified board name of the daughterboard
    board = arduino:avr:uno
-   # The arduino-cli executable path (can be abs or relative)
-   arduino-executable = arduino-cli
+   # The arduino-cli executable path
+   arduino-executable = /usr/local/bin/arduino-cli
 
 coachswarm.conf
 ---------------
