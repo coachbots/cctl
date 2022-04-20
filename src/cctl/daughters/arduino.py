@@ -74,8 +74,8 @@ async def __upload_arduino_script() -> None:
         logging.debug(RES_STR['logging']['arduino_upload_success'], stdout)
         return 0
 
-    if exec_operation('compile') == 0:
-        exec_operation('upload')
+    if await exec_operation('compile') == 0:
+        await exec_operation('upload')
 
 
 @__uses_lock
