@@ -26,7 +26,6 @@ __email__ = 'contact@markovejnovic.com'
 __status__ = 'Development'
 
 
-ARDUINO_SCRIPT_PATH_MANAGER = pkg_resources.path(static, 'arduino-daughter')
 ARDUINO_EXECUTABLE = config.get_arduino_executable_path()
 PORT = config.get_arduino_daughterboard_port()
 BAUD_RATE = config.get_arduino_daughterboard_baud_rate()
@@ -48,9 +47,9 @@ async def __upload_arduino_script() -> None:
             f'build.extra_flags="-DVERSION=\"{cctl.__VERSION__}\""'
         ] if operation == 'compile' else [])
 
-        with ARDUINO_SCRIPT_PATH_MANAGER as script_path:
-            proc = await asyncio.create_subprocess_exec(ARDUINO_EXECUTABLE,
-                operation, *flags, str(script_path),
+        with pkg_resources.path(static, 'arduino-daughter') as script_path:
+            proc = await asyncio.create_subprocess_exec(
+                ARDUINO_EXECUTABLE, operation, *flags, str(script_path),
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE)
 
@@ -64,8 +63,9 @@ async def __upload_arduino_script() -> None:
             logging.debug(RES_STR['logging']['arduino_upload_success'], stdout)
             return 0
 
-    if await exec_operation('compile') == 0:
-        await exec_operation('upload')
+    if await exec_operation('compile') != 0:
+        return
+    await exec_operation('upload')
 
 
 @uses_lock(ACCESS_LOCK)
