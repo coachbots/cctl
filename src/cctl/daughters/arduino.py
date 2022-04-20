@@ -37,9 +37,12 @@ ACCESS_LOCK = asyncio.Lock()
 
 def __uses_lock(function):
     @wraps(function)
-    def wrapper(*args, **kwargs):
-        with (yield from ACCESS_LOCK):
-            return function(*args, **kwargs)
+    async def wrapper(*args, **kwargs):
+        ACCESS_LOCK.acquire()
+        try:
+            return await function(*args, **kwargs)
+        finally:
+            ACCESS_LOCK.release()
     return wrapper
 
 
