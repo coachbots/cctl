@@ -42,10 +42,11 @@ class TestArduino(unittest.TestCase):
         self.assertEqual(__VERSION__, version)
 
     @async_test
-    async def charge_rail_set(self):
+    async def test_charge_rail_set(self):
         """Ensures that it is possible to set the charge_rail power."""
         await arduino.update()
         await arduino.charge_rail_set(True)
+        await arduino.charge_rail_set(False)
 
 
 if __name__ == '__main__':
