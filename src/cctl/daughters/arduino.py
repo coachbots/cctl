@@ -26,7 +26,7 @@ __email__ = 'contact@markovejnovic.com'
 __status__ = 'Development'
 
 
-ARDUINO_SCRIPT_PATH = pkg_resources.path(static, 'arduino-daughter')
+ARDUINO_SCRIPT_PATH_MANAGER = pkg_resources.path(static, 'arduino-daughter')
 ARDUINO_EXECUTABLE = config.get_arduino_executable_path()
 PORT = config.get_arduino_daughterboard_port()
 BAUD_RATE = config.get_arduino_daughterboard_baud_rate()
@@ -44,23 +44,24 @@ async def __upload_arduino_script() -> None:
             f'--fqbn {BOARD_TYPE}',
             f'-p {PORT}',
             '--build-property ' +
-            f'"build.extra_flags=\"-DVERSION={cctl.__VERSION__}\""'
+            f'"build.extra_flags=\\"-DVERSION={cctl.__VERSION__}\\""'
         ] if operation == 'compile' else [
             f'--fqbn {BOARD_TYPE}',
             f'-p {PORT}',
         ]
-        proc = await asyncio.create_subprocess_shell(' '.join([
-            ARDUINO_EXECUTABLE, operation, *flags, str(ARDUINO_SCRIPT_PATH)
-        ]), stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
-        stdout, stderr = await proc.communicate()
+        with ARDUINO_SCRIPT_PATH_MANAGER as script_path:
+            proc = await asyncio.create_subprocess_shell(' '.join([
+                ARDUINO_EXECUTABLE, operation, *flags, script_path
+            ]), stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+            stdout, stderr = await proc.communicate()
 
-        if proc.returncode != 0:
-            logging.error(RES_STR['logging']['arduino_upload_err'],
-                          proc.returncode, stderr)
-            return -1
+            if proc.returncode != 0:
+                logging.error(RES_STR['logging']['arduino_upload_err'],
+                              proc.returncode, stderr)
+                return -1
 
-        logging.debug(RES_STR['logging']['arduino_upload_success'], stdout)
-        return 0
+            logging.debug(RES_STR['logging']['arduino_upload_success'], stdout)
+            return 0
 
     if await exec_operation('compile') == 0:
         await exec_operation('upload')
