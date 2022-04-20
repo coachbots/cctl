@@ -48,7 +48,7 @@ async def __upload_arduino_script() -> None:
     """Uploads the static/arduino-daughter.ino script. Internal use only. This
     function automatically compiles it as required.
     """
-    async def exec_operation( operation: str) -> int:
+    async def exec_operation(operation: str) -> int:
         flags = [
             f'--fqbn {BOARD_TYPE}',
             f'-p {PORT}',
