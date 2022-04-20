@@ -4,7 +4,7 @@
 """This module exposes programming and control of the Arduino daughterboard."""
 
 import asyncio
-from typing import Union, Literal
+from typing import Union
 import logging
 from functools import wraps
 try:
@@ -48,9 +48,7 @@ async def __upload_arduino_script() -> None:
     """Uploads the static/arduino-daughter.ino script. Internal use only. This
     function automatically compiles it as required.
     """
-    async def exec_operation(
-        operation: Union[Literal['upload'], Literal['compile']]
-    ) -> int:
+    async def exec_operation( operation: str) -> int:
         flags = [
             f'--fqbn {BOARD_TYPE}',
             f'-p {PORT}',
