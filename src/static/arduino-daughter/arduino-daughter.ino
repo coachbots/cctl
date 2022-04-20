@@ -16,8 +16,8 @@
 
 #define BAUD_RATE 115200
 #define RELAY_PINS {A1, A3, A5}  // The pins hooked up to the relay.
-#define COMMAND_POLL_DELAY 100  // The polling delay used if no command is
-                                // sent.
+#define COMMAND_POLL_DELAY 20  // The polling delay used if no command is
+                               // sent.
 
 /**
  * The ChargeRelays namespace contains functions which control the relays used
