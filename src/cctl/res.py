@@ -87,6 +87,7 @@ RES_STR = {
         'pub_signal': 'Sending signal %s over PUB transport.',
         'req_signal_timeout': 'direct_signal did not receive a reply.',
         'req_retry': 'Could not reach robot %d. Retrying.',
+        'req_response_raw': 'REQ transport received a response %s',
         'req_invalid_status': 'direct_signal received an invalid ' +
                               'response: %d.',
         'state_change_max_attempts': 'Could not change state of bot %d.',

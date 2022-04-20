@@ -6,6 +6,8 @@
 import sys
 from os import path
 import setuptools
+sys.path.insert(0, path.abspath('./src'))
+import cctl
 
 sys.path.insert(0, path.abspath('./src'))
 import cctl
