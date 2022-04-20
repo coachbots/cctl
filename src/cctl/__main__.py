@@ -103,6 +103,17 @@ def main():
         nargs='+'
     )
 
+    charger_parser = command_parser.add_parser(
+        RES_STR['cli']['charger']['name'],
+        help=RES_STR['cli']['charger']['help']
+    )
+    charger_parser.add_argument(
+        RES_STR['cli']['charger']['state']['name'],
+        help=RES_STR['cli']['charger']['state']['help'],
+        metavar=RES_STR['cli']['charger']['state']['metavar'],
+        nargs=1
+    )
+
     args = parser.parse_args()
     if args.command is None:
         parser.print_help()

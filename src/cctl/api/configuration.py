@@ -45,6 +45,12 @@ mandatory_keys = {
     'logs': [
         'syslog_path',
         'legacy_log_file_path'
+    ],
+    'arduino-daughter': [
+        'port',
+        'baudrate',
+        'board',
+        'arduino-executable'
     ]
 }
 
@@ -80,6 +86,12 @@ default_values = {
     'logs': {
         'syslog_path': '/var/log/syslog',
         'legacy_log_file_path': '/home/pi/control/experiment_log'
+    },
+    'arduino-daughter': {
+        'port': '/dev/cctl-arduino',
+        'baudrate': 115200,
+        'board': 'arduino:avr:uno',
+        'arduino-executable': '/usr/local/bin/arduino-cli'
     }
 }
 
@@ -253,3 +265,23 @@ def get_pi_password() -> str:
 def get_socks5_proxy_user() -> str:
     """Returns the cctl user setup for proxying the internet."""
     return config.get('coachswarm', 'socks5_proxy_user')
+
+
+def get_arduino_daughterboard_port() -> str:
+    """Returns the arduino daughterboard communication port."""
+    return config.get('arduino-daughter', 'port')
+
+
+def get_arduino_daughterboard_baud_rate() -> int:
+    """Returns the arduino daughterboard communication baudrate."""
+    return config.getint('arduino-daughter', 'baudrate')
+
+
+def get_arduino_daughterboard_board() -> str:
+    """Returns the arduino daughterboard type."""
+    return config.get('arduino-daughter', 'board')
+
+
+def get_arduino_executable_path() -> str:
+    """Returns the full path to the arduino executable."""
+    return path.abspath(config.get('arduino-daughter', 'arduino-executable'))

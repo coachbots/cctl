@@ -3,6 +3,7 @@
 """Defines the main class that handles all commands."""
 
 import sys
+import asyncio
 from typing import Callable, Iterable, Union, List
 import re
 from os import path
@@ -11,11 +12,12 @@ import logging
 from argparse import Namespace
 from subprocess import call
 from multiprocessing import Process
+import serial
 import time
 from cctl.netutils import sftp_client
 
 from cctl.res import ERROR_CODES, RES_STR
-from cctl.api import camera_ctl, bot_ctl, configuration
+from cctl.api import camera_ctl, bot_ctl, charge_ctl, configuration
 
 
 def _parse_id(coach_id: str) -> Union[List[int], bool]:
@@ -288,6 +290,20 @@ class CommandAction:
         # TODO: Implement
         raise NotImplementedError
 
+    def charger_on_off_handler(self) -> int:
+        """Controls whether the charger should be turned on or off."""
+        state = bool(self._args.state == 'on')
+        try:
+            asyncio.get_event_loop().run_until_complete(
+                charge_ctl.charge_rail_set(state))
+        except serial.SerialException as sex:
+            logging.error(RES_STR['arduino_comm_err'], sex)
+            return ERROR_CODES['daughterboard_comm_issue']
+        except RuntimeError as rex:
+            logging.error(rex)
+            return ERROR_CODES['daughterboard_comm_issue']
+        return 0
+
     def exec(self) -> int:
         """Parses arguments automatically and handles booting."""
         def _uploader():
@@ -305,6 +321,7 @@ class CommandAction:
             RES_STR['cmd_update']: _uploader,
             RES_STR['cli']['exec']['name']: self.run_command_handler,
             RES_STR['cli']['install']['name']: self.install_packages_handler,
+            RES_STR['cli']['charger']['name']: self.charger_on_off_handler,
 
             # TODO: make this a member method
             RES_STR['cmd_manage']: CommandAction.manage_system,
