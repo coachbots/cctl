@@ -77,8 +77,8 @@ async def query_version() -> str:
         str: The version of the daughterboard.
     """
     with Serial(PORT, BAUD_RATE, timeout=1) as ser:
+        ser.reset_input_buffer()
         ser.write(b'V')  # Ask for the daughterboard to return the version.
-        ser.flushInput()
         return ser.readline()[:-2].decode('ascii')  # Last characters are \r\n
 
 
