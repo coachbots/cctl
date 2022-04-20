@@ -41,14 +41,12 @@ async def __upload_arduino_script() -> None:
     @uses_lock(ACCESS_LOCK)
     async def exec_operation(operation: str) -> int:
         flags = [
-            f'--fqbn {BOARD_TYPE}',
-            f'-p {PORT}',
-            '--build-property ' +
-            f'build.extra_flags="-DVERSION=\\"{cctl.__VERSION__}\\""'
-        ] if operation == 'compile' else [
-            f'--fqbn {BOARD_TYPE}',
-            f'-p {PORT}',
-        ]
+            '-b', BOARD_TYPE,
+            '-p', str(PORT),
+        ] + ([
+            '--build-property',
+            f'build.extra_flags="-DVERSION=\\"{cctl.__VERSION__}\\"'
+        ] if operation == 'compile' else [])
 
         with ARDUINO_SCRIPT_PATH_MANAGER as script_path:
             proc = await asyncio.create_subprocess_exec(ARDUINO_EXECUTABLE,
