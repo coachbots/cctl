@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""This module exposes programming and control of the Arduino daughterboard."""
+"""This module exposes programming and control of the Arduino daughterboard.
+Upon importing this module, it will check whether the Arduino needs any
+updates, and automatically as required.
+"""
 
 import asyncio
-import time
 import logging
 try:
     import importlib.resources as pkg_resources
@@ -103,3 +105,5 @@ async def charge_rail_set(power: bool) -> None:
     """
     with Serial(PORT, BAUD_RATE) as ser:
         ser.write(b'A' if power else b'D')
+
+asyncio.get_event_loop().run_until_complete(update(force=False))
