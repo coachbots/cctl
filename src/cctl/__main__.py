@@ -103,14 +103,14 @@ def main():
         nargs='+'
     )
 
-    charger_parser = command_parser.add_subparsers(
+    charger_parser = command_parser.add_parser(
         RES_STR['cli']['charger']['name'],
         help=RES_STR['cli']['charger']['help']
     )
     charger_parser.add_argument(
-        RES_STR['cli']['charger']['packages']['name'],
-        help=RES_STR['cli']['charger']['packages']['help'],
-        metavar=RES_STR['cli']['charger']['packages']['metavar'],
+        RES_STR['cli']['charger']['state']['name'],
+        help=RES_STR['cli']['charger']['state']['help'],
+        metavar=RES_STR['cli']['charger']['state']['metavar'],
         nargs=1
     )
 
