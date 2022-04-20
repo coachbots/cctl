@@ -39,7 +39,7 @@ async def __upload_arduino_script() -> None:
     function automatically compiles it as required.
     """
     @uses_lock(ACCESS_LOCK)
-    async def exec_operation(operation: str) -> int:
+    async def exec_operation(operation: str):
         flags = [
             '-b', BOARD_TYPE,
             '-p', str(PORT),
@@ -57,15 +57,12 @@ async def __upload_arduino_script() -> None:
             stdout, stderr = await proc.communicate()
 
             if proc.returncode != 0:
-                logging.error(RES_STR['logging']['arduino_upload_err'],
-                              proc.returncode, stderr)
-                return -1
+                raise RuntimeError(RES_STR['logging']['arduino_upload_err'] %
+                                   (proc.returncode, stderr))
 
             logging.debug(RES_STR['logging']['arduino_upload_success'], stdout)
-            return 0
 
-    if await exec_operation('compile') != 0:
-        return
+    await exec_operation('compile')
     await exec_operation('upload')
 
 
@@ -77,8 +74,9 @@ async def query_version() -> str:
         str: The version of the daughterboard.
     """
     with Serial(PORT, BAUD_RATE, timeout=1) as ser:
-        ser.reset_input_buffer()
         ser.write(b'V')  # Ask for the daughterboard to return the version.
+        ser.reset_input_buffer()
+        await asyncio.sleep(1e-1)
         return ser.readline()[:-2].decode('ascii')  # Last characters are \r\n
 
 

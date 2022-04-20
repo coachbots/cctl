@@ -15,7 +15,13 @@ from cctl.daughters import arduino
 
 
 async def charge_rail_set(power: bool) -> None:
-    """Changes the state of the charging rail
+    """Changes the state of the charging rail.
+
+    Raises:
+        serial.SerialException upon a serial error.
+        RuntimeError when there needs to be a firmware update on the arduino
+            but it could not be automatically processed.
+
 
     Parameters:
         power (bool): Whether to set the power on or off.

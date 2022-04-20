@@ -92,6 +92,7 @@ RES_STR = {
         'state_change_max_attempts': 'Could not change state of bot %d.',
         'state_change_retry': 'Could not change state of bot %d. Trying ' +
                               'again.',
+        'arduino_comm_err': 'Cannot communicate with the Arduino because %s.',
         'arduino_upload_err': 'Could not successfully upload the Arduino ' +
                               'script. The error-code was %d and stderr: %s',
         'arduino_upload_success': 'Successfully uploaded the Arduino ' +
@@ -131,6 +132,15 @@ RES_STR = {
                 'help': 'The bots to run the command on.',
                 'metavar': 'BOTS...'
             },
+        },
+        'charger': {
+            'name': 'charger',
+            'help': 'Controls the power of the charger.',
+            'state': {
+                'name': 'state',
+                'help': 'Whether the charger should be [on] or [off].',
+                'metavar': 'STATE'
+            }
         }
     }
 }
@@ -141,5 +151,6 @@ ERROR_CODES = {
     'unknown_camera_error': 121,
     'camera_raw_error': 122,
     'processed_stream_creating_error': 124,
-    'malformed_cli_args': 141
+    'malformed_cli_args': 141,
+    'daughterboard_comm_issue': 161
 }
