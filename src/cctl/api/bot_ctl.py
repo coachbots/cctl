@@ -14,7 +14,6 @@ import shutil
 import time
 import logging
 import socket
-from typing_extensions import Literal
 
 try:
     import importlib.resources as pkg_resources
@@ -295,9 +294,7 @@ class Coachbot:
 
     async def async_upload_user_code(
         self,
-        usr_code: str,
-        os_update: bool,
-        usr_code_type_flag: Literal['f', 's'] = 'f',
+        path_to_usr_code: str, os_update: bool,
         path_to_os: str = path.join(configuration.get_server_dir(),
                                     'temp')) -> bool:
         """Asynchronously uploads code to the specified Coachbot if it is
@@ -306,23 +303,12 @@ class Coachbot:
         Checks whether the coachbot is online.
 
         Parameters:
-            usr_code (str): The source of the user code. If
-                ``usr_code_type_flag`` is set to ``'f'``, then this string is
-                interpreted as a path to the source code. If it is set to
-                ``'s'``, then this is interpreted as the soruce code itself.
+            path_to_usr_code (str): The path to the user code to upload.
             os_update (bool): Flag indicating whether an os update should be
                 performed.
-            usr_code_type_flag (Literal['s', 'f']): The flag determining how to
-                interpreted ``usr_code``.
-            path_to_os (str): The full path to the operating system source.
 
         Returns:
-            bool: Whether the Coachbot was updated or not.
-
-        .. warning::
-
-           This function has an API that will soon be superceded. The
-           ``path_to_os`` parameter will soon be replaced (and ignored).
+            bool: Whether the Coachbot was updated.
         """
         if not self.is_alive():
             return False
@@ -344,16 +330,11 @@ class Coachbot:
             await self.async_boot(False)
             await self.async_boot(True)
 
-        source = None
-        if usr_code_type_flag == 'f':
-            # TODO: Not really async.
-            with open(usr_code, 'r') as file:
-                source = file.read()
-        else:
-            source = usr_code
-
-        netutils.write_remote_file(
-            self.address, configuration.get_coachswarm_remote_path(), source)
+        # Not really async.
+        with open(path_to_usr_code, 'rb') as usr_code:
+            netutils.write_remote_file(
+                self.address, configuration.get_coachswarm_remote_path(),
+                usr_code.read())
 
         return True
 
