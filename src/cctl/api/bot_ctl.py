@@ -22,11 +22,11 @@ except ImportError:
 
 import paramiko
 from paramiko.channel import ChannelFile
-from cctl import netutils
+from cctl.utils import net as netutils
 
 from cctl.api import configuration
 from cctl.res import RES_STR
-from cctl.netutils import async_host_is_reachable, get_broadcast_address, \
+from cctl.utils.net import async_host_is_reachable, get_broadcast_address, \
     get_ip_address, read_remote_file, ssh_client
 import static
 

@@ -15,7 +15,7 @@ from cctl.api.bot_ctl import Coachbot
 from cctl.api.configuration import get_coachswarm_net_rep_port, \
     get_coachswarm_net_pub_port, get_coachswarm_net_req_port, \
     get_server_interface
-from cctl.netutils import get_ip_address
+from cctl.utils.net import get_ip_address
 from cctl.network.net_status import MAX_SUCCESSFUL_VALUE, NetStatus
 from cctl.res import RES_STR
 

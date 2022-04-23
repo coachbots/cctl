@@ -14,7 +14,7 @@ except ImportError:
     import importlib_resources as pkg_resources
 from serial import Serial
 import cctl
-from cctl.util.asynctools import uses_lock
+from cctl.utils.asynctools import uses_lock
 from cctl.api import configuration as config
 from cctl.res import RES_STR
 import static

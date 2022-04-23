@@ -14,7 +14,7 @@ from subprocess import call
 from multiprocessing import Process
 import serial
 import time
-from cctl.netutils import sftp_client
+from cctl.utils.net import sftp_client
 
 from cctl.res import ERROR_CODES, RES_STR
 from cctl.api import camera_ctl, bot_ctl, charge_ctl, configuration
