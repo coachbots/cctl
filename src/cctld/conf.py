@@ -26,12 +26,21 @@ if len(config.read(CONF_PATH)) == 0:
     logging.error('Could not read %s. Please ensure it exists.', CONF_PATH)
     sys.exit(ExitCode.EX_CONFIG)
 
+
+# TODO: Should check for validity of the file before using it.
+
 class Config:
     """The configuration properties."""
 
+    class General:
+        """Returns the confvals under the ``general`` header."""
+        @property
+        def workdir(self) -> str:
+            """Returns the working directory of cctld."""
+            return config.get('general', 'workdir')
+
     class CoachServers:
         """Returns the configurations under the ``coach_servers``header."""
-
         @property
         def status_port(self) -> int:
             """Returns the port of the status server."""
@@ -43,6 +52,21 @@ class Config:
             the Coachbots."""
             return config.get('coach_servers', 'interface')
 
+    class IPC:
+        """Returns the configs under the ``ipc`` header."""
+        @property
+        def path(self) -> str:
+            """Returns the full path of the IPC feed."""
+            return config.get('ipc', 'path')
+
+    @property
+    def general(self) -> 'Config.General':
+        return Config.General()
+
     @property
     def servers(self) -> 'Config.CoachServers':
         return Config.CoachServers()
+
+    @property
+    def ipc(self) -> 'Config.IPC':
+        return Config.IPC()

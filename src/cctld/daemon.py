@@ -5,6 +5,8 @@
 import daemon
 from signal import SIGTERM, SIGHUP, SIGUSR1
 
+from cctld.conf import Config
+
 __author__ = 'Marko Vejnovic <contact@markovejnovic.com>'
 __copyright__ = 'Copyright 2022, Northwestern University'
 __credits__ = ['Marko Vejnovic', 'Lin Liu', 'Billie Strong']
@@ -16,7 +18,7 @@ __status__ = 'Development'
 
 
 ctx = daemon.DaemonContext(
-    working_directory='/var/lib/cctld',  # TODO: Change?
+    working_directory=Config().general.workdir,
     umask=0o022,  # TODO: Change?
     pidfile=None,  # Automatically handled
     detach_process=None,  # Automatically handled

@@ -15,7 +15,7 @@ import paramiko
 from paramiko.client import SSHClient
 from paramiko import WarningPolicy
 
-from cctl.api import configuration
+from cctl.api import configuration  # TODO: This import should be removed.
 from cctl.res import RES_STR
 
 SIOCGIFADDR = 0x8915  # See man netdevice 7
