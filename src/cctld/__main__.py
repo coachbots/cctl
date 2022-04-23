@@ -16,4 +16,8 @@ async def main():
 
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    if __debug__:
+        asyncio.run(main())
+    else:
+        with daemon.context() as d_ctx:
+            asyncio.run(main())
