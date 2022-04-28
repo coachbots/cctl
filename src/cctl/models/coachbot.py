@@ -1,21 +1,8 @@
 #!/usr/bin/env python
 
-"""This module defines all the Coachbot-related models."""
-
 import json
+from typing import Dict, Any, Tuple
 from dataclasses import dataclass, asdict
-from cctl.utils.math import Vec2
-
-
-__author__ = 'Marko Vejnovic <contact@markovejnovic.com>'
-__copyright__ = 'Copyright 2022, Northwestern University'
-__credits__ = ['Marko Vejnovic', 'Lin Liu', 'Billie Strong']
-__license__ = 'Proprietary'
-__version__ = '0.6.0'
-__maintainer__ = 'Marko Vejnovic'
-__email__ = 'contact@markovejnovic.com'
-__status__ = 'Development'
-
 
 @dataclass
 class CoachbotState:
@@ -25,7 +12,7 @@ class CoachbotState:
     user_version: str
     os_version: str
     bat_voltage: float
-    position: Vec2
+    position: Tuple[float, float]
     theta: float
 
     def serialize(self) -> str:
@@ -34,8 +21,13 @@ class CoachbotState:
         I have decided that this form should be JSON since it is more easily
         debuggable.
         """
-        return json.dumps({**asdict(self),
-                           'position': [self.position.x, self.position.y]})
+        return json.dumps(self.to_dict())
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            **asdict(self),
+            'position': [self.position.x, self.position.y]
+        }
 
     @staticmethod
     def deserialize(data: str) -> 'CoachbotState':
@@ -46,5 +38,6 @@ class CoachbotState:
             as_dict['user_version'],
             as_dict['os_version'],
             as_dict['bat_voltage'],
-            Vec2(as_dict['position']),
+            as_dict['position'],
             as_dict['theta'])
+

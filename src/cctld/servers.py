@@ -7,18 +7,18 @@ Currently, the following servers are exposed:
 """
 
 import sys
-import asyncio
 import re
 import logging
 from typing import Any, Callable, Dict, Tuple, Union
+from dataclasses import replace
+import reactivex as rx
 import zmq
 import zmq.asyncio
 from cctl.utils.math import Vec2
 
 from cctl.utils.net import get_ip_address
 from cctld.conf import Config
-from cctl.models import IPC_VALID_METHODS, CoachbotState, IPCRequest, \
-    IPCResponse, IPCResultCode
+from cctl.protocols import ipc, status
 from cctld.res import ExitCode
 
 
@@ -31,34 +31,27 @@ __maintainer__ = 'Marko Vejnovic'
 __email__ = 'contact@markovejnovic.com'
 __status__ = 'Development'
 
-IPCHandler = Callable[[IPCRequest, Tuple[Union[str, Any], ...]], Any]
+IPCHandler = Callable[[Any, ipc.Request, Tuple[Union[str, Any]]], Any]
 ENDPOINT_HANDLERS: Dict[str, Dict[str, IPCHandler]] = {
     r'/bots/([0-9]+)/state/?': {
-        'read': lambda _, __: IPCResponse(
-            IPCResultCode.OK,
-            CoachbotState(
-                is_on=True,
-                user_version='0.1.0',
-                os_version='0.1.0',
-                bat_voltage=3.7,
-                position=Vec2(0.3, 0.4),
-                theta=0
-            ).serialize()
+        'read': lambda state, _, endpoint_groups: ipc.Response(
+            ipc.ResultCode.OK,
+            state.bot_states[int(endpoint_groups[1])]
         ),
     },
     r'/bots/state/?': {
-        'read': lambda _, __: IPCResponse(IPCResultCode.OK)
+        'read': lambda state, _, __: ipc.Response(ipc.ResultCode.OK)
     }
 }
 
 
-async def start_ipc_server():
+async def start_ipc_server(state_subject: rx.subjects.BehaviorSubject):
     """The IPCServer is a server that is used to communicate with other
     processes that may query the state of the Coachbots.
 
     Under the hood, this server uses ZMQ to ensure huge scalability.
     """
-    async def handle_client(request: IPCRequest) -> IPCResponse:
+    async def handle_client(request: ipc.Request) -> ipc.Response:
         """This function handles a client asking a request to this server. """
         logging.getLogger('servers').debug('Received IPC request %s', request)
 
@@ -67,19 +60,20 @@ async def start_ipc_server():
             if not match:
                 continue
 
-            if request.method not in IPC_VALID_METHODS:
-                return IPCResponse(IPCResultCode.BAD_REQUEST)
+            if request.method not in ipc.VALID_METHODS:
+                return ipc.Response(ipc.ResultCode.BAD_REQUEST)
 
             try:
-                return handlers[request.method](request, match.groups())
+                state = state_subject.value
+                return handlers[request.method](state, request, match.groups())
             except KeyError:
                 logging.getLogger('servers').warning(
                     'Invalid method %s requested by %s.', request.method,
                     'client'  # TODO: Get client name/PID.
                 )
-                return IPCResponse(IPCResultCode.METHOD_NOT_ALLOWED)
+                return ipc.Response(ipc.ResultCode.METHOD_NOT_ALLOWED)
 
-        return IPCResponse(IPCResultCode.NOT_FOUND)
+        return ipc.Response(ipc.ResultCode.NOT_FOUND)
 
     ctx = zmq.asyncio.Context()
     sock = ctx.socket(zmq.REP)
@@ -93,31 +87,50 @@ async def start_ipc_server():
 
     while True:
         request = await sock.recv_string()
-        response = await handle_client(IPCRequest.deserialize(request))
+        response = await handle_client(ipc.Request.deserialize(request))
         logging.getLogger('servers').debug('Responding with: %s', response)
         await sock.send_string(response.serialize())
 
 
-async def start_management_server():
-    """The ManagementServer is a simple server which receives the coach-os
+async def start_status_server(state_subject: rx.subjects.BehaviorSubject):
+    """The StatusServer is a simple server which receives the coach-os
     status via TCP. This is the server that communicates with Coachbots getting
     their data and metrics."""
-    async def handle_client(reader: asyncio.StreamReader,
-                            writer: asyncio.StreamWriter):
+    async def handle_client(request: status.Request) -> status.Response:
         """This function handles a client asking a request to this server. """
-        status = CoachbotState.deserialize(await reader.read())
-        addr = writer.get_extra_info('peername')
+        logging.getLogger('servers').debug('Received Status request %s',
+                                           request)
 
-        logging.getLogger('servers').debug('Received a status %s from %s',
-                                           status, addr)
+        id, status = request.identifier, request.status
 
-    server = await asyncio.start_server(
-        handle_client,
-        get_ip_address(Config().servers.interface),
-        Config().servers.status_port
-    )
+        state_subject.on_next(
+            replace(
+                state_subject.value,
+                bot_states=(
+                    (v := state_subject.value)[:id] + (status, ) + v[(id +1 ):]
+                )
+            )
+        )
 
-    logging.getLogger('servers').debug('Started management_server')
+        return status.Response()
 
-    async with server:
-        await server.serve_forever()
+
+    ctx = zmq.asyncio.Context()
+    sock = ctx.socket(zmq.REP)
+    try:
+        sock.bind(f'tcp://{get_ip_address(Config().servers.interface)}'
+                  f':{Config().servers.status_port}')
+    except zmq.ZMQError as zmq_err:
+        logging.getLogger('servers').error(
+            'Could not bind to tcp://%s:%d. Pleease check whether another '
+            'process is using it. Error: %s',
+            get_ip_address(Config().servers.interface),
+            Config().servers.status_port,
+            zmq_err)
+        sys.exit(ExitCode.EX_UNAVAILABLE)
+
+    while True:
+        request = await sock.recv_string()
+        response = await handle_client(CoachbotState.deserialize(request))
+        logging.getLogger('servers').debug('Responding with: %s', response)
+        await sock.send_string(response.serialize())

@@ -18,11 +18,11 @@ __email__ = 'contact@markovejnovic.com'
 __status__ = 'Development'
 
 
-IPC_VALID_METHODS = ('create', 'read', 'update', 'delete')
+VALID_METHODS = ('create', 'read', 'update', 'delete')
 
 
 @dataclass
-class IPCRequest:
+class Request:
     """Represents a basic IPCRequest that cctld supports."""
     method: str
     endpoint: str
@@ -34,9 +34,9 @@ class IPCRequest:
         return json.dumps(asdict(self))
 
     @staticmethod
-    def deserialize(data: str) -> 'IPCRequest':
+    def deserialize(data: str) -> 'Request':
         """Creates an IPCRequest from a JSON string."""
-        return IPCRequest(
+        return Request(
             (as_dict := json.loads(data))['method'],
             as_dict['endpoint'],
             as_dict['head'],
@@ -44,7 +44,7 @@ class IPCRequest:
         )
 
 
-class IPCResultCode(IntEnum):
+class ResultCode(IntEnum):
     """Enumerates all valid IPC result codes. These are a smaller subset of
     HTTP response codes.
     """
@@ -61,9 +61,9 @@ class IPCResultCode(IntEnum):
 
 
 @dataclass
-class IPCResponse:
+class Response:
     """Represents a basic IPCResponse that cctld supports."""
-    result_code: IPCResultCode
+    result_code: ResultCode
     body: str = ''
 
     def serialize(self) -> str:
@@ -71,9 +71,9 @@ class IPCResponse:
         return json.dumps(asdict(self))
 
     @staticmethod
-    def deserialize(data: str) -> 'IPCResponse':
+    def deserialize(data: str) -> 'Response':
         """Creates an IPCResponse from a string."""
-        return IPCResponse(
+        return Response(
             (as_dict := json.loads(data))['result_code'],
             body=as_dict['body']
         )
