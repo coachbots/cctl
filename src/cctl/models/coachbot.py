@@ -1,37 +1,54 @@
 #!/usr/bin/env python
 
 import json
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Optional
 from dataclasses import dataclass, asdict
+
+from cctl.utils.math import Vec2
+
 
 @dataclass
 class CoachbotState:
     """The StatusMessage is the model that represents the communication between
     coach-os and cctl."""
-    is_on: bool
-    user_version: str
-    os_version: str
-    bat_voltage: float
-    position: Tuple[float, float]
-    theta: float
+    is_on: bool = False
+    user_version: Optional[str] = None
+    os_version: Optional[str] = None
+    bat_voltage: Optional[float] = None
+    position: Optional[Vec2] = None
+    theta: Optional[float] = None
 
     def serialize(self) -> str:
         """Converts the StatusMessage into a serialized form.
 
-        I have decided that this form should be JSON since it is more easily
-        debuggable.
+        Returns:
+            str: The JSON representation of this object.
         """
         return json.dumps(self.to_dict())
 
     def to_dict(self) -> Dict[str, Any]:
+        """Converts this object into a dictionary.
+
+        Returns:
+            Dict[str, Any]: This object in dictionary form, ready to be
+                serialized.
+        """
         return {
             **asdict(self),
             'position': [self.position.x, self.position.y]
+            if self.position is not None else None
         }
 
     @staticmethod
     def deserialize(data: str) -> 'CoachbotState':
-        """Deserializes a StatusMessage from a string."""
+        """Deserializes a StatusMessage from a JSON string.
+
+        Parameters:
+            data (str): The object to be deserialized from JSON.
+
+        Returns:
+            CoachbotState: The deserialized object.
+        """
         as_dict = json.loads(data)
         return CoachbotState(
             as_dict['is_on'],
@@ -40,4 +57,3 @@ class CoachbotState:
             as_dict['bat_voltage'],
             as_dict['position'],
             as_dict['theta'])
-

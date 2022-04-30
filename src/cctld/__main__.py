@@ -3,24 +3,23 @@
 """This is the main script that runs cctld."""
 
 import asyncio
-from typing import Tuple
 from cctl.models.coachbot import CoachbotState
-import reactivex as rx
-from dataclasses import dataclass
+from reactivex.subject import BehaviorSubject
 from cctld import daemon, servers
+from cctld.models import AppState
 
-
-@dataclass
-class AppState:
-    bot_states: Tuple[CoachbotState, ...] = tuple(CoachbotState() for _ in
-                                                  range(100))
 
 async def main():
     """The main entry point of cctld."""
-    state_subject = rx.subjects.BehaviorSubject(AppState())
+    app_state = AppState(
+        coachbot_states=BehaviorSubject(
+            (CoachbotState(False) for _ in range(100)))
+    )
+
     running_servers = asyncio.gather(
-        servers.start_status_server(state_subject),
-        servers.start_ipc_server(state_subject)
+        servers.start_status_server(app_state.coachbot_states),
+        servers.start_ipc_request_server(app_state),
+        servers.start_ipc_feed_server(app_state)
     )
     await running_servers
 

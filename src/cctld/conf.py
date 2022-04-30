@@ -55,9 +55,14 @@ class Config:
     class IPC:
         """Returns the configs under the ``ipc`` header."""
         @property
-        def path(self) -> str:
-            """Returns the full path of the IPC feed."""
-            return config.get('ipc', 'path')
+        def request_feed(self) -> str:
+            """Returns the full path of the IPC request file."""
+            return config.get('ipc', 'request_feed')
+
+        @property
+        def state_feed(self) -> str:
+            """Returns the full path to the coachbot state feed file."""
+            return config.get('ipc', 'state_feed')
 
     @property
     def general(self) -> 'Config.General':
