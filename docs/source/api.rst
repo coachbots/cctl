@@ -64,6 +64,41 @@ functions from it:
 
    cctl_bots.set_user_code_running(False)  # Pauses user code
 
+Non-Python API
+--------------
+
+Because ``cctl.api`` is only a binding around the workhorse that is ``cctld``,
+you can technically get access to ``cctld`` info in any language you like.
+To exemplify this take a look at the following C-example:
+
+.. code-block:: guess
+
+   #include <string.h>
+   #include <zmq.h>
+   // ...
+   void* zmq_ctx = zmq_ctx_new();
+   void* sock = zmq_socket(zmq_ctx, ZMQ_REQ);
+
+   char my_req[] = "{"
+       "\"method\": \"read\","
+       "\"endpoint\": \"/bots/state/1\","
+       "\"head\": {},"
+       "\"body\": \"\""
+   "}";
+
+   char recv_buffer[128];
+   zmq_connect(sock, "ipc:///var/run/cctld/request_pipe");
+   zmq_send(sock, my_req, sizeof(my_req), 0);
+   zmq_recv(sock, recv_buffer, 128, 0);
+
+   // This should evaluate to true.
+   assert strcmp(recv_buffer, "{ \"result_code\": 200, \"body\": \"\" }") == 0;
+   // ...
+
+
+Further documentation is found at `Api Details`_.
+
+
 API Modules
 -----------
 
