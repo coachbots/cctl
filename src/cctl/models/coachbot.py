@@ -17,6 +17,7 @@ class CoachbotState:
     bat_voltage: Optional[float] = None
     position: Optional[Vec2] = None
     theta: Optional[float] = None
+    user_code_running: Optional[bool] = None
 
     def serialize(self) -> str:
         """Converts the StatusMessage into a serialized form.
@@ -51,9 +52,11 @@ class CoachbotState:
         """
         as_dict = json.loads(data)
         return CoachbotState(
-            as_dict['is_on'],
-            as_dict['user_version'],
-            as_dict['os_version'],
-            as_dict['bat_voltage'],
-            as_dict['position'],
-            as_dict['theta'])
+            is_on=as_dict['is_on'],
+            user_version=as_dict['user_version'],
+            os_version=as_dict['os_version'],
+            bat_voltage=as_dict['bat_voltage'],
+            position=as_dict['position'],
+            theta=as_dict['theta'],
+            user_code_running=as_dict['user_code_running']
+        )

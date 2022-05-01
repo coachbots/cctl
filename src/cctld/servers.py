@@ -7,9 +7,8 @@ Currently, the following servers are exposed:
 """
 
 import sys
-import re
 import logging
-from typing import Any, Callable, Dict, Tuple, Union
+from typing import Tuple
 from cctld.models import AppState
 from reactivex.subject import BehaviorSubject
 import zmq
@@ -20,29 +19,17 @@ from cctld.conf import Config
 from cctl.protocols import ipc, status
 from cctl.models import CoachbotState
 from cctld.res import ExitCode
+from cctld.requests import handler as req_handler
 
 
 __author__ = 'Marko Vejnovic <contact@markovejnovic.com>'
 __copyright__ = 'Copyright 2022, Northwestern University'
 __credits__ = ['Marko Vejnovic', 'Lin Liu', 'Billie Strong']
 __license__ = 'Proprietary'
-__version__ = '0.6.0'
+__version__ = '1.0.0'
 __maintainer__ = 'Marko Vejnovic'
 __email__ = 'contact@markovejnovic.com'
 __status__ = 'Development'
-
-IPCHandler = Callable[[Any, ipc.Request, Tuple[Union[str, Any]]], Any]
-ENDPOINT_HANDLERS: Dict[str, Dict[str, IPCHandler]] = {
-    r'^/bots/([0-9]+)/state/?': {
-        'read': lambda state, _, endpoint_groups: ipc.Response(
-            ipc.ResultCode.OK,
-            state.bot_states[int(endpoint_groups[1])]
-        ),
-    },
-    r'^/bots/state/?': {
-        'read': lambda state, _, __: ipc.Response(ipc.ResultCode.OK)
-    }
-}
 
 
 async def start_ipc_request_server(app_state: AppState):
@@ -55,26 +42,20 @@ async def start_ipc_request_server(app_state: AppState):
         """This function handles a client asking a request to this server. """
         logging.getLogger('servers').debug('Received IPC request %s', request)
 
-        for endpoint_regex, handlers in ENDPOINT_HANDLERS.items():
-            match = re.match(endpoint_regex, request.endpoint)
-            if not match:
-                continue
+        if request.method not in ipc.VALID_METHODS:
+            return ipc.Response(ipc.ResultCode.BAD_REQUEST)
 
-            if request.method not in ipc.VALID_METHODS:
-                return ipc.Response(ipc.ResultCode.BAD_REQUEST)
-
-            try:
-                state_subject = app_state.coachbot_states
-                state = state_subject.value
-                return handlers[request.method](state, request, match.groups())
-            except KeyError:
-                logging.getLogger('servers').warning(
-                    'Invalid method %s requested by %s.', request.method,
-                    'client'  # TODO: Get client name/PID.
-                )
-                return ipc.Response(ipc.ResultCode.METHOD_NOT_ALLOWED)
-
-        return ipc.Response(ipc.ResultCode.NOT_FOUND)
+        try:
+            handler, matchs = req_handler.get(request.endpoint, request.method)
+            return handler(app_state, request, matchs)
+        except KeyError:
+            logging.getLogger('servers').warning(
+                'Invalid method %s requested by %s.', request.method,
+                'client'  # TODO: Get client name/PID.
+            )
+            return ipc.Response(ipc.ResultCode.METHOD_NOT_ALLOWED)
+        except ValueError:
+            return ipc.Response(ipc.ResultCode.NOT_FOUND)
 
     ctx = zmq.asyncio.Context()
     sock = ctx.socket(zmq.REP)
