@@ -1,3 +1,3 @@
 #!/usr/bin/env python
 
-from .coachbot import CoachbotState
+from .coachbot import CoachbotState, Coachbot

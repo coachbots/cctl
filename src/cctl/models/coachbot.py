@@ -8,10 +8,29 @@ from cctl.utils.math import Vec2
 
 
 @dataclass
+class Coachbot:
+    """This class contains all the information about a Coachbot, including its
+    identifier and the state."""
+    identifier: int
+    state: 'CoachbotState'
+
+    @property
+    def ip_address(self) -> str:
+        """Returns the ip address of this coachbot.
+
+        Todo:
+            This implementation may not necessarilly be robust if the network
+            changes.
+        """
+        # TODO: Not robust
+        return f'192.168.1.{self.identifier + 3}'
+
+
+@dataclass
 class CoachbotState:
     """The StatusMessage is the model that represents the communication between
     coach-os and cctl."""
-    is_on: bool = False
+    is_on: Optional[bool] = None
     user_version: Optional[str] = None
     os_version: Optional[str] = None
     bat_voltage: Optional[float] = None

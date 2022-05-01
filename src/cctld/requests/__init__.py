@@ -4,13 +4,13 @@
 handle. This is facilitated through the ``ENDPOINT_HANDLERS`` dictionary which
 is buit upon the import of this module."""
 
-from typing import Any, Dict, Tuple, Union
+from typing import Any, Tuple, Union
 from dataclasses import replace
-import re
+from cctl.models import Coachbot
+from cctl.models.coachbot import CoachbotState
 from cctl.protocols import ipc
 from cctld.models.app_state import AppState
-from cctld.requests.handler import ENDPOINT_HANDLERS, IPCOperationT, \
-    IPCReqHandlerT, handler
+from cctld.requests.handler import handler
 
 
 @handler(r'^/bots/([0-9]+)/state/?$', 'read')
@@ -30,12 +30,11 @@ def read_bot_state(
 def create_bot_user_running(app_state, _, endpoint_groups):
     """Starts the user code."""
     ident = int(endpoint_groups[1])
-    (cb_states := app_state.coachbot_states).on_next(tuple(
-        replace(state, user_code_running=True)
-        if i == ident
-        else state
-        for i, state in enumerate(cb_states.value)
-    ))
+    if app_state.coachbot_states.value[ident].user_code_running:
+        return ipc.Response(ipc.ResultCode.OK)
+
+    app_state.requested_states.on_next(
+        Coachbot(ident, CoachbotState(user_code_running=True)))
     return ipc.Response(ipc.ResultCode.OK)
 
 
@@ -43,10 +42,9 @@ def create_bot_user_running(app_state, _, endpoint_groups):
 def delete_bot_user_running(app_state, _, endpoint_groups):
     """Stops the user code."""
     ident = int(endpoint_groups[1])
-    (cb_states := app_state.coachbot_states).on_next(tuple(
-        replace(state, user_code_running=False)
-        if i == ident
-        else state
-        for i, state in enumerate(cb_states.value)
-    ))
+    if not app_state.coachbot_states.value[ident].user_code_running:
+        return ipc.Response(ipc.ResultCode.OK)
+
+    app_state.requested_states.on_next(
+        Coachbot(ident, CoachbotState(user_code_running=False)))
     return ipc.Response(ipc.ResultCode.OK)
