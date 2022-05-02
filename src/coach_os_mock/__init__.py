@@ -11,7 +11,9 @@ Todo:
 import socket
 import time
 
-from zmq.sugar.poll import select
+
+from select import select
+import zmq
 from cctl.models import Coachbot
 from cctl.models.coachbot import CoachbotState
 from cctl.utils.math import Vec2
@@ -34,6 +36,9 @@ class MockManagedCoachbot(Coachbot):
         self.state = state
         self._5005sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._5005sock.settimeout(0.5)
+
+        self.zmq_ctx = zmq.Context()
+        self._5006sock = zmq.socket(self.zmq_ctx, zmq.REQ)
 
     def listen(self, timeout=1):
         """Listens for a timeout time for inputs.
@@ -71,6 +76,9 @@ class MockManagedCoachbot(Coachbot):
                 print('Received STOP_USR. '
                       f'user_code_running={self.state.user_code_running}')
                 continue
+
+    def reply(self) -> None:
+        self._5006sock.connect('tcp://localhost:5006')
 
     def __enter__(self) -> 'MockManagedCoachbot':
         self._5005sock.bind(('', 5005))

@@ -57,7 +57,7 @@ correct Linux devices. To do this, you can simply edit
 ``/etc/udev/rules.d/72-cctl-daughters.rules`` (create if it doesn't exist) to
 look like:
 
-.. code-block:: udev
+.. code-block:: text
 
    SUBSYSTEM=="tty" ATTRS{manufacturer}=="Arduino*" \
    ATTRS{serial}=="<YOUR_SERIAL>" SYMLINK+="cctl-arduino"
@@ -156,6 +156,21 @@ is an example file with all supported keys.
    board = arduino:avr:uno
    # The arduino-cli executable path
    arduino-executable = /usr/local/bin/arduino-cli
+
+Configuring **cctld**
+---------------------
+
+You are required to configure **cctld** in order to achieve commuincation
+between the coachbots and it. The configuration file should be stored in
+``/etc/coachswarm/cctld.conf`` and **cctld** will attempt to read from it. If
+this file does not exist, **cctld** will **not start**. The format of the file
+is:
+
+.. include:: ../../src/static/cctld.conf
+   :code: ini
+   :name: cctld.conf
+   
+
 
 coachswarm.conf
 ---------------

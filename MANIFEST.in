@@ -1,2 +1,3 @@
 include src/static/mac_addresses
 include src/static/arduino-daughter.ino
+include src/static/cctld.conf

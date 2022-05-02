@@ -6,7 +6,7 @@ __author__ = 'Marko Vejnovic <contact@markovejnovic.com>'
 __copyright__ = 'Copyright 2022, Northwestern University'
 __credits__ = ['Marko Vejnovic', 'Lin Liu', 'Billie Strong']
 __license__ = 'Proprietary'
-__version__ = '0.6.0'
+__version__ = '1.0.0'
 __maintainer__ = 'Marko Vejnovic'
 __email__ = 'contact@markovejnovic.com'
 __status__ = 'Development'
@@ -57,12 +57,12 @@ class Config:
         @property
         def request_feed(self) -> str:
             """Returns the full path of the IPC request file."""
-            return config.get('ipc', 'request_feed')
+            return config.get('api', 'request_feed')
 
         @property
         def state_feed(self) -> str:
             """Returns the full path to the coachbot state feed file."""
-            return config.get('ipc', 'state_feed')
+            return config.get('api', 'state_feed')
 
     @property
     def general(self) -> 'Config.General':
