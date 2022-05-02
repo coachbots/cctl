@@ -5,7 +5,6 @@ handle. This is facilitated through the ``ENDPOINT_HANDLERS`` dictionary which
 is buit upon the import of this module."""
 
 from typing import Any, Tuple, Union
-from dataclasses import replace
 from cctl.models import Coachbot
 from cctl.models.coachbot import CoachbotState
 from cctl.protocols import ipc
@@ -22,15 +21,20 @@ def read_bot_state(
     """Returns the specific bot state."""
     return ipc.Response(
         ipc.ResultCode.OK,
-        app_state.coachbot_states.value[int(endpoint_groups[1])]
+        app_state.coachbot_states.value[int(endpoint_groups[0])]
     )
 
 
 @handler(r'^/bots/([0-9]+)/user-code/running/?$', 'create')
 def create_bot_user_running(app_state, _, endpoint_groups):
     """Starts the user code."""
-    ident = int(endpoint_groups[1])
-    if app_state.coachbot_states.value[ident].user_code_running:
+    ident = int(endpoint_groups[0])
+    current_state = app_state.coachbot_states.value[ident]
+
+    if not current_state.is_on:
+        return ipc.Response(ipc.ResultCode.STATE_CONFLICT)
+
+    if current_state.user_code_running:
         return ipc.Response(ipc.ResultCode.OK)
 
     app_state.requested_states.on_next(
@@ -41,10 +45,21 @@ def create_bot_user_running(app_state, _, endpoint_groups):
 @handler(r'^/bots/([0-9]+)/user-code/running/?$', 'delete')
 def delete_bot_user_running(app_state, _, endpoint_groups):
     """Stops the user code."""
-    ident = int(endpoint_groups[1])
-    if not app_state.coachbot_states.value[ident].user_code_running:
+    ident = int(endpoint_groups[0])
+    current_state = app_state.coachbot_states.value[ident]
+
+    if not current_state.is_on:
+        return ipc.Response(ipc.ResultCode.STATE_CONFLICT)
+
+    if not current_state.user_code_running:
         return ipc.Response(ipc.ResultCode.OK)
 
     app_state.requested_states.on_next(
         Coachbot(ident, CoachbotState(user_code_running=False)))
     return ipc.Response(ipc.ResultCode.OK)
+
+
+@handler('^/teapot', 'read')
+def i_am_a_teapot(*args, **kwargs):
+    """This function does not require documentation."""
+    return ipc.Response(ipc.ResultCode.I_AM_A_TEAPOT)

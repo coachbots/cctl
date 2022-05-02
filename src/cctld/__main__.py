@@ -36,12 +36,13 @@ class BotStateManager(Observer):
         Todo:
             This is legacy.
         """
-        my_ip = b'192.168.1.2'
+        my_ip = b'127.0.0.1'
         port = 5005
-        broadcast_ip = '255.255.255.0'
-        config_bytes = b''
+        broadcast_ip = 'localhost'
+        config_bytes = b' '  # Dummy value, necessary for legacy protocol.
+        target_op = b'START' if value.state.user_code_running else b'STOP'
         with closing(socket.socket(socket.AF_INET, socket.SOCK_DGRAM)) as sock:
-            sock.sendto(b'START_USR|' + config_bytes + b'|' + my_ip,
+            sock.sendto(target_op + b'_USR|' + config_bytes + b'|' + my_ip,
                         (broadcast_ip, port))
 
     def _no_handler_for_field(self, *args, field: str, **kwargs):
