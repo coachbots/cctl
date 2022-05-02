@@ -18,7 +18,7 @@ import zmq.asyncio
 
 from cctl.api.bot_ctl import Coachbot
 from cctl.models.coachbot import CoachbotState
-from cctl.models.ipc import IPCRequest, IPCResponse
+from cctl.protocols import ipc
 
 
 class CCTLDClient:
@@ -39,7 +39,7 @@ class CCTLDClient:
             return False
         self._socket.disconnect(self._ipc)
 
-    async def request(self, request: IPCRequest) -> IPCResponse:
+    async def request(self, request: ipc.Request) -> ipc.Response:
         """Sends a request to the server and returns the response it gives
         back."""
         if self._socket is None:
@@ -48,11 +48,11 @@ class CCTLDClient:
 
         await self._socket.send_string(request.serialize())
         response_raw = await self._socket.recv_string()
-        return IPCResponse.deserialize(response_raw)
+        return ipc.Response.deserialize(response_raw)
 
     async def read_bot_state(self, bot: Coachbot) -> CoachbotState:
         """This function reads a Coachbot's state."""
-        response = await self.request(IPCRequest(
+        response = await self.request(ipc.Request(
             method='read',
             endpoint=f'/bots/{bot.identifier}/state'
         ))

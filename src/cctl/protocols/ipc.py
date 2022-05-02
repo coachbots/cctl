@@ -58,6 +58,9 @@ class ResultCode(IntEnum):
     FORBIDDEN = 403
     NOT_FOUND = 404
     METHOD_NOT_ALLOWED = 405
+    STATE_CONFLICT = 409
+
+    I_AM_A_TEAPOT = 418
 
 
 @dataclass

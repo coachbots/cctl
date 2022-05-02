@@ -50,13 +50,13 @@ class MockManagedCoachbot(Coachbot):
         """
         start_time = time.time()
         while (delta_t := time.time() - start_time) < timeout:
-            if not select([self._5005sock], [], [], 0)[0]:
-                time.sleep(1)
+            print(f'[T+{round(delta_t, 1)}s]\t\t', end='')
+            if not select([self._5005sock], [], [], 1e-1)[0]:
                 print('No input as of now.')
                 continue
 
             data, adr = self._5005sock.recvfrom(1024)
-            dlist = data.split(b'|')
+            dlist = data.decode().split('|')
 
             if dlist[0] == 'UPDATE' and dlist[1] != self.state.user_version:
                 self.state.user_version = dlist[1].decode()
@@ -105,7 +105,7 @@ class MockManagedCoachbot(Coachbot):
             self._5006sock.close()
 
     def __enter__(self) -> 'MockManagedCoachbot':
-        self._5005sock.bind(('', 5005))
+        self._5005sock.bind(('localhost', 5005))
         return self
 
     def __exit__(self, exc_type, exc_value, traceback) -> bool:

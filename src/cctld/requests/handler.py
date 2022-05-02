@@ -6,6 +6,7 @@ reads."""
 
 from typing import Callable, Dict, Tuple, Union, Any
 from typing_extensions import Literal
+import re
 from cctl.protocols import ipc
 from cctld.models.app_state import AppState
 
@@ -36,8 +37,11 @@ def handler(endpoint_regex: str,
                                app_state.coachbot_states.value)
     """
     def factory(function: IPCReqHandlerT):
+        if ENDPOINT_HANDLERS.get(endpoint_regex) is None:
+            ENDPOINT_HANDLERS[endpoint_regex] = {}
+        ENDPOINT_HANDLERS[endpoint_regex][operation] = function
+
         def wrapper(*args, **kwargs):
-            ENDPOINT_HANDLERS[endpoint_regex][operation] = function
             return function(*args, **kwargs)
         return wrapper
     return factory

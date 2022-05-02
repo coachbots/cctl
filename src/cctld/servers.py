@@ -18,7 +18,7 @@ from cctld.conf import Config
 from cctl.protocols import ipc, status
 from cctl.models import CoachbotState
 from cctld.res import ExitCode
-from cctld.requests import handler as req_handler
+from cctld.requests.handler import get as get_handler
 
 
 __author__ = 'Marko Vejnovic <contact@markovejnovic.com>'
@@ -45,8 +45,8 @@ async def start_ipc_request_server(app_state: AppState):
             return ipc.Response(ipc.ResultCode.BAD_REQUEST)
 
         try:
-            handler, matchs = req_handler.get(request.endpoint, request.method)
-            return handler(app_state, request, matchs)
+            handler, matchs = get_handler(request.endpoint, request.method)
+            return handler(app_state, request, tuple(matchs))
         except KeyError:
             logging.getLogger('servers').warning(
                 'Invalid method %s requested by %s.', request.method,
