@@ -21,7 +21,7 @@ def read_bot_state(
     """Returns the specific bot state."""
     return ipc.Response(
         ipc.ResultCode.OK,
-        app_state.coachbot_states.value[int(endpoint_groups[0])]
+        app_state.coachbot_states.value[int(endpoint_groups[0])].serialize()
     )
 
 
