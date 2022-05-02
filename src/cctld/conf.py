@@ -41,16 +41,11 @@ class Config:
 
     class CoachServers:
         """Returns the configurations under the ``coach_servers``header."""
-        @property
-        def status_port(self) -> int:
-            """Returns the port of the status server."""
-            return config.getint('coach_servers', 'status_port')
 
         @property
-        def interface(self) -> str:
-            """Returns the default interface to be used for communicating with
-            the Coachbots."""
-            return config.get('coach_servers', 'interface')
+        def status_host(self) -> str:
+            """Returns the host/port which will listen for Coachbot statues."""
+            return config.get('coach_servers', 'status_host')
 
     class IPC:
         """Returns the configs under the ``ipc`` header."""

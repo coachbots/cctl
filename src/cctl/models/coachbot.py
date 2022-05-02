@@ -53,11 +53,23 @@ class CoachbotState:
             Dict[str, Any]: This object in dictionary form, ready to be
                 serialized.
         """
+        print(self)
         return {
             **asdict(self),
             'position': [self.position.x, self.position.y]
             if self.position is not None else None
         }
+
+    @staticmethod
+    def from_dict(as_dict: Dict[str, Any]) -> 'CoachbotState':
+        """Creates an object from a dictionary.
+
+        Returns:
+            CoachbotState: The CoachbotState built from a dictionary.
+        """
+        return CoachbotState(
+            **{**as_dict, 'position': Vec2(as_dict['position'])}
+        )
 
     @staticmethod
     def deserialize(data: str) -> 'CoachbotState':
@@ -69,13 +81,4 @@ class CoachbotState:
         Returns:
             CoachbotState: The deserialized object.
         """
-        as_dict = json.loads(data)
-        return CoachbotState(
-            is_on=as_dict['is_on'],
-            user_version=as_dict['user_version'],
-            os_version=as_dict['os_version'],
-            bat_voltage=as_dict['bat_voltage'],
-            position=as_dict['position'],
-            theta=as_dict['theta'],
-            user_code_running=as_dict['user_code_running']
-        )
+        return CoachbotState.from_dict(json.loads(data))

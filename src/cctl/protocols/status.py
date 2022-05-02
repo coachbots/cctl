@@ -5,7 +5,7 @@
 import json
 from dataclasses import dataclass, asdict
 from typing import Any, Dict
-from cctl.utils.math import Vec2
+from cctl.models import CoachbotState
 
 
 __author__ = 'Marko Vejnovic <contact@markovejnovic.com>'
@@ -26,18 +26,24 @@ class Request:
     state: 'CoachbotState'
 
     def serialize(self) -> str:
-        return json.dumps({
+        return json.dumps(self.to_dict())
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
             'identifier': self.identifier,
             'state': self.state.to_dict()
-        })
+        }
+
+    @staticmethod
+    def from_dict(as_dict) -> 'Request':
+        return Request(
+            identifier=as_dict['identifier'],
+            state=CoachbotState.from_dict(as_dict['state'])
+        )
 
     @staticmethod
     def deserialize(data: str) -> 'Request':
-        as_dict = json.loads(data)
-        return Request(
-            identifier=as_dict['identifier'],
-            state=CoachbotState.deserialize(as_dict['state'])
-        )
+        return Request.from_dict(json.loads(data))
 
 
 @dataclass

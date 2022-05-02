@@ -14,7 +14,6 @@ from reactivex.subject import BehaviorSubject
 import zmq
 import zmq.asyncio
 
-from cctl.utils.net import get_ip_address
 from cctld.conf import Config
 from cctl.protocols import ipc, status
 from cctl.models import CoachbotState
@@ -74,7 +73,7 @@ async def start_ipc_request_server(app_state: AppState):
         await sock.send_string(response.serialize())
 
 
-async def start_status_server(state_subject: BehaviorSubject) -> None:
+async def start_status_server(app_state: AppState) -> None:
     """The StatusServer is a simple server which receives the coach-os
     status via TCP. This is the server that communicates with Coachbots getting
     their data and metrics.
@@ -90,33 +89,31 @@ async def start_status_server(state_subject: BehaviorSubject) -> None:
 
         req_id, new_state = request.identifier, request.state
 
-        state_subject.on_next(
+        old_states = app_state.coachbot_states.value
+        app_state.coachbot_states.on_next(
             tuple(new_state
                   if i == req_id
                   else old_state
-                  for i, old_state in state_subject.value)
+                  for i, old_state in enumerate(old_states))
         )
 
-        return new_state.Response()
+        return status.Response()
 
     ctx = zmq.asyncio.Context()
     sock = ctx.socket(zmq.REP)
     try:
-        sock.bind(f'tcp://{get_ip_address(Config().servers.interface)}'
-                  f':{Config().servers.status_port}')
+        sock.bind(Config().servers.status_host)
     except zmq.ZMQError as zmq_err:
         logging.getLogger('servers').error(
-            'Could not bind to tcp://%s:%d. Pleease check whether another '
+            'Could not bind to %s. Pleease check whether another '
             'process is using it. Error: %s',
-            get_ip_address(Config().servers.interface),
-            Config().servers.status_port,
-            zmq_err)
+            Config().servers.status_host, zmq_err)
         sys.exit(ExitCode.EX_UNAVAILABLE)
 
     while True:
         request = await sock.recv_string()
 
-        response = await handle_client(CoachbotState.deserialize(request))
+        response = await handle_client(status.Request.deserialize(request))
         logging.getLogger('servers').debug('Responding with: %s', response)
         await sock.send_string(response.serialize())
 

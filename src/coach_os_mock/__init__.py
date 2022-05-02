@@ -10,6 +10,7 @@ Todo:
 
 import socket
 import time
+import json
 
 
 from select import select
@@ -33,12 +34,12 @@ class MockManagedCoachbot(Coachbot):
                 user_code_running=False
             )
     ):
+        self.my_id = 90
         self.state = state
         self._5005sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._5005sock.settimeout(0.5)
 
         self.zmq_ctx = zmq.Context()
-        self._5006sock = zmq.socket(self.zmq_ctx, zmq.REQ)
 
     def listen(self, timeout=1):
         """Listens for a timeout time for inputs.
@@ -49,7 +50,6 @@ class MockManagedCoachbot(Coachbot):
         """
         start_time = time.time()
         while (delta_t := time.time() - start_time) < timeout:
-            print(f'[T+{round(delta_t, 2)}s]\t\t', end='')
             if not select([self._5005sock], [], [], 0)[0]:
                 time.sleep(1)
                 print('No input as of now.')
@@ -77,8 +77,32 @@ class MockManagedCoachbot(Coachbot):
                       f'user_code_running={self.state.user_code_running}')
                 continue
 
-    def reply(self) -> None:
-        self._5006sock.connect('tcp://localhost:5006')
+    def reply(self, timeout) -> None:
+        target = 'tcp://192.168.1.119:16780'
+        self._5006sock = self.zmq_ctx.socket(zmq.REQ)
+        self._5006sock.connect(target)
+        assert self.state.position is not None
+        request = json.dumps({
+            'identifier': self.my_id,
+            'state': {
+                'is_on': bool(self.state.is_on),
+                'user_version': self.state.user_version,
+                'os_version': self.state.os_version,
+                'bat_voltage': self.state.bat_voltage,
+                'position': [self.state.position.x, self.state.position.y],
+                'theta': self.state.theta
+            }
+        })
+        print(f'Sending request: {request} to {target}')
+        self._5006sock.send_string(request)
+        self._5006sock.RCVTIMEO = int(timeout * 1000)
+        try:
+            response = self._5006sock.recv()
+            print(f'Received {response}')
+        except zmq.error.Again:
+            print('Server didn\'t reply.')
+        finally:
+            self._5006sock.close()
 
     def __enter__(self) -> 'MockManagedCoachbot':
         self._5005sock.bind(('', 5005))

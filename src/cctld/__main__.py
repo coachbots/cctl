@@ -67,14 +67,14 @@ async def main():
     """The main entry point of cctld."""
     app_state = AppState(
         coachbot_states=BehaviorSubject(
-            (CoachbotState(False) for _ in range(100))),
+            tuple(CoachbotState(False) for _ in range(100))),
         requested_states=Subject()
     )
 
-    app_state.requested_states.register(BotStateManager())
+    app_state.requested_states.subscribe(BotStateManager())
 
     running_servers = asyncio.gather(
-        servers.start_status_server(app_state.coachbot_states),
+        servers.start_status_server(app_state),
         servers.start_ipc_request_server(app_state),
         servers.start_ipc_feed_server(app_state),
     )
