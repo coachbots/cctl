@@ -27,16 +27,33 @@ class Coachbot:
 
 
 @dataclass
+class UserCodeState:
+    """Represents the state of user code."""
+    is_running: Optional[bool] = None
+    version: Optional[str] = None
+    name: Optional[str] = None
+    author: Optional[str] = None
+    requires_version: Optional[str] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Converts this object to a dictionary."""
+        return asdict(self)
+
+    @staticmethod
+    def from_dict(as_dict) -> 'UserCodeState':
+        return UserCodeState(**as_dict)
+
+
+@dataclass
 class CoachbotState:
     """The StatusMessage is the model that represents the communication between
     coach-os and cctl."""
     is_on: Optional[bool] = None
-    user_version: Optional[str] = None
     os_version: Optional[str] = None
     bat_voltage: Optional[float] = None
     position: Optional[Vec2] = None
     theta: Optional[float] = None
-    user_code_running: Optional[bool] = None
+    user_code_state: UserCodeState = UserCodeState()
 
     def serialize(self) -> str:
         """Converts the StatusMessage into a serialized form.
@@ -53,9 +70,9 @@ class CoachbotState:
             Dict[str, Any]: This object in dictionary form, ready to be
                 serialized.
         """
-        print(self)
         return {
             **asdict(self),
+            'user_code_state': self.user_code_state.to_dict(),
             'position': [self.position.x, self.position.y]
             if self.position is not None else None
         }
@@ -68,7 +85,13 @@ class CoachbotState:
             CoachbotState: The CoachbotState built from a dictionary.
         """
         return CoachbotState(
-            **{**as_dict, 'position': Vec2(as_dict['position'])}
+            **{
+                **as_dict,
+                'user_code_state':
+                    UserCodeState.from_dict(as_dict['user_code_state']),
+                'position': Vec2(as_dict['position']) \
+                    if as_dict['position'] is not None else None
+            }
         )
 
     @staticmethod

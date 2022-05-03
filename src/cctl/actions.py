@@ -9,11 +9,13 @@ import re
 from os import path
 import os
 import logging
+from compot.widgets import ObserverMainWindow
 from argparse import Namespace
-from subprocess import call
-from multiprocessing import Process
+from reactivex import operators as rxops
 import serial
-import time
+from cctl.api.cctld import CCTLDCoachbotStateObservable
+from cctl.models.coachbot import Coachbot
+from cctl.ui.manager import Manager
 from cctl.utils.net import sftp_client
 
 from cctl.res import ERROR_CODES, RES_STR
@@ -54,29 +56,24 @@ class CommandAction:
 
     @staticmethod
     def manage_system() -> None:
-        """Boots up the coachbot driver system.
+        """Starts the UI that displays the management information of the
+        coachbots.
 
         Todo:
-            Shouldn't be implemented the way it is. Should be calling a
-            module function.
+            A hack implementation since ``cctl`` isn't fully asyncio ready yet.
         """
-        def _start_ftp_server():
-            call(['./cloud.py', configuration.get_server_interface()],
-                 cwd=configuration.get_server_dir())
 
-        def _start_manager():
-            call(['./manager.py'], cwd=configuration.get_server_dir())
+        async def __helper():
+            data_stream, task = await CCTLDCoachbotStateObservable(
+                configuration.get_state_feed())
 
-        ftp_server = Process(target=_start_ftp_server)
-        coach_manager = Process(target=_start_manager)
-        procs = [ftp_server, coach_manager]
+            ObserverMainWindow(
+                Manager, data_stream.pipe(rxops.map(
+                    lambda sts: [Coachbot(i, st) for i, st in enumerate(sts)]))
+            )
+            await task
 
-        for proc in procs:
-            proc.start()
-            time.sleep(5)  # FIXME: Really bad
-
-        for proc in procs:
-            proc.join()
+        asyncio.get_event_loop().run_until_complete(__helper())
 
     def __init__(self, args: Namespace):
         self._args = args
@@ -324,7 +321,7 @@ class CommandAction:
             RES_STR['cli']['charger']['name']: self.charger_on_off_handler,
 
             # TODO: make this a member method
-            RES_STR['cmd_manage']: CommandAction.manage_system,
+            'manage': CommandAction.manage_system,
         }
 
         try:

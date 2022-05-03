@@ -8,6 +8,8 @@ updates, and automatically as required.
 
 import asyncio
 import logging
+
+from serial.serialutil import SerialException
 try:
     import importlib.resources as pkg_resources
 except ImportError:
@@ -47,7 +49,7 @@ async def __upload_arduino_script() -> None:
             '-p', str(PORT),
         ] + ([
             '--build-property',
-            f'build.extra_flags="-DVERSION=\"{cctl.__VERSION__}\""'
+            f'build.extra_flags="-DVERSION=\"{cctl.__version__}\""'
         ] if operation == 'compile' else [])
 
         with pkg_resources.path(static, 'arduino-daughter') as script_path:
@@ -90,7 +92,7 @@ async def update(force: bool = False) -> None:
         script will skip checking for version and simply force update the
         arduino daughterboard.
     """
-    if not force and await query_version() == cctl.__VERSION__:
+    if not force and await query_version() == cctl.__version__:
         return
 
     await __upload_arduino_script()
@@ -106,4 +108,12 @@ async def charge_rail_set(power: bool) -> None:
     with Serial(PORT, BAUD_RATE) as ser:
         ser.write(b'A' if power else b'D')
 
-asyncio.get_event_loop().run_until_complete(update(force=False))
+# Update as soon as this script module is loaded.
+async def __auto_update():
+    try:
+        await update(force=False)
+    except SerialException as s_ex:
+        logging.error('Could not update the Arduino daughterboard: %s.'
+                      'This means that it will likely not work.', s_ex)
+
+asyncio.get_event_loop().run_until_complete(__auto_update())

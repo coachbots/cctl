@@ -13,6 +13,9 @@ __email__ = 'contact@markovejnovic.com'
 __status__ = 'Development'
 
 
+import asyncio
+from typing import Tuple
+import reactivex as rx
 import zmq
 import zmq.asyncio
 
@@ -94,3 +97,51 @@ class CCTLDClient:
 
     async def __aexit__(self, exc_t, exc_v, exc_tb):
         return False
+
+
+async def CCTLDCoachbotStateObservable(
+    state_feed: str) -> Tuple[rx.Subject, asyncio.Task]:
+    """The ``CCTLDCoachbotStateObservable`` is an ``rx.Observable`` that will
+    call the ``on_next`` function of your observer as new ``CoachbotState``
+    data comes through.
+
+    Note:
+        This function will spawn an ``asyncio.Task`` that you are resonsible
+        for managing. Failure to manage this task (possibly via cancelling it
+        when you don't need it) will result in some overhead.
+
+    Parameters:
+        state_feed (str): The URI to connect to the state feed. This should be
+            the same state feed **cctld** is serving on. Can be of the form
+            ``ipc://<PATH>`` or ``tcp://<HOST>:<PORT>``.
+
+    Returns:
+        Tuple[reactivex.Subject, asyncio.Task]: The Observable and the running
+        task.
+
+    Example Usage:
+
+    .. code-block:: python
+
+       my_observable, task = CCTLDCoachbotStateObservable()
+       my_observer = rx.Observer(on_next=lambda next: print(next))
+       my_observable.subscribe(my_observer)
+    """
+    my_subject = rx.Subject()
+
+    async def run():
+        context = zmq.asyncio.Context()
+        socket = context.socket(zmq.SUB)
+        socket.connect(state_feed)
+        socket.setsockopt_string(zmq.SUBSCRIBE, '')
+        try:
+            while True:
+                msg = [CoachbotState.from_dict(bot)
+                       for bot in (await socket.recv_json())]
+                my_subject.on_next(msg)
+        except Exception as ex:
+            my_subject.on_error(ex)
+        finally:
+            my_subject.on_completed()
+
+    return my_subject, asyncio.create_task(run())

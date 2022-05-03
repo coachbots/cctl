@@ -16,7 +16,7 @@ import json
 from select import select
 import zmq
 from cctl.models import Coachbot
-from cctl.models.coachbot import CoachbotState
+from cctl.models.coachbot import CoachbotState, UserCodeState
 from cctl.utils.math import Vec2
 
 
@@ -26,12 +26,14 @@ class MockManagedCoachbot(Coachbot):
         self,
             state=CoachbotState(
                 is_on=True,
-                user_version='1',
                 os_version='1',
                 bat_voltage=4.2,
                 position=Vec2(0, 0),
                 theta=0,
-                user_code_running=False
+                user_code_state=UserCodeState(
+                    version='1',
+                    is_running=False,
+                )
             )
     ):
         self.my_id = 90
@@ -86,7 +88,7 @@ class MockManagedCoachbot(Coachbot):
             'identifier': self.my_id,
             'state': {
                 'is_on': bool(self.state.is_on),
-                'user_version': self.state.user_version,
+                'user_code_state': self.state.user_code_state.to_dict(),
                 'os_version': self.state.os_version,
                 'bat_voltage': self.state.bat_voltage,
                 'position': [self.state.position.x, self.state.position.y],

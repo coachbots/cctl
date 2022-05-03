@@ -51,6 +51,9 @@ mandatory_keys = {
         'baudrate',
         'board',
         'arduino-executable'
+    ],
+    'cctld': [
+        'state_feed'
     ]
 }
 
@@ -92,6 +95,9 @@ default_values = {
         'baudrate': 115200,
         'board': 'arduino:avr:uno',
         'arduino-executable': '/usr/local/bin/arduino-cli'
+    },
+    'cctld': {
+        'state_feed': 'ipc:///var/run/cctld/state_feed'
     }
 }
 
@@ -285,3 +291,7 @@ def get_arduino_daughterboard_board() -> str:
 def get_arduino_executable_path() -> str:
     """Returns the full path to the arduino executable."""
     return path.abspath(config.get('arduino-daughter', 'arduino-executable'))
+
+def get_state_feed() -> str:
+    """Returns the full path to the cctld state feed."""
+    return config.get('cctld', 'state_feed')
