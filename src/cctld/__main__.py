@@ -7,7 +7,7 @@ from contextlib import closing
 import logging
 import socket
 
-from dataclasses import asdict
+from dataclasses import asdict, is_dataclass
 from reactivex.subject import BehaviorSubject, Subject
 from reactivex import Observer
 from cctl.models.coachbot import CoachbotState, Coachbot
@@ -30,7 +30,7 @@ class BotStateManager(Observer):
         This class needs a significant rewrite since it is still adhering to a
         legacy API that is to be replaced.
     """
-    def user_code_running(self, value: Coachbot, *args, **kwargs):
+    def user_code_state_is_running(self, value: Coachbot, *args, **kwargs):
         """Changes the running user code to the target state as required.
 
         Todo:
@@ -40,10 +40,35 @@ class BotStateManager(Observer):
         port = 5005
         broadcast_ip = 'localhost'
         config_bytes = b' '  # Dummy value, necessary for legacy protocol.
-        target_op = b'START' if value.state.user_code_running else b'STOP'
+        assert value.state.user_code_state.is_running is not None
+        target_op = b'START' if value.state.user_code_state.is_running \
+            else b'STOP'
         with closing(socket.socket(socket.AF_INET, socket.SOCK_DGRAM)) as sock:
             sock.sendto(target_op + b'_USR|' + config_bytes + b'|' + my_ip,
                         (broadcast_ip, port))
+
+    def user_code_state_user_code(self, value: Coachbot, *args, **kwargs):
+        """Updates the running user code to something new."""
+        # TODO: Rewrite this. Actually, the user_code should contain metadata
+        # information such as authorship and name of the file. This should be
+        # built into a UserCodeState model which should then be uploaded rather
+        # than sending this raw over the wire.
+        port = 5005
+        broadcast_ip = 'localhost'
+        target_op = b'UPDATE'
+        assert value.state.user_code_state.user_code is not None
+        with closing(socket.socket(socket.AF_INET, socket.SOCK_DGRAM)) as sock:
+            sock.sendto(
+                target_op + b'|' +
+                value.state.user_code_state.user_code.encode(),
+                (broadcast_ip, port)
+            )
+
+
+    def user_code_state(self, value: Coachbot, *args, **kwargs):
+        """Handles user_code_state change requests."""
+        self.__exec_handlers_for_dataclass(
+            value.state.user_code_state, value, prefix='user_code_state')
 
     def _no_handler_for_field(self, *args, field: str, **kwargs):
         """Called when a handler function is not found for the field which has
@@ -51,17 +76,19 @@ class BotStateManager(Observer):
         # TODO: Wrong logger
         logging.error('The handler for field %s does not exist.', field)
 
+    def __exec_handlers_for_dataclass(self, obj, coachbot, prefix=''):
+        for field, field_value in asdict(obj).items():
+            if field_value is None:
+                continue
+
+            getattr(self, prefix + field,
+                    self._no_handler_for_field)(coachbot, field=field)
+
     def on_next(self, value: Coachbot):
         # Iterate through all the new values we need to do on the coachbot.
         # If the field is None, means we don't need to touch it. If it is not
         # None, then we need to do something with it.
-        for field, field_value in asdict(value.state).items():
-            if field_value is None:
-                continue
-
-            # Call the function in this class with the name of that field.
-            getattr(self, field,
-                    self._no_handler_for_field)(value, field=field)
+        self.__exec_handlers_for_dataclass(value.state, value)
 
 
 async def main():

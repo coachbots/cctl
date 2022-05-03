@@ -6,7 +6,7 @@ is buit upon the import of this module."""
 
 from typing import Any, Tuple, Union
 from cctl.models import Coachbot
-from cctl.models.coachbot import CoachbotState
+from cctl.models.coachbot import CoachbotState, UserCodeState
 from cctl.protocols import ipc
 from cctld.models.app_state import AppState
 from cctld.requests.handler import handler
@@ -38,7 +38,8 @@ def create_bot_user_running(app_state, _, endpoint_groups):
         return ipc.Response(ipc.ResultCode.OK)
 
     app_state.requested_states.on_next(
-        Coachbot(ident, CoachbotState(user_code_running=True)))
+        Coachbot(ident, CoachbotState(
+            user_code_state=UserCodeState(is_running=True))))
     return ipc.Response(ipc.ResultCode.OK)
 
 
@@ -55,7 +56,29 @@ def delete_bot_user_running(app_state, _, endpoint_groups):
         return ipc.Response(ipc.ResultCode.OK)
 
     app_state.requested_states.on_next(
-        Coachbot(ident, CoachbotState(user_code_running=False)))
+        Coachbot(ident, CoachbotState(
+            user_code_state=UserCodeState(is_running=False))))
+    return ipc.Response(ipc.ResultCode.OK)
+
+
+@handler(r'^/bots/([0-9]+)/user-code/code/?$', 'update')
+def update_bot_user_code(app_state, request: ipc.Request, endpoint_groups):
+    """Updates the user code."""
+    ident = int(endpoint_groups[0])
+    current_state = app_state.coachbot_states.value[ident]
+
+    if not current_state.is_on:
+        return ipc.Response(ipc.ResultCode.STATE_CONFLICT)
+
+    if current_state.user_code_running:
+        app_state.requested_states.on_next(
+            Coachbot(ident, CoachbotState(
+                user_code_state=UserCodeState(is_running=False)))
+        )
+
+    app_state.requested_states.on_next(
+        Coachbot(ident, CoachbotState(
+            user_code_state=UserCodeState(user_code=request.body))))
     return ipc.Response(ipc.ResultCode.OK)
 
 

@@ -56,6 +56,12 @@ class _CCTLDClientRequest:
         return ipc.Response.deserialize(response_raw)
 
 
+class CCTLDRespEx(Exception):
+    pass
+
+class CCTLDRespInvalidState(CCTLDRespEx):
+    pass
+
 class CCTLDClient:
     """The ``CCTLDClient`` object is a ``ContextManager`` that manages requests
     automatically for you. Use it as any other ``ContextManager``. All other
@@ -94,6 +100,48 @@ class CCTLDClient:
                 endpoint=f'/bots/{bot.identifier}/state'
             ))
             return CoachbotState.deserialize(response.body)
+
+    async def set_user_code_running(self, bot: Coachbot, state: bool) -> None:
+        """This function sets the user code of the target bot to start or not,
+        per the parameter.
+
+        Parameters:
+            bot (Coachbot): The target bot.
+            state (bool): The target state.
+
+        Raises:
+            CCTLDRespInvalidState: If the user code could not be turned on due
+            to a state conflict (likely the bot being powered off).
+        """
+        if self._ctx is None:
+            raise ValueError('CCTLDClient can only be used as a context '
+                             'manager. ')
+        with _CCTLDClientRequest(self._ctx, self._path) as req:
+            response = await req.request(ipc.Request(
+                method='create' if state else 'delete',
+                endpoint=f'/bots/{bot.identifier}/user-code/running'
+            ))
+            if response.result_code == ipc.ResultCode.STATE_CONFLICT:
+                raise CCTLDRespInvalidState(response.body)
+
+    async def update_user_code(self, bot: Coachbot, user_code: str) -> None:
+        """Attempts to update the user code on the specified bot.
+
+        Raises:
+            CCTLDRespInvalidState: If the robot is in an invalid state for
+            updating. This likely means it is turned off.
+        """
+        if self._ctx is None:
+            raise ValueError('CCTLDClient can only be used as a context '
+                             'manager. ')
+        with _CCTLDClientRequest(self._ctx, self._path) as req:
+            response = await req.request(ipc.Request(
+                method='update',
+                endpoint=f'/bots/{bot.identifier}/user-code/code',
+                body=user_code
+            ))
+            if response.result_code == ipc.ResultCode.STATE_CONFLICT:
+                raise CCTLDRespInvalidState(response.body)
 
     async def __aexit__(self, exc_t, exc_v, exc_tb):
         return False

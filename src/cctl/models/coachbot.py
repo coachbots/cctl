@@ -34,6 +34,7 @@ class UserCodeState:
     name: Optional[str] = None
     author: Optional[str] = None
     requires_version: Optional[str] = None
+    user_code: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
         """Converts this object to a dictionary."""

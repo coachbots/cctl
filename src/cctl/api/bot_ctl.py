@@ -333,7 +333,7 @@ class Coachbot:
             await self.async_boot(True)
 
         # Not really async.
-        with open(path_to_usr_code, 'rb') as usr_code:
+        with open(path_to_usr_code, 'r') as usr_code:
             netutils.write_remote_file(
                 self.address, configuration.get_coachswarm_remote_path(),
                 usr_code.read())
