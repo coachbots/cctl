@@ -1,6 +1,9 @@
 Installation
 ============
 
+.. warning::
+   This document is possibly outdated. You are on your own.
+
 Installing **cctl** is a task of fetching all its dependencies, building it and
 installing it. Because, at this moment, we do not ship Debian packages, you
 must manually build **cctl** yourself.
@@ -9,7 +12,7 @@ Dependencies
 ------------
 
 Before installing **cctl** ensure you have ``ffmpeg``, ``v4l2loopback``,
-``python3.6``, ``pandoc`` and the appropriate ``pip`` version.
+``python3.8``, ``pandoc`` and the appropriate ``pip`` version.
 
 You also need to have ``arduino-cli`` installed. To do this, you should run
 this in a root shell:

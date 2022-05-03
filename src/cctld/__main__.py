@@ -91,7 +91,7 @@ class BotStateManager(Observer):
         self.__exec_handlers_for_dataclass(value.state, value)
 
 
-async def main():
+async def __main():
     """The main entry point of cctld."""
     app_state = AppState(
         coachbot_states=BehaviorSubject(
@@ -109,9 +109,10 @@ async def main():
     await running_servers
 
 
+def main():
+    with daemon.context():
+        asyncio.run(__main())
+
+
 if __name__ == '__main__':
-    if __debug__:
-        asyncio.run(main())
-    else:
-        with daemon.context() as d_ctx:
-            asyncio.run(main())
+    main()

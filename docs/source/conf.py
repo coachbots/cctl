@@ -38,7 +38,9 @@ extensions = [
     'sphinx.ext.githubpages',
     'sphinx.ext.napoleon',
     'sphinx.ext.todo',
-    'sphinx_rtd_theme'
+    'sphinx.ext.graphviz',
+    'sphinx_rtd_theme',
+    'sphinx-jsonschema'
 ]
 
 # Add any paths that contain templates here, relative to this directory.

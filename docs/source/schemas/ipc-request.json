@@ -1,0 +1,27 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "",
+    "title": "ipc.Request",
+    "description": "An ipc.Request to cctld",
+    "type": "object",
+    "properties": {
+        "endpoint": {
+            "description": "The endpoint you are making a request on.",
+            "type": "string"
+        },
+        "method": {
+            "description": "The method you are trying to call.",
+            "type": "string",
+            "pattern": "^(create)|(read)|(update)|(delete)$"
+        },
+        "head": {
+            "description": "Headers Supporting the Request",
+            "type": "object"
+        },
+        "body": {
+            "description": "The request body.",
+            "type": "object"
+        }
+    },
+    "required": [ "endpoint", "method", "head", "body" ]
+}

@@ -15,6 +15,7 @@ last updated.
    :maxdepth: 2
    :caption: Contents:
 
+   rationale
    installation
    configuration
    usage
