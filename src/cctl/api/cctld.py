@@ -14,7 +14,7 @@ __status__ = 'Development'
 
 
 import asyncio
-from typing import Tuple
+from typing import Iterable, Tuple
 import reactivex as rx
 import zmq
 import zmq.asyncio
@@ -79,11 +79,24 @@ class CCTLDClient:
     """
     def __init__(self, cctl_ipc_path: str) -> None:
         self._path = cctl_ipc_path
-        self._ctx = None
+        self._ctx = zmq.asyncio.Context()
 
     async def __aenter__(self) -> 'CCTLDClient':
-        self._ctx = zmq.asyncio.Context()
         return self
+
+    async def read_bots_state(self) -> Tuple[CoachbotState]:
+        """Returns the current bot states.
+
+        Returns:
+            Tuple[CoachbotState]: The tuple of coachbot states.
+        """
+        with _CCTLDClientRequest(self._ctx, self._path) as req:
+            response = await req.request(ipc.Request(
+                method='read',
+                endpoint='/bots/state'
+            ))
+            return tuple(CoachbotState.deserialize(b) for b in response.body)
+
 
     async def read_bot_state(self, bot: Coachbot) -> CoachbotState:
         """This function returns the latest bot state according to ``cctld``.
@@ -91,9 +104,6 @@ class CCTLDClient:
         Returns:
             CoachbotState: The state of the specified ``Coachbot``.
         """
-        if self._ctx is None:
-            raise ValueError('CCTLDClient can only be used as a context '
-                             'manager. ')
         with _CCTLDClientRequest(self._ctx, self._path) as req:
             response = await req.request(ipc.Request(
                 method='read',
@@ -113,9 +123,6 @@ class CCTLDClient:
             CCTLDRespInvalidState: If the user code could not be turned on due
             to a state conflict (likely the bot being powered off).
         """
-        if self._ctx is None:
-            raise ValueError('CCTLDClient can only be used as a context '
-                             'manager. ')
         with _CCTLDClientRequest(self._ctx, self._path) as req:
             response = await req.request(ipc.Request(
                 method='create' if state else 'delete',
@@ -131,9 +138,6 @@ class CCTLDClient:
             CCTLDRespInvalidState: If the robot is in an invalid state for
             updating. This likely means it is turned off.
         """
-        if self._ctx is None:
-            raise ValueError('CCTLDClient can only be used as a context '
-                             'manager. ')
         with _CCTLDClientRequest(self._ctx, self._path) as req:
             response = await req.request(ipc.Request(
                 method='update',

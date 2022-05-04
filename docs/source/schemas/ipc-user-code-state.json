@@ -1,0 +1,43 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "ipc-user-code-state.json",
+    "title": "User Code State",
+    "description": "Describes the state of the user code.",
+    "type": "object",
+    "properties": {
+        "is_running": {
+            "type": "bool|null",
+            "description": "If the coachbot user code is currently running"
+        },
+        "version": {
+            "type": "string|null",
+            "description": "The current version of the user code.",
+            "pattern": "^v([0-9])+\\.[0-9]+\\.[0-9]+$"
+        },
+        "name": {
+            "type": "string|null",
+            "description": "The name of the user code."
+        },
+        "author": {
+            "type": "string|null",
+            "description": "The authorship information of the user code."
+        },
+        "requires_version": {
+            "type": "string|null",
+            "description": "A pattern specifying the coach-os version required.",
+            "pattern": "^(\\^|~)?v[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "user_code": {
+            "type": "string|null",
+            "description": "The user code itself."
+        }
+    },
+    "required": [
+        "is_running",
+        "version",
+        "name",
+        "author",
+        "requires_version",
+        "user_code"
+    ]
+}

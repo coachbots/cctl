@@ -4,12 +4,20 @@
 handle. This is facilitated through the ``ENDPOINT_HANDLERS`` dictionary which
 is buit upon the import of this module."""
 
+import json
 from typing import Any, Tuple, Union
 from cctl.models import Coachbot
 from cctl.models.coachbot import CoachbotState, UserCodeState
 from cctl.protocols import ipc
 from cctld.models.app_state import AppState
 from cctld.requests.handler import handler
+
+@handler(r'^/bots/state/?$', 'read')
+def read_bots_state(app_state: AppState, _, __) -> ipc.Response:
+    """Returns the state of all the robots."""
+    return ipc.Response(
+        ipc.ResultCode.OK,
+        json.dumps(bots.to_dict() for bots in app_state.coachbot_states.value))
 
 
 @handler(r'^/bots/([0-9]+)/state/?$', 'read')
