@@ -4,14 +4,14 @@
 ``ENDPOINT_HANDLERS``, a variable from which the IPC Request server then
 reads."""
 
-from typing import Callable, Dict, Tuple, Union, Any
+from typing import Callable, Coroutine, Dict, Tuple, Union, Any
 from typing_extensions import Literal
 import re
 from cctl.protocols import ipc
 from cctld.models.app_state import AppState
 
 IPCReqHandlerT = Callable[[AppState, ipc.Request, Tuple[Union[str, Any], ...]],
-                          ipc.Response]
+                          Coroutine[Any, Any, ipc.Response]]
 IPCOperationT = str
 
 
@@ -31,8 +31,8 @@ def handler(endpoint_regex: str,
        from cctl.protocols import ipc
 
        @handler('^/bots/state/?$', 'read')
-       def all_bots_state_read(app_state: AppState, request: ipc.Request,
-                               regex_matches):
+       async def all_bots_state_read(app_state: AppState, request: ipc.Request,
+                                     regex_matches):
            return ipc.Response(ipc.ResultCode.OK,
                                app_state.coachbot_states.value)
     """

@@ -39,6 +39,16 @@ class Config:
             """Returns the working directory of cctld."""
             return config.get('general', 'workdir')
 
+    class CoachClient:
+        """Returns the configurations under the ``coach_client`` header."""
+
+        @property
+        def command_port(self) -> int:
+            """Returns the port on which the coachbots are listening for
+            commands."""
+            return config.getint('coach_client', 'command_port')
+
+
     class CoachServers:
         """Returns the configurations under the ``coach_servers``header."""
 
@@ -70,3 +80,7 @@ class Config:
     @property
     def ipc(self) -> 'Config.IPC':
         return Config.IPC()
+
+    @property
+    def coach_client(self) -> 'Config.CoachClient':
+        return Config.CoachClient()

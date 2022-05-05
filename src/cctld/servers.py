@@ -10,7 +10,6 @@ import sys
 import logging
 from typing import Tuple
 from cctld.models import AppState
-from reactivex.subject import BehaviorSubject
 import zmq
 import zmq.asyncio
 
@@ -46,7 +45,7 @@ async def start_ipc_request_server(app_state: AppState):
 
         try:
             handler, matchs = get_handler(request.endpoint, request.method)
-            return handler(app_state, request, tuple(matchs))
+            return await handler(app_state, request, tuple(matchs))
         except KeyError:
             logging.getLogger('servers').warning(
                 'Invalid method %s requested by %s.', request.method,
