@@ -5,6 +5,7 @@
 import asyncio
 
 from reactivex.subject import BehaviorSubject
+from reactivex.subject.subject import Subject
 from cctl.models.coachbot import CoachbotState
 from cctld import daemon, servers
 from cctld.conf import Config
@@ -20,6 +21,7 @@ async def __main():
     app_state = AppState(
         coachbot_states=BehaviorSubject(
             tuple(CoachbotState(False) for _ in range(100))),
+        coachbot_signals=Subject(),
         config=Config()
     )
 
@@ -27,6 +29,7 @@ async def __main():
         servers.start_status_server(app_state),
         servers.start_ipc_request_server(app_state),
         servers.start_ipc_feed_server(app_state),
+        servers.start_ipc_signal_forward_server(app_state)
     )
     await running_servers
 

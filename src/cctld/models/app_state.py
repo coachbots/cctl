@@ -6,7 +6,9 @@ state."""
 
 from typing import Tuple
 from dataclasses import dataclass
-from cctl.models.coachbot import CoachbotState
+
+from reactivex.subject.subject import Subject
+from cctl.models.coachbot import CoachbotState, Signal
 from reactivex.subject import BehaviorSubject
 from cctld.conf import Config
 
@@ -21,3 +23,4 @@ class AppState:
     """
     coachbot_states: BehaviorSubject[Tuple[CoachbotState, ...]]
     config: Config
+    coachbot_signals: Subject[Signal]

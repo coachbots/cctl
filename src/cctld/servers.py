@@ -13,9 +13,8 @@ from cctld.models import AppState
 import zmq
 import zmq.asyncio
 
-from cctld.conf import Config
 from cctl.protocols import ipc, status
-from cctl.models import CoachbotState
+from cctl.models import CoachbotState, Signal
 from cctld.res import ExitCode
 from cctld.requests.handler import get as get_handler
 
@@ -58,11 +57,12 @@ async def start_ipc_request_server(app_state: AppState):
     ctx = zmq.asyncio.Context()
     sock = ctx.socket(zmq.REP)
     try:
-        sock.bind(Config().ipc.request_feed)
+        sock.bind(app_state.config.ipc.request_feed)
     except zmq.ZMQError as zmq_err:
         logging.getLogger('servers').error(
             'Could not bind to the requested UNIX file %s. Please check '
-            'permissions. Error: %s', Config().ipc.request_feed, zmq_err)
+            'permissions. Error: %s',
+            app_state.config.ipc.request_feed, zmq_err)
         sys.exit(ExitCode.EX_NOPERM)
 
     while True:
@@ -78,35 +78,42 @@ async def start_status_server(app_state: AppState) -> None:
     their data and metrics.
 
     Parameters:
-        reactivex.subjects.BehaviorSubject: The subject to inject
-        ``CoachbotState``s into.
+        app_state (AppState): The application state.
     """
     async def handle_client(request: status.Request) -> status.Response:
         """This function handles a client asking a request to this server."""
         logging.getLogger('servers').debug('Received Status request %s',
                                            request)
 
-        req_id, new_state = request.identifier, request.state
+        if request.type == 'signal':
+            assert isinstance(request.body, Signal)
+            app_state.coachbot_signals.on_next(request.body)
+            return status.Response()
 
-        old_states = app_state.coachbot_states.value
-        app_state.coachbot_states.on_next(
-            tuple(new_state
-                  if i == req_id
-                  else old_state
-                  for i, old_state in enumerate(old_states))
-        )
+        if request.type == 'status':
+            req_id, new_state = request.identifier, request.body
 
-        return status.Response()
+            old_states = app_state.coachbot_states.value
+            app_state.coachbot_states.on_next(
+                tuple(new_state
+                      if i == req_id
+                      else old_state
+                      for i, old_state in enumerate(old_states))
+            )
+
+            return status.Response()
+
+        return status.Response(status_code=status.StatusCode.OK)
 
     ctx = zmq.asyncio.Context()
     sock = ctx.socket(zmq.REP)
     try:
-        sock.bind(Config().servers.status_host)
+        sock.bind(app_state.config.servers.status_host)
     except zmq.ZMQError as zmq_err:
         logging.getLogger('servers').error(
-            'Could not bind to %s. Pleease check whether another '
+            'Could not bind to %s. Please check whether another '
             'process is using it. Error: %s',
-            Config().servers.status_host, zmq_err)
+            app_state.config.servers.status_host, zmq_err)
         sys.exit(ExitCode.EX_UNAVAILABLE)
 
     while True:
@@ -124,15 +131,37 @@ async def start_ipc_feed_server(app_state: AppState) -> None:
     ctx = zmq.asyncio.Context()
     sock = ctx.socket(zmq.PUB)
     try:
-        sock.bind(Config().ipc.state_feed)
+        sock.bind(app_state.config.ipc.state_feed)
     except zmq.ZMQError as zmq_err:
         logging.getLogger('servers').error(
             'Could not bind to %s. Please check whether you have permissions.'
             'Error: %s',
-            Config().ipc.state_feed, zmq_err)
+            app_state.config.ipc.state_feed, zmq_err)
         sys.exit(ExitCode.EX_NOPERM)
 
     def on_coachbot_state_change(new_states: Tuple[CoachbotState, ...]):
         sock.send_json([new_state.to_dict() for new_state in new_states])
 
     app_state.coachbot_states.subscribe(on_next=on_coachbot_state_change)
+
+
+async def start_ipc_signal_forward_server(app_state: AppState) -> None:
+    """This server forwards signals that ``Coachbots`` send to **cctld** into
+    the registered feed. APIs can then listen for these to trigger events.
+    """
+    ctx = zmq.asyncio.Context()
+    sock = ctx.socket(zmq.PUB)
+
+    try:
+        sock.bind(app_state.config.ipc.signal_feed)
+    except zmq.ZMQError as zmq_err:
+        logging.getLogger('servers').error(
+            'Could not bind to %s. Please check whether you have permissions.'
+            'Error: %s',
+            app_state.config.ipc.state_feed, zmq_err)
+        sys.exit(ExitCode.EX_NOPERM)
+
+    def on_signal(signal: Signal):
+        sock.send_json(signal.to_dict())
+
+    app_state.coachbot_signals.subscribe(on_next=on_signal)

@@ -58,7 +58,7 @@ class Config:
             return config.get('coach_servers', 'status_host')
 
     class IPC:
-        """Returns the configs under the ``ipc`` header."""
+        """Returns the configs under the ``api`` header."""
         @property
         def request_feed(self) -> str:
             """Returns the full path of the IPC request file."""
@@ -68,6 +68,12 @@ class Config:
         def state_feed(self) -> str:
             """Returns the full path to the coachbot state feed file."""
             return config.get('api', 'state_feed')
+
+        @property
+        def signal_feed(self) -> str:
+            """Returns the path to which cctl APIs can bind to listen for
+            signals."""
+            return config.get('api', 'signal_feed')
 
     @property
     def general(self) -> 'Config.General':

@@ -106,3 +106,17 @@ class CoachbotState:
             CoachbotState: The deserialized object.
         """
         return CoachbotState.from_dict(json.loads(data))
+
+
+@dataclass
+class Signal:
+    """Represents a signal that is sent from a coachbot to cctld."""
+    name: str
+    body: Dict[str, Any]
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+    @staticmethod
+    def from_dict(as_dict: Dict[str, Any]) -> 'Signal':
+        return Signal(**as_dict)

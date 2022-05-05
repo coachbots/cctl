@@ -67,7 +67,7 @@ do:
    from cctl.api.cctld import CCTLDClient
 
    # This should match the value in /etc/coachswarm/cctld.conf
-   CCTLD_HOST = 'ipc:///var/run/cctld/request_pipe'
+   CCTLD_HOST = 'ipc:///var/run/cctld/request_feed'
 
    async def main():
        with CCTLDClient(CCTLD_HOST) as client:
@@ -98,7 +98,7 @@ result.
    from cctl.api.cctld import CCTLDClient
 
    # This should match the value in /etc/coachswarm/cctld.conf
-   CCTLD_HOST = 'ipc:///var/run/cctld/request_pipe'
+   CCTLD_HOST = 'ipc:///var/run/cctld/request_feed'
 
    async def doesnt_care_about_user_code_running():
        await asyncio.sleep(5)
@@ -127,3 +127,94 @@ result.
 
    if __name__ == '__main__':
        asyncio.run(main())
+
+Observable
+----------
+
+Besides exposing this admitely HTTP-like API, **cctld** also tries to be
+helpful in giving you some ``Observable`` objects that you can then
+``Observe``. For example:
+
+.. code-block:: python
+   :linenos:
+   :name: Tracking Coachbot State
+   :caption: Tracking Coachbot State
+
+   #!/usr/bin/env python3.8
+
+   import asyncio
+   from reactivex import operators as rxops
+   from cctl.api.cctld import CCTLDCoachbotStateObservable
+   from cctl.models import CoachbotState
+
+   # Note the change here.
+   CCTLD_HOST = 'ipc:///var/run/cctld/state_feed'
+
+   async def main():
+       # Note that this observable returns a 100-tuple of CoachbotState
+       # objects.
+       my_obserable, task = CCTLDCoachbotStateObservable(CCTLD_HOST)
+
+       # We print all coachbot states as they come in
+       my_obserable.subscribe(on_next=lambda states: print(states))
+
+       # We could also track specific coachbot states like so:
+       # Note that we will still pritn 100-tuples, but only those in which the
+       # first bot is on.
+       my_obserable.pipe(
+           rxops.filter(lambda states: states[0].is_on)).subscribe(
+               lambda states: print(states))
+
+       # You can always pipe this through if you are only interested in the
+       # first bot.
+       my_obserable.pipe(
+           rxops.filter(lambda states: states[0].is_on)).subscribe(
+               lambda states: print(states[0]))
+
+       # Do not forget to await for the task! Otherwise we're just going to
+       # pass through without continually listening.
+       await task
+
+   if __name__ == '__main__':
+       asyncio.run(main())
+
+Now that's all fine and dandy, but if you're interested in signals as they're
+fired on the Coachbots you can track that too with the
+``CCTDLSignalObservable`` in a very similar fashion. Think of these as rising
+edges to the previous being actual values in electrical signals.
+
+.. code-block:: python
+   :linenos:
+   :name: Tracking Coachbot Signals
+   :caption: Tracking Coachbot Signals
+
+   #!/usr/bin/env python3.8
+
+   import asyncio
+   from reactivex import operators as rxops
+   from cctl.api.cctld import CCTLDSignalObservable
+   from cctl.models import Signal
+
+   # Note the change here.
+   CCTLD_HOST = 'ipc:///var/run/cctld/signal_feed'
+
+   async def main():
+       # This observable will give you cctl.models.Signal objects.
+       my_obserable, task = CCTLDSignalObservable(CCTLD_HOST)
+
+       # We track all of the signals.
+       my_obserable.subscribe(on_next=lambda signal: print(signal))
+
+       # We can track specific signals too!
+       my_obserable.pipe(
+           rxops.filter(lambda sig: sig.name == 'user-code-begin').subscribe(
+               on_next=lambda sig: print(sig))
+
+       # Do not forget to await for the task! Otherwise we're just going to
+       # pass through without continually listening.
+       await task
+
+   if __name__ == '__main__':
+       asyncio.run(main())
+
+What you choose between these two is completely up to you!
