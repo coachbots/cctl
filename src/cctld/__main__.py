@@ -41,6 +41,14 @@ def main():
     if not os.path.exists(config.general.workdir):
         os.makedirs(config.general.workdir)
 
+    # Attempt to create the required directory for the IPC feeds. This may
+    # fail. The admin is responsible for this anyways -- this simply minimizes
+    # his headache.
+    for paths in ((p := config.ipc).request_feed, p.state_feed, p.signal_feed):
+        directory = os.path.dirname(paths)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
     if __debug__:
         asyncio.run(__main(config))
     else:
