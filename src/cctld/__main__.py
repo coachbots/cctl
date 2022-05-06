@@ -45,9 +45,11 @@ def main():
     # fail. The admin is responsible for this anyways -- this simply minimizes
     # his headache.
     for paths in ((p := config.ipc).request_feed, p.state_feed, p.signal_feed):
-        directory = os.path.dirname(paths)
-        if not os.path.exists(directory):
-            os.makedirs(directory)
+        if paths.startswith('ipc://'):
+            # TODO: Possibly buggy if a path contains ipc://
+            directory = os.path.dirname(paths.replace('ipc://', ''))
+            if not os.path.exists(directory):
+                os.makedirs(directory)
 
     if __debug__:
         asyncio.run(__main(config))
