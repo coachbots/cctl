@@ -19,7 +19,7 @@ import cctl
 from cctl.utils.asynctools import uses_lock
 from cctl.api import configuration as config
 from cctl.res import RES_STR
-import cctl_static
+from cctl_static import arduino_daughter
 
 __author__ = 'Marko Vejnovic <contact@markovejnovic.com>'
 __copyright__ = 'Copyright 2022, Northwestern University'
@@ -52,9 +52,8 @@ async def __upload_arduino_script() -> None:
             f'build.extra_flags="-DVERSION=\"{cctl.__version__}\""'
         ] if operation == 'compile' else [])
 
-        with pkg_resources.path(
-            cctl_static,
-                'arduino-daughter/arduino-daughter.ino') as script_path:
+        with pkg_resources.path(arduino_daughter,
+                                'arduino-daughter.ino') as script_path:
             proc = await asyncio.create_subprocess_exec(
                 ARDUINO_EXECUTABLE, operation, *flags, str(script_path),
                 stdout=asyncio.subprocess.PIPE,
