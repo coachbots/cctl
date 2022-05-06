@@ -20,7 +20,10 @@ async def read_bots_state(app_state: AppState, _, __) -> ipc.Response:
     """Returns the state of all the robots."""
     return ipc.Response(
         ipc.ResultCode.OK,
-        json.dumps(bots.to_dict() for bots in app_state.coachbot_states.value))
+        json.dumps(
+            [bots.to_dict() for bots in app_state.coachbot_states.value]
+        )
+    )
 
 
 @handler(r'^/bots/state/is-on/?$', 'create')
