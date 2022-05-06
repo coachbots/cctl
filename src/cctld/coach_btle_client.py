@@ -152,7 +152,7 @@ class CoachbotBTLEClient:
         except btle.BTLEException as btle_ex:
             logging.getLogger('bluetooth').warning(
                 'Could not connect to device %s', self._address)
-            raise btle_ex
+            raise CoachbotBTLEError from btle_ex
 
         assert self.peripheral is not None
         self.uart_service = self.peripheral.getServiceByUUID(
