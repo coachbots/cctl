@@ -122,7 +122,7 @@ class CCTLDClient:
         with _CCTLDClientRequest(self._ctx, self._path) as req:
             response = await req.request(ipc.Request(
                 method='create' if state else 'delete',
-                endpoint=f'/bots/state/{bot.identifier}/is-on'
+                endpoint=f'/bots/{bot.identifier}/state/is-on'
             ))
             if response.result_code != ipc.ResultCode.OK:
                 raise CCTLDRespInvalidState(response.body)
