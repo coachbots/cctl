@@ -147,10 +147,14 @@ class CoachbotBTLEClient:
                                     f'{reply}')
 
     async def __aenter__(self) -> 'CoachbotBTLEClient':
-        try:
-            self.peripheral = btle.Peripheral(
+        def peripheral_allocate() -> btle.Peripheral:
+            return btle.Peripheral(
                 self._address, addrType=btle.ADDR_TYPE_RANDOM,
                 iface=self._iface)
+
+        try:
+            self.peripheral = await asyncio.get_event_loop().run_in_executor(
+                executor=None, func=peripheral_allocate)
         except btle.BTLEException as btle_ex:
             logging.getLogger('bluetooth').warning(
                 'Could not connect to device %s', self._address)
