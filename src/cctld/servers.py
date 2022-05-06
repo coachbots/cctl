@@ -44,10 +44,6 @@ async def start_ipc_request_server(app_state: AppState):
 
         try:
             handler, matchs = get_handler(request.endpoint, request.method)
-            response = await handler(app_state, request, tuple(matchs))
-            logging.getLogger('servers').debug('Returning IPC response %s',
-                                               response)
-            return response
         except KeyError:
             logging.getLogger('servers').warning(
                 'Invalid method %s requested by %s.', request.method,
@@ -56,6 +52,11 @@ async def start_ipc_request_server(app_state: AppState):
             return ipc.Response(ipc.ResultCode.METHOD_NOT_ALLOWED)
         except ValueError:
             return ipc.Response(ipc.ResultCode.NOT_FOUND)
+
+        response = await handler(app_state, request, tuple(matchs))
+        logging.getLogger('servers').debug('Returning IPC response %s',
+                                           response)
+        return response
 
     ctx = zmq.asyncio.Context()
     sock = ctx.socket(zmq.REP)
