@@ -218,6 +218,8 @@ class CoachbotBTLEClientManager:
            )
         """
         interface = await self._available_interfaces.get()
-        async with CoachbotBTLEClient(addr, interface) as client:
-            await request(client)
-        await self._available_interfaces.put(interface)
+        try:
+            async with CoachbotBTLEClient(addr, interface) as client:
+                await request(client)
+        finally:
+            await self._available_interfaces.put(interface)
