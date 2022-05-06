@@ -30,7 +30,7 @@ setuptools.setup(
     entry_points={
         'console_scripts': [
             'cctl = cctl.__main__:main',
-            'cctld = cctl.__main__:main'
+            'cctld = cctld.__main__:main'
         ]
     },
     include_package_data=True
