@@ -19,7 +19,7 @@ import cctl
 from cctl.utils.asynctools import uses_lock
 from cctl.api import configuration as config
 from cctl.res import RES_STR
-import static
+import cctl_static
 
 __author__ = 'Marko Vejnovic <contact@markovejnovic.com>'
 __copyright__ = 'Copyright 2022, Northwestern University'
@@ -52,7 +52,9 @@ async def __upload_arduino_script() -> None:
             f'build.extra_flags="-DVERSION=\"{cctl.__version__}\""'
         ] if operation == 'compile' else [])
 
-        with pkg_resources.path(static, 'arduino-daughter') as script_path:
+        with pkg_resources.path(
+            cctl_static,
+                'arduino-daughter/arduino-daughter.ino') as script_path:
             proc = await asyncio.create_subprocess_exec(
                 ARDUINO_EXECUTABLE, operation, *flags, str(script_path),
                 stdout=asyncio.subprocess.PIPE,
@@ -107,6 +109,7 @@ async def charge_rail_set(power: bool) -> None:
     """
     with Serial(PORT, BAUD_RATE) as ser:
         ser.write(b'A' if power else b'D')
+
 
 # Update as soon as this script module is loaded.
 async def __auto_update():

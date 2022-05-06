@@ -6,11 +6,11 @@ from typing import Dict, Any, Optional
 from dataclasses import dataclass, asdict
 
 from cctl.utils.math import Vec2
-import static
+import cctl_static
 
 
 COACHBOT_MAC_ADDRESSES = pkg_resources.read_text(
-    static, 'coachbot_btle_mac_addresses').split('\n')
+    cctl_static, 'coachbot_btle_mac_addresses').split('\n')
 
 
 @dataclass
