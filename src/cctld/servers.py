@@ -98,7 +98,7 @@ async def start_status_server(app_state: AppState) -> None:
             app_state.coachbot_signals.on_next(request.body)
             return status.Response()
 
-        if request.type == 'status':
+        if request.type == 'state':
             req_id, new_state = request.identifier, request.body
 
             old_states = app_state.coachbot_states.value
