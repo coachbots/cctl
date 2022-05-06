@@ -160,8 +160,11 @@ class CommandAction:
 
             async def _wrapper():
                 async with CCTLDClient(configuration.get_request_feed()) as c:
-                    await asyncio.gather(
-                        *[c.set_is_on(bot, True) for bot in bots])
+                    results = await asyncio.gather(
+                        *[c.set_is_on(bot, True) for bot in bots],
+                        return_exceptions=True)
+                    # TODO: Fix this
+                    print(results)
             asyncio.run(_wrapper())
             return 0
 
