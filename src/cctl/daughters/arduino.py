@@ -53,7 +53,7 @@ async def __upload_arduino_script() -> None:
         ] if operation == 'compile' else [])
 
         with pkg_resources.path(arduino_daughter,
-                                'arduino-daughter.ino') as script_path:
+                                'arduino_daughter.ino') as script_path:
             proc = await asyncio.create_subprocess_exec(
                 ARDUINO_EXECUTABLE, operation, *flags, str(script_path),
                 stdout=asyncio.subprocess.PIPE,
@@ -118,4 +118,5 @@ async def __auto_update():
         logging.error('Could not update the Arduino daughterboard: %s.'
                       'This means that it will likely not work.', s_ex)
 
-asyncio.get_event_loop().run_until_complete(__auto_update())
+# TODO: Reenable
+#asyncio.get_event_loop().run_until_complete(__auto_update())
