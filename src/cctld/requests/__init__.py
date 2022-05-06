@@ -8,7 +8,7 @@ import json
 from typing import Any, Tuple, Union
 from cctl.models import Coachbot
 from cctl.protocols import ipc
-from cctld.coach_btle_client import CoachbotBTLEClient, CoachbotBTLEError, \
+from cctld.coach_btle_client import CoachbotBTLEClient, CoachbotBTLEError, CoachbotBTLEMode, \
     CoachbotBTLEStateException
 from cctld.coach_commands import CoachCommand
 from cctld.models.app_state import AppState
@@ -40,11 +40,8 @@ async def create_bot_is_on(
         return ipc.Response(ipc.ResultCode.OK)
 
     async def boot_bot_on(client: CoachbotBTLEClient):
-        try:
-            await client.set_mode_led_on(True)
-        except CoachbotBTLEStateException:
-            await client.toggle_mode()
-            await client.set_mode_led_on(True)
+        await client.set_mode(CoachbotBTLEMode.COMMAND)
+        await client.set_mode_led_on(True)
 
     try:
         await app_state.coachbot_btle_manager.execute_request(
@@ -69,11 +66,8 @@ async def delete_bot_is_on(
         return ipc.Response(ipc.ResultCode.OK)
 
     async def boot_bot_off(client: CoachbotBTLEClient):
-        try:
-            await client.set_mode_led_on(False)
-        except CoachbotBTLEStateException:
-            await client.toggle_mode()
-            await client.set_mode_led_on(False)
+        await client.set_mode(CoachbotBTLEMode.COMMAND)
+        await client.set_mode_led_on(False)
 
     try:
         await app_state.coachbot_btle_manager.execute_request(

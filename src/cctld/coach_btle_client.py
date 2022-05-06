@@ -83,6 +83,16 @@ class CoachbotBTLEClient:
         self.tx_channel = None
         self.rx_channel = None
 
+    async def set_mode(self, mode: CoachbotBTLEMode) -> None:
+        """Sets the mode of the coachbot to the target mode.
+
+        The implementation here is somewhat reduntant since there is no AT+
+        command to check for the current mode. We have to switch until we get
+        to the right mode.
+        """
+        while await self.toggle_mode() != mode:
+            pass
+
     async def toggle_mode(self) -> CoachbotBTLEMode:
         """Switches the mode of the Coachbot.
 
@@ -130,7 +140,7 @@ class CoachbotBTLEClient:
             raise CoachbotBTLEStateException(
                 'The Adafruit is not in command mode.')
 
-        if reply_clean.replace('\n', '') != 'OK':
+        if 'OK' not in reply_clean.replace('\n', ''):
             raise CoachbotBTLEError('The reply was not OK. The reply was: '
                                     f'{reply}')
 
