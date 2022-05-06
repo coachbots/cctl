@@ -13,6 +13,7 @@ from compot.widgets import ObserverMainWindow
 from argparse import Namespace
 from reactivex import operators as rxops
 import serial
+from cctl.api.bot_ctl import get_all_coachbots
 from cctl.api.cctld import CCTLDClient, CCTLDCoachbotStateObservable
 from cctl.models.coachbot import Coachbot
 from cctl.ui.manager import Manager
@@ -250,11 +251,20 @@ class CommandAction:
 
     def _start_pause_handler(self) -> int:
         target_on = self._args.command == RES_STR['cmd_start']
+
+        async def helper():
+            async with CCTLDClient(configuration.get_request_feed()) as client:
+                print(
+                    await asyncio.gather(
+                        *[client.set_user_code_running(bot, target_on)
+                          for bot in get_all_coachbots()],
+                        return_exceptions=True)
+                )
         target_str = RES_STR['cmd_start'] if target_on \
             else RES_STR['cmd_pause']
 
         logging.info(RES_STR['bot_operating_msg'], target_str)
-        bot_ctl.set_user_code_running(target_on)
+        asyncio.run(helper())
         return 0
 
     def _fetch_logs_handler(self):
