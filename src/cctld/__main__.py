@@ -3,6 +3,8 @@
 """This is the main script that runs cctld."""
 
 import asyncio
+import logging
+import sys
 from reactivex.subject import BehaviorSubject
 from reactivex.subject.subject import Subject
 
@@ -40,6 +42,9 @@ def main():
     # Automatically create the workdir folder if it does not exist.
     if not os.path.exists(config.general.workdir):
         os.makedirs(config.general.workdir)
+
+    logging.basicConfig(stream=sys.stderr,
+                        level=(logging.DEBUG if __debug__ else logging.INFO))
 
     # Attempt to create the required directory for the IPC feeds. This may
     # fail. The admin is responsible for this anyways -- this simply minimizes

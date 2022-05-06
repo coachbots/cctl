@@ -44,7 +44,10 @@ async def start_ipc_request_server(app_state: AppState):
 
         try:
             handler, matchs = get_handler(request.endpoint, request.method)
-            return await handler(app_state, request, tuple(matchs))
+            response = await handler(app_state, request, tuple(matchs))
+            logging.getLogger('servers').debug('Returning IPC response %s',
+                                               response)
+            return response
         except KeyError:
             logging.getLogger('servers').warning(
                 'Invalid method %s requested by %s.', request.method,
