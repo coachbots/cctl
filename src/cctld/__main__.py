@@ -11,11 +11,11 @@ from cctl.models.coachbot import CoachbotState
 from cctld import daemon, servers
 from cctld.conf import Config
 from cctld.models import AppState
+import os
 
 
-async def __main():
+async def __main(config: Config):
     """The main entry point of cctld."""
-    config = Config()
     app_state = AppState(
         coachbot_states=BehaviorSubject(
             tuple(CoachbotState(False) for _ in range(100))),
@@ -35,8 +35,14 @@ async def __main():
 
 
 def main():
-    with daemon.context():
-        asyncio.run(__main())
+    config = Config()
+
+    # Automatically create the workdir folder if it does not exist.
+    if not os.path.exists(config.general.workdir):
+        os.makedirs(config.general.workdir)
+
+    with daemon.context(config):
+        asyncio.run(__main(config))
 
 
 if __name__ == '__main__':
