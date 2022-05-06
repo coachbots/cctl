@@ -59,8 +59,10 @@ class _CCTLDClientRequest:
 class CCTLDRespEx(Exception):
     pass
 
+
 class CCTLDRespInvalidState(CCTLDRespEx):
     pass
+
 
 class CCTLDClient:
     """The ``CCTLDClient`` object is a ``ContextManager`` that manages requests
@@ -84,7 +86,7 @@ class CCTLDClient:
     async def __aenter__(self) -> 'CCTLDClient':
         return self
 
-    async def read_bots_state(self) -> Tuple[CoachbotState]:
+    async def read_bots_state(self) -> Tuple[CoachbotState, ...]:
         """Returns the current bot states.
 
         Returns:
@@ -96,7 +98,6 @@ class CCTLDClient:
                 endpoint='/bots/state'
             ))
             return tuple(CoachbotState.deserialize(b) for b in response.body)
-
 
     async def read_bot_state(self, bot: Coachbot) -> CoachbotState:
         """This function returns the latest bot state according to ``cctld``.
@@ -110,6 +111,21 @@ class CCTLDClient:
                 endpoint=f'/bots/{bot.identifier}/state'
             ))
             return CoachbotState.deserialize(response.body)
+
+    async def set_is_on(self, bot: Coachbot, state: bool) -> None:
+        """This function attempts to turn on a coachbot.
+
+        Parameters:
+            bot (Coachbot): The target coachbot
+            state (bool): Whether the coachbot should be on or not.
+        """
+        with _CCTLDClientRequest(self._ctx, self._path) as req:
+            response = await req.request(ipc.Request(
+                method='create' if state else 'delete',
+                endpoint=f'/bots/{bot.identifier}/is-on'
+            ))
+            if response.result_code != ipc.ResultCode.OK:
+                raise CCTLDRespInvalidState(response.body)
 
     async def set_user_code_running(self, bot: Coachbot, state: bool) -> None:
         """This function sets the user code of the target bot to start or not,
@@ -152,7 +168,7 @@ class CCTLDClient:
 
 
 async def CCTLDCoachbotStateObservable(
-    state_feed: str) -> Tuple[rx.Subject, asyncio.Task]:
+        state_feed: str) -> Tuple[rx.Subject, asyncio.Task]:
     """The ``CCTLDCoachbotStateObservable`` is an ``rx.Observable`` that will
     call the ``on_next`` function of your observer as new ``CoachbotState``
     data comes through.
