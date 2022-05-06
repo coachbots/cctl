@@ -41,8 +41,11 @@ def main():
     if not os.path.exists(config.general.workdir):
         os.makedirs(config.general.workdir)
 
-    with daemon.context(config):
+    if __debug__:
         asyncio.run(__main(config))
+    else:
+        with daemon.context(config):
+            asyncio.run(__main(config))
 
 
 if __name__ == '__main__':
