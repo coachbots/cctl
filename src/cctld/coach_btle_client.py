@@ -104,15 +104,16 @@ class CoachbotBTLEClient:
         logging.getLogger('bluetooth').debug('Sending message %s', message)
         assert self.tx_channel is not None
         self.tx_channel.write(message)
+        await asyncio.sleep(1e-1)
+
         assert self.rx_channel is not None
         reply = self.rx_channel.read().decode('ascii')
-        reply_clean = reply.replace('\r', '\n')
 
-        if 'OK' not in reply_clean:
+        if 'OK' not in reply:
             raise CoachbotBTLEError('The reply was not OK. The reply was: '
                                     f'{reply}')
 
-        return CoachbotBTLEMode(int(reply_clean[0]))
+        return CoachbotBTLEMode(int(reply[0]))
 
     async def set_mode_led_on(self, state: bool) -> None:
         """Attempts to turn on/off the MODE LED (Red) on of the specified
@@ -131,16 +132,17 @@ class CoachbotBTLEClient:
         logging.getLogger('bluetooth').debug('Sending message %s', message)
         assert self.tx_channel is not None
         self.tx_channel.write(message)
+        await asyncio.sleep(1e-1)
+
         assert self.rx_channel is not None
         reply = self.rx_channel.read().decode('ascii')
-        reply_clean = reply.replace('\r', '\n')
 
         # A no-reply indicates that we are not in command mode.
-        if reply_clean == '':
+        if reply == '':
             raise CoachbotBTLEStateException(
                 'The Adafruit is not in command mode.')
 
-        if 'OK' not in reply_clean.replace('\n', ''):
+        if 'OK' not in reply:
             raise CoachbotBTLEError('The reply was not OK. The reply was: '
                                     f'{reply}')
 
