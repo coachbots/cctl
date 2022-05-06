@@ -26,7 +26,7 @@ async def read_bots_state(app_state: AppState, _, __) -> ipc.Response:
     )
 
 
-@handler(r'^/bots/state/is-on/?$', 'create')
+@handler(r'^/bots/([0-9]+)/state/is-on/?$', 'create')
 async def create_bot_is_on(
     app_state: AppState,
     _: ipc.Request,
@@ -55,7 +55,7 @@ async def create_bot_is_on(
     return ipc.Response(ipc.ResultCode.OK)
 
 
-@handler(r'^/bots/state/is-on/?$', 'delete')
+@handler(r'^/bots/([0-9]+)/state/is-on/?$', 'delete')
 async def delete_bot_is_on(
     app_state: AppState,
     _: ipc.Request,

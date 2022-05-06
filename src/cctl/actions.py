@@ -13,7 +13,7 @@ from compot.widgets import ObserverMainWindow
 from argparse import Namespace
 from reactivex import operators as rxops
 import serial
-from cctl.api.cctld import CCTLDCoachbotStateObservable
+from cctl.api.cctld import CCTLDClient, CCTLDCoachbotStateObservable
 from cctl.models.coachbot import Coachbot
 from cctl.ui.manager import Manager
 from cctl.utils.net import sftp_client
@@ -157,7 +157,12 @@ class CommandAction:
             logging.info(RES_STR['bot_booting_many_msg'],
                          ','.join([str(bot.identifier) for bot in bots]),
                          target_str)
-            bot_ctl.boot_bots(bots, target_on)
+
+            async def _wrapper():
+                async with CCTLDClient(configuration.get_request_feed()) as c:
+                    await asyncio.gather(
+                        *[c.set_is_on(bot, True) for bot in bots])
+            asyncio.run(_wrapper())
             return 0
 
         return self._bot_id_handler(_all_handler, _some_handler)

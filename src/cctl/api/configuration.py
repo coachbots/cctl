@@ -53,7 +53,8 @@ mandatory_keys = {
         'arduino-executable'
     ],
     'cctld': [
-        'state_feed'
+        'state_feed',
+        'request_feed'
     ]
 }
 
@@ -97,7 +98,8 @@ default_values = {
         'arduino-executable': '/usr/local/bin/arduino-cli'
     },
     'cctld': {
-        'state_feed': 'ipc:///var/run/cctld/state_feed'
+        'state_feed': 'ipc:///run/cctld/state_feed',
+        'request_feed': 'ipc:///run/cctld/feed_pipe'
     }
 }
 
@@ -292,6 +294,12 @@ def get_arduino_executable_path() -> str:
     """Returns the full path to the arduino executable."""
     return path.abspath(config.get('arduino-daughter', 'arduino-executable'))
 
+
 def get_state_feed() -> str:
     """Returns the full path to the cctld state feed."""
     return config.get('cctld', 'state_feed')
+
+
+def get_request_feed() -> str:
+    """Returns the request feed of cctld."""
+    return config.get('cctld', 'request_feed')
