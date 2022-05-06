@@ -8,9 +8,12 @@ import json
 from typing import Any, Tuple, Union
 from cctl.models import Coachbot
 from cctl.protocols import ipc
+from cctld.coach_btle_client import CoachbotBTLEClient, CoachbotBTLEError, \
+    CoachbotBTLEStateException
 from cctld.coach_commands import CoachCommand
 from cctld.models.app_state import AppState
 from cctld.requests.handler import handler
+
 
 @handler(r'^/bots/state/?$', 'read')
 async def read_bots_state(app_state: AppState, _, __) -> ipc.Response:
@@ -18,6 +21,64 @@ async def read_bots_state(app_state: AppState, _, __) -> ipc.Response:
     return ipc.Response(
         ipc.ResultCode.OK,
         json.dumps(bots.to_dict() for bots in app_state.coachbot_states.value))
+
+
+@handler(r'^/bots/state/is-on/?$', 'create')
+async def create_bot_is_on(
+    app_state: AppState,
+    _: ipc.Request,
+    endpoint_groups: Tuple[Union[str, Any], ...]
+):
+    """Turns a bot on."""
+    bot = Coachbot((ident := int(endpoint_groups[0])),
+                   app_state.coachbot_states.value[ident])
+
+    if bot.state.is_on:
+        return ipc.Response(ipc.ResultCode.OK)
+
+    async def boot_bot_on(client: CoachbotBTLEClient):
+        try:
+            await client.set_mode_led_on(True)
+        except CoachbotBTLEStateException:
+            await client.toggle_mode()
+            await client.set_mode_led_on(True)
+
+    try:
+        await app_state.coachbot_btle_manager.execute_request(
+            bot.bluetooth_mac_address, boot_bot_on)
+    except CoachbotBTLEError as err:
+        return ipc.Response(ipc.ResultCode.STATE_CONFLICT, str(err))
+
+    return ipc.Response(ipc.ResultCode.OK)
+
+
+@handler(r'^/bots/state/is-on/?$', 'delete')
+async def delete_bot_is_on(
+    app_state: AppState,
+    _: ipc.Request,
+    endpoint_groups: Tuple[Union[str, Any], ...]
+):
+    """Turns a bot off."""
+    bot = Coachbot((ident := int(endpoint_groups[0])),
+                   app_state.coachbot_states.value[ident])
+
+    if not bot.state.is_on:
+        return ipc.Response(ipc.ResultCode.OK)
+
+    async def boot_bot_off(client: CoachbotBTLEClient):
+        try:
+            await client.set_mode_led_on(False)
+        except CoachbotBTLEStateException:
+            await client.toggle_mode()
+            await client.set_mode_led_on(False)
+
+    try:
+        await app_state.coachbot_btle_manager.execute_request(
+            bot.bluetooth_mac_address, boot_bot_off)
+    except CoachbotBTLEError as err:
+        return ipc.Response(ipc.ResultCode.STATE_CONFLICT, str(err))
+
+    return ipc.Response(ipc.ResultCode.OK)
 
 
 @handler(r'^/bots/([0-9]+)/state/?$', 'read')
@@ -47,7 +108,7 @@ async def create_bot_user_running(app_state, _, endpoint_groups):
 
     async with CoachCommand(
         Coachbot(ident, current_state).ip_address,
-        app_state.config.coach_client.command_port) as command:
+            app_state.config.coach_client.command_port) as command:
         await command.set_user_code_running(True)
 
     return ipc.Response(ipc.ResultCode.OK)
@@ -67,7 +128,7 @@ async def delete_bot_user_running(app_state, _, endpoint_groups):
 
     async with CoachCommand(
         Coachbot(ident, current_state).ip_address,
-        app_state.config.coach_client.command_port) as command:
+            app_state.config.coach_client.command_port) as command:
         await command.set_user_code_running(False)
 
     return ipc.Response(ipc.ResultCode.OK)
@@ -84,14 +145,14 @@ async def update_bot_user_code(app_state, request: ipc.Request,
         return ipc.Response(ipc.ResultCode.STATE_CONFLICT)
 
     if current_state.user_code_running:
-        with CoachCommand(
+        async with CoachCommand(
             Coachbot(ident, current_state).ip_address,
-            app_state.config.coach_client.command_port) as command:
+                app_state.config.coach_client.command_port) as command:
             await command.set_user_code_running(False)
 
     async with CoachCommand(
         Coachbot(ident, current_state).ip_address,
-        app_state.config.coach_client.command_port) as command:
+            app_state.config.coach_client.command_port) as command:
         await command.set_user_code(request.body)
     return ipc.Response(ipc.ResultCode.OK)
 
