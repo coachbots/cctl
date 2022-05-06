@@ -6,6 +6,7 @@ Currently, the following servers are exposed:
     * Status Server (``5678``, by default)
 """
 
+import asyncio
 import sys
 import logging
 from typing import Tuple
@@ -69,11 +70,14 @@ async def start_ipc_request_server(app_state: AppState):
             app_state.config.ipc.request_feed, zmq_err)
         sys.exit(ExitCode.EX_NOPERM)
 
-    while True:
-        request = await sock.recv_string()
+    async def send_reply(socket, request):
         response = await handle_client(ipc.Request.deserialize(request))
         logging.getLogger('servers').debug('Responding with: %s', response)
         await sock.send_string(response.serialize())
+
+    while True:
+        request = await sock.recv_string()
+        asyncio.create_task(send_reply(sock, request))
 
 
 async def start_status_server(app_state: AppState) -> None:
