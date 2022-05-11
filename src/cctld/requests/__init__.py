@@ -4,6 +4,7 @@
 handle. This is facilitated through the ``ENDPOINT_HANDLERS`` dictionary which
 is buit upon the import of this module."""
 
+import asyncio
 import json
 import logging
 from typing import Any, Tuple, Union
@@ -96,6 +97,58 @@ async def read_bot_state(
         ipc.ResultCode.OK,
         app_state.coachbot_states.value[int(endpoint_groups[0])].serialize()
     )
+
+
+@handler(r'^/bots/user-code/running/?$', 'create')
+async def create_bots_user_running(app_state: AppState, _, __):
+    """Starts the user code for all running coachbots."""
+    async def __boot_bot(bot: Coachbot):
+        if bot.state.is_on:
+            return
+        async with CoachCommand(
+            bot.ip_address,
+            app_state.config.coach_client.command_port
+        ) as cmd:
+            await cmd.set_user_code_running(True)
+
+    errs = await asyncio.gather(
+        *(__boot_bot(Coachbot(i, bot)) for i, bot in
+          enumerate(app_state.coachbot_states.value)),
+        return_exceptions=True)
+
+    total_errors = [(i, err) for i, err in enumerate(errs) if err is not None]
+    if len(total_errors) > 0:
+        return ipc.Response(
+            ipc.ResultCode.INTERNAL_SERVER_ERROR,
+            f'Could not change bot states {total_errors}')
+
+    return ipc.Response(ipc.ResultCode.OK)
+
+
+@handler(r'^/bots/user-code/running/?$', 'delete')
+async def delete_bots_user_running(app_state: AppState, _, __):
+    """Stops the user code for all running coachbots."""
+    async def __boot_bot(bot: Coachbot):
+        if not bot.state.is_on:
+            return
+        async with CoachCommand(
+            bot.ip_address,
+            app_state.config.coach_client.command_port
+        ) as cmd:
+            await cmd.set_user_code_running(False)
+
+    errs = await asyncio.gather(
+        *(__boot_bot(Coachbot(i, bot)) for i, bot in
+          enumerate(app_state.coachbot_states.value)),
+        return_exceptions=True)
+
+    total_errors = [(i, err) for i, err in enumerate(errs) if err is not None]
+    if len(total_errors) > 0:
+        return ipc.Response(
+            ipc.ResultCode.INTERNAL_SERVER_ERROR,
+            f'Could not change bot states {total_errors}')
+
+    return ipc.Response(ipc.ResultCode.OK)
 
 
 @handler(r'^/bots/([0-9]+)/user-code/running/?$', 'create')
