@@ -238,6 +238,7 @@ async def CCTLDCoachbotStateObservable(
 
     return my_subject, asyncio.create_task(run())
 
+
 async def CCTLDSignalObservable(
     signal_feed: str) -> Tuple[rx.Subject, asyncio.Task]:
     """The ``CCTLDSignalObservable`` is an ``rx.Observable`` that will
