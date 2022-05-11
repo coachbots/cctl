@@ -88,7 +88,7 @@ async def start_ipc_request_server(app_state: AppState):
                 pass
 
         logging.getLogger('servers').warning(
-            'Could not send status reply message to %d. Ignoring...')
+            'Could not send status reply message. Ignoring...')
 
 
 async def start_status_server(app_state: AppState) -> None:

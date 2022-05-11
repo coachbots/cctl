@@ -14,7 +14,8 @@ __status__ = 'Development'
 
 
 import asyncio
-from typing import Iterable, Tuple
+from typing import Iterable, Optional, Tuple, Union
+from typing_extensions import Literal
 import reactivex as rx
 import zmq
 import zmq.asyncio
@@ -22,6 +23,8 @@ import zmq.asyncio
 from cctl.api.bot_ctl import Coachbot
 from cctl.models.coachbot import CoachbotState, Signal
 from cctl.protocols import ipc
+
+CoachbotSelectorT = Union[Coachbot, Literal['all']]
 
 
 class _CCTLDClientRequest:
@@ -86,31 +89,37 @@ class CCTLDClient:
     async def __aenter__(self) -> 'CCTLDClient':
         return self
 
-    async def read_bots_state(self) -> Tuple[CoachbotState, ...]:
-        """Returns the current bot states.
-
-        Returns:
-            Tuple[CoachbotState]: The tuple of coachbot states.
-        """
-        with _CCTLDClientRequest(self._ctx, self._path) as req:
-            response = await req.request(ipc.Request(
-                method='read',
-                endpoint='/bots/state'
-            ))
-            return tuple(CoachbotState.deserialize(b) for b in response.body)
-
-    async def read_bot_state(self, bot: Coachbot) -> CoachbotState:
+    async def read_state(self, bot: CoachbotSelectorT) -> CoachbotState:
         """This function returns the latest bot state according to ``cctld``.
+
+        Parameters:
+            bot (CoachbotSelectorT): The selector. Can be a ``Coachbot`` or the
+            keyword 'all'.
 
         Returns:
             CoachbotState: The state of the specified ``Coachbot``.
         """
+        instance_map = {
+            Coachbot: {
+                'endpoint': lambda bot: f'/bots/{bot.identifier}/bots/state',
+                'return': lambda body: CoachbotState.deserialize(body)
+            },
+            Literal['all']: {
+                'endpoint': lambda _: '/bots/state',
+                'return': lambda body: tuple(CoachbotState.deserialize(b)
+                                             for b in body)
+            }
+        }
+        endpoint, return_builder = next((value['endpoint'], value['return'])
+                                        for instance, value
+                                        in instance_map.items()
+                                        if isinstance(bot, instance))
         with _CCTLDClientRequest(self._ctx, self._path) as req:
             response = await req.request(ipc.Request(
                 method='read',
-                endpoint=f'/bots/{bot.identifier}/state'
+                endpoint=endpoint(bot)
             ))
-            return CoachbotState.deserialize(response.body)
+            return return_builder(response.body)
 
     async def set_is_on(self, bot: Coachbot, state: bool) -> None:
         """This function attempts to turn on a coachbot.
@@ -127,22 +136,37 @@ class CCTLDClient:
             if response.result_code != ipc.ResultCode.OK:
                 raise CCTLDRespInvalidState(response.body)
 
-    async def set_user_code_running(self, bot: Coachbot, state: bool) -> None:
+    async def set_user_code_running(self, bot: CoachbotSelectorT,
+                                    state: bool) -> None:
         """This function sets the user code of the target bot to start or not,
         per the parameter.
 
         Parameters:
-            bot (Coachbot): The target bot.
+            bot (CoachbotSelectorT): The target bot.
             state (bool): The target state.
 
         Raises:
             CCTLDRespInvalidState: If the user code could not be turned on due
             to a state conflict (likely the bot being powered off).
         """
+        instance_map = {
+            Coachbot: {
+                'endpoint':
+                    lambda bot: f'/bots/{bot.identifier}/user-code/running'
+            },
+            Literal['all']: {
+                'endpoint': lambda _: '/bots/user-code/running'
+            }
+        }
+        endpoint = next(value['endpoint'] for instance, value
+                        in instance_map.items()
+                        if isinstance(bot, instance))(bot)
+        method = 'create' if state else 'delete'
+
         with _CCTLDClientRequest(self._ctx, self._path) as req:
             response = await req.request(ipc.Request(
-                method='create' if state else 'delete',
-                endpoint=f'/bots/{bot.identifier}/user-code/running'
+                method=method,
+                endpoint=endpoint
             ))
             if response.result_code == ipc.ResultCode.STATE_CONFLICT:
                 raise CCTLDRespInvalidState(response.body)
