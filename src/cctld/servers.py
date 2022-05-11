@@ -142,7 +142,13 @@ async def start_ipc_feed_server(app_state: AppState) -> None:
     def on_coachbot_state_change(new_states: Tuple[CoachbotState, ...]):
         sock.send_json([new_state.to_dict() for new_state in new_states])
 
-    app_state.coachbot_states.subscribe(on_next=on_coachbot_state_change)
+    def close():
+        logging.getLogger('servers').info('Closing IPC Feed Server.')
+        sock.close()
+
+    app_state.coachbot_states.subscribe(on_next=on_coachbot_state_change,
+                                        on_completed=close,
+                                        on_error=lambda _: close())
 
 
 async def start_ipc_signal_forward_server(app_state: AppState) -> None:
@@ -164,4 +170,10 @@ async def start_ipc_signal_forward_server(app_state: AppState) -> None:
     def on_signal(signal: Signal):
         sock.send_json(signal.to_dict())
 
-    app_state.coachbot_signals.subscribe(on_next=on_signal)
+    def close():
+        logging.getLogger('servers').info('Closing IPC Signal Forward Server.')
+        sock.close()
+
+    app_state.coachbot_signals.subscribe(on_next=on_signal,
+                                         on_completed=close,
+                                         on_error=lambda _: close())
