@@ -83,15 +83,33 @@ class CoachbotBTLEClient:
         self.tx_channel = None
         self.rx_channel = None
 
-    async def set_mode(self, mode: CoachbotBTLEMode) -> None:
+    async def set_mode(self, mode: CoachbotBTLEMode,
+                       max_attempts: int = 3) -> None:
         """Sets the mode of the coachbot to the target mode.
 
         The implementation here is somewhat reduntant since there is no AT+
         command to check for the current mode. We have to switch until we get
         to the right mode.
+
+        Raises:
+            CoachbotBTLEError: Raised when the coachbot could not change the
+            mode.
         """
-        while await self.toggle_mode() != mode:
-            pass
+        async def __helper():
+            while await self.toggle_mode() != mode:
+                pass
+
+        attempt = 0
+        while attempt < max_attempts:
+            try:
+                await __helper()
+                attempt += 1
+                return
+            except CoachbotBTLEError as err:
+                logging.getLogger('bluetooth').warning(
+                    'Could not toggle the mode to %s due to %s. Trying again.',
+                    mode, err)
+        raise CoachbotBTLEError('Could not change the mode to %s.')
 
     async def toggle_mode(self) -> CoachbotBTLEMode:
         """Switches the mode of the Coachbot.
@@ -115,12 +133,14 @@ class CoachbotBTLEClient:
 
         return CoachbotBTLEMode(int(reply[0]))
 
-    async def set_mode_led_on(self, state: bool) -> None:
+    async def set_mode_led_on(self, state: bool,
+                              max_attempts: int = 3) -> None:
         """Attempts to turn on/off the MODE LED (Red) on of the specified
         Coachbot BT module.
 
         Parameters:
             state (bool): Whether the LED should turn on or off.
+            max_attempts (int): The number of attempts one is willing to try.
 
         Raises:
             CoachbotBTLEStateException: If this function is called but the
@@ -128,23 +148,34 @@ class CoachbotBTLEClient:
                 will alleviate the problem and move the Coachbot Adafruit to
                 command mode.
         """
-        message = f'AT+HWMODELED=5,{1 if state else 0}\n'.encode('ascii')
-        logging.getLogger('bluetooth').debug('Sending message %s', message)
-        assert self.tx_channel is not None
-        self.tx_channel.write(message)
-        await asyncio.sleep(1e-1)
+        async def __helper() -> None:
+            message = f'AT+HWMODELED=5,{1 if state else 0}\n'.encode('ascii')
+            logging.getLogger('bluetooth').debug('Sending message %s', message)
+            assert self.tx_channel is not None
+            self.tx_channel.write(message)
+            await asyncio.sleep(1e-1)
 
-        assert self.rx_channel is not None
-        reply = self.rx_channel.read().decode('ascii')
+            assert self.rx_channel is not None
+            reply = self.rx_channel.read().decode('ascii')
 
-        # A no-reply indicates that we are not in command mode.
-        if reply == '':
-            raise CoachbotBTLEStateException(
-                'The Adafruit is not in command mode.')
+            # A no-reply indicates that we are not in command mode.
+            if reply == '':
+                raise CoachbotBTLEStateException(
+                    'The Adafruit is not in command mode.')
 
-        if 'OK' not in reply:
-            raise CoachbotBTLEError('The reply was not OK. The reply was: '
-                                    f'{reply}')
+            if 'OK' not in reply:
+                raise CoachbotBTLEError('The reply was not OK. The reply was: '
+                                        f'{reply}')
+
+        for _ in range(max_attempts):
+            try:
+                await __helper()
+                return
+            except CoachbotBTLEError as err:
+                logging.getLogger('bluetooth').warning(
+                    'Could not boot bot due to %s. Will retry.', err)
+        logging.getLogger('bluetooth').error(
+            'Could not boot bot.')
 
     async def __aenter__(self) -> 'CoachbotBTLEClient':
         def peripheral_allocate() -> btle.Peripheral:

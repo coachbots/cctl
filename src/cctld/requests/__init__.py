@@ -5,6 +5,7 @@ handle. This is facilitated through the ``ENDPOINT_HANDLERS`` dictionary which
 is buit upon the import of this module."""
 
 import json
+import logging
 from typing import Any, Tuple, Union
 from cctl.models import Coachbot
 from cctl.protocols import ipc
@@ -46,8 +47,14 @@ async def create_bot_is_on(
     try:
         await app_state.coachbot_btle_manager.execute_request(
             bot.bluetooth_mac_address, boot_bot_on)
-    except CoachbotBTLEError as err:
+    except CoachbotBTLEStateException as err:
+        logging.getLogger('requests').error(
+            'Could not change the state of bot %s due to %s', bot, err)
         return ipc.Response(ipc.ResultCode.STATE_CONFLICT, str(err))
+    except CoachbotBTLEError as err:
+        logging.getLogger('requests').error(
+            'Could not change the state of bot %s due to %s', bot, err)
+        return ipc.Response(ipc.ResultCode.INTERNAL_SERVER_ERROR)
 
     return ipc.Response(ipc.ResultCode.OK)
 
