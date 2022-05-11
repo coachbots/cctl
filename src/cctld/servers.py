@@ -36,6 +36,9 @@ async def start_ipc_request_server(app_state: AppState):
 
     Under the hood, this server uses ZMQ to ensure huge scalability.
     """
+    # Detrmines the maximum number of attempts to reply.
+    max_rep_retry = 3
+
     async def handle_client(request: ipc.Request) -> ipc.Response:
         """This function handles a client asking a request to this server. """
         logging.getLogger('servers').debug('Received IPC request %s', request)
@@ -61,6 +64,7 @@ async def start_ipc_request_server(app_state: AppState):
 
     ctx = zmq.asyncio.Context()
     sock = ctx.socket(zmq.REP)
+    sock.setsockopt(zmq.SNDTIMEO, 100)
     try:
         sock.bind(app_state.config.ipc.request_feed)
     except zmq.ZMQError as zmq_err:
@@ -70,14 +74,22 @@ async def start_ipc_request_server(app_state: AppState):
             app_state.config.ipc.request_feed, zmq_err)
         sys.exit(ExitCode.EX_NOPERM)
 
-    async def send_reply(socket, request):
-        response = await handle_client(ipc.Request.deserialize(request))
-        logging.getLogger('servers').debug('Responding with: %s', response)
-        await sock.send_string(response.serialize())
-
     while True:
-        request = await sock.recv_string()
-        asyncio.create_task(send_reply(sock, request))
+        request_raw = await sock.recv_string()
+        request = ipc.Request.deserialize(request_raw)
+        response = await handle_client(request)
+        logging.getLogger('servers').debug('Responding with: %s', response)
+
+        for _ in range(max_rep_retry):
+            try:
+                await sock.send_string(response.serialize())
+                break
+            except zmq.Again:
+                pass
+
+        logging.getLogger('servers').warning(
+            'Could not send status reply message to %d. Ignoring...',
+            request.identifier)
 
 
 async def start_status_server(app_state: AppState) -> None:
@@ -88,6 +100,9 @@ async def start_status_server(app_state: AppState) -> None:
     Parameters:
         app_state (AppState): The application state.
     """
+    # Detrmines the number of retries attempted before giving up on a reply.
+    max_rep_retry = 3
+
     async def handle_client(request: status.Request) -> status.Response:
         """This function handles a client asking a request to this server."""
         logging.getLogger('servers').debug('Received Status request %s',
@@ -115,6 +130,7 @@ async def start_status_server(app_state: AppState) -> None:
 
     ctx = zmq.asyncio.Context()
     sock = ctx.socket(zmq.REP)
+    sock.setsockopt(zmq.SNDTIMEO, 100)
     try:
         sock.bind(app_state.config.servers.status_host)
     except zmq.ZMQError as zmq_err:
@@ -125,11 +141,22 @@ async def start_status_server(app_state: AppState) -> None:
         sys.exit(ExitCode.EX_UNAVAILABLE)
 
     while True:
-        request = await sock.recv_string()
+        request_raw = await sock.recv_string()
+        request = status.Request.deserialize(request_raw)
 
-        response = await handle_client(status.Request.deserialize(request))
+        response = await handle_client(request)
         logging.getLogger('servers').debug('Responding with: %s', response)
-        await sock.send_string(response.serialize())
+
+        for _ in range(max_rep_retry):
+            try:
+                await sock.send_string(response.serialize())
+                break
+            except zmq.Again:
+                pass
+
+        logging.getLogger('servers').warning(
+            'Could not send status reply message to %d. Ignoring...',
+            request.identifier)
 
 
 async def start_ipc_feed_server(app_state: AppState) -> None:
