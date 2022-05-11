@@ -6,14 +6,14 @@ Currently, the following servers are exposed:
     * Status Server (``5678``, by default)
 """
 
-import asyncio
 import sys
 import logging
 from typing import Tuple
-from cctld.models import AppState
+
 import zmq
 import zmq.asyncio
 
+from cctld.models import AppState
 from cctl.protocols import ipc, status
 from cctl.models import CoachbotState, Signal
 from cctld.res import ExitCode
@@ -88,8 +88,7 @@ async def start_ipc_request_server(app_state: AppState):
                 pass
 
         logging.getLogger('servers').warning(
-            'Could not send status reply message to %d. Ignoring...',
-            request.identifier)
+            'Could not send status reply message to %d. Ignoring...')
 
 
 async def start_status_server(app_state: AppState) -> None:
