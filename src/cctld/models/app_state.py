@@ -23,7 +23,7 @@ class CoachbotStateSubject(Subject):
     Todo:
         This implementation is really really bad and is bound to fail.
     """
-    MAX_TIME_BEFORE_PRUNE = 3
+    MAX_TIME_BEFORE_PRUNE = 6
 
     def __init__(self, bots: Iterable[CoachbotState]) -> None:
         super().__init__()
