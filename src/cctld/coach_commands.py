@@ -78,6 +78,8 @@ class CoachCommand:
                         'Could not reach a coachbot. Retrying...')
                     self._close_socket()
                     self._socket = self._build_socket()
+            logging.getLogger('coach-command').error('Could not reach '
+                                                     'Coachbot.')
             raise CoachCommandError('Could not make a request to the '
                                     'Coachbots.')
 
@@ -90,6 +92,8 @@ class CoachCommand:
                 except zmq.Again:
                     logging.getLogger('coach-command').warning(
                         'Did not receive a reply from a coachbot. Retrying...')
+            logging.getLogger('coach-command').error('Did not receive '
+                                                     'response from Coachbot.')
             raise CoachCommandError('Did not receive a reply from the '
                                     'Coachbot.')
 
