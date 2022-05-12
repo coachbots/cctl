@@ -33,5 +33,12 @@ setuptools.setup(
             'cctld = cctld.__main__:main'
         ]
     },
-    include_package_data=True
+    include_package_data=True,
+    install_requires=[
+        'pyzmq',
+        'pyserial',
+        'reactivex',
+        'bluepy',
+        'python-daemon'
+    ]
 )

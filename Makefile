@@ -9,6 +9,10 @@ VERSION=$(shell cat src/cctl/__init__.py | grep __version__ \
 build:
 	$(PYTHON) -m build
 
+prepare-deb:
+	$(PYTHON) setup.py --command-packages=stdeb.command bdist_deb
+	@echo "Please tweak the values in deb_dist/"
+
 manpage:
 	mkdir -p build
 	pandoc docs/cctl.1.md -s -t man -o build/cctl.1
