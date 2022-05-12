@@ -27,8 +27,9 @@ class CoachCommand:
         self._host = host
         self._port = coachbot_command_port
         self._context = zmq.asyncio.Context()
+        self._socket = None
 
-    def _build_socket(self) -> zmq.asyncio.Socket:
+    def _build_socket(self):
         sock = self._context.socket(zmq.REQ)
         sock.setsockopt(zmq.RCVTIMEO, 100)
         sock.setsockopt(zmq.RCVTIMEO, 100)
@@ -65,12 +66,18 @@ class CoachCommand:
         async def _request(socket):
             for _ in range(max_retries):
                 try:
+                    assert self._socket is not None
+                    # TODO: Un-hard-code this
+                    self._socket.connect('tcp://%s:%d' %
+                                         (self._host, self._port))
                     await function(socket)
                     return
                 except zmq.Again:
                     # TODO: Could be more informational.
                     logging.getLogger('coach-command').warning(
                         'Could not reach a coachbot. Retrying...')
+                    self._close_socket()
+                    self._socket = self._build_socket()
             raise CoachCommandError('Could not make a request to the '
                                     'Coachbots.')
 
