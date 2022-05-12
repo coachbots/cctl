@@ -85,9 +85,6 @@ async def create_bot_is_on(
     bot = Coachbot((ident := int(endpoint_groups[0])),
                    app_state.coachbot_states.value[ident])
 
-    if bot.state.is_on:
-        return ipc.Response(ipc.ResultCode.OK)
-
     async def boot_bot_on(client: CoachbotBTLEClient):
         await client.set_mode(CoachbotBTLEMode.COMMAND)
         await client.set_mode_led_on(True)
@@ -116,9 +113,6 @@ async def delete_bot_is_on(
     """Turns a bot off."""
     bot = Coachbot((ident := int(endpoint_groups[0])),
                    app_state.coachbot_states.value[ident])
-
-    if not bot.state.is_on:
-        return ipc.Response(ipc.ResultCode.OK)
 
     async def boot_bot_off(client: CoachbotBTLEClient):
         await client.set_mode(CoachbotBTLEMode.COMMAND)
@@ -150,8 +144,6 @@ async def read_bot_state(
 async def create_bots_user_running(app_state: AppState, _, __):
     """Starts the user code for all running coachbots."""
     async def __boot_bot(bot: Coachbot):
-        if bot.state.is_on:
-            return
         async with CoachCommand(
             bot.ip_address,
             app_state.config.coach_client.command_port
@@ -176,8 +168,6 @@ async def create_bots_user_running(app_state: AppState, _, __):
 async def delete_bots_user_running(app_state: AppState, _, __):
     """Stops the user code for all running coachbots."""
     async def __boot_bot(bot: Coachbot):
-        if not bot.state.is_on:
-            return
         async with CoachCommand(
             bot.ip_address,
             app_state.config.coach_client.command_port
