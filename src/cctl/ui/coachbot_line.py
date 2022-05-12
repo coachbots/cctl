@@ -34,7 +34,7 @@ def UserInfo(user_info: UserCodeState):
     return Row(
         (
             Text(f' {run_str} ', style=TextStyleSpec(color=run_color)),
-            Text(f' {name_str.ljust(MAX_NAME_LEN)} '),
+            Text(f' {name_str.ljust(MAX_NAME_LEN)}▕'),
             Text(f' {author_str.ljust(MAX_AUTHOR_LEN)} '),
             Text(f" {('v' + version_str).rjust(VERSION_LEN)} ",
                  style=TextStyleSpec(color=ColorPairs.INFO_INVERTED))
@@ -57,20 +57,20 @@ def CoachbotLine(bot: Coachbot,
 
     position_str = f'{round(p.x, 2): 5} {round(p.y, 2): 5}' \
         if (p := state.position) is not None \
-        else f"{'?'.ljust(5)},{'?'.rjust(5)}"
+        else f"{'?'.rjust(5)},{'?'.rjust(5)}"
     theta_str = f'{round(t * 180 / math.pi, 1): 6}' \
         if (t := state.theta) is not None else f"{'?'.rjust(6)}"
 
     bat_label = f'{round(v, 2):>4}' if (v := state.bat_voltage) is not None \
-        else f'?'
+        else f'   ?'
     bat_color = (ColorPairs.OK_INVERTED if v > 3.8 \
         else (ColorPairs.WARNING_INVERTED if v > 3.6 \
               else ColorPairs.ERROR_INVERTED)) \
-        if (v := state.bat_voltage) is not None else ColorPairs.INFO_INVERTED
+        if (v := state.bat_voltage) is not None else ColorPairs.INFO
 
     left_widget = Row(
         (
-            Text(f' {bot.identifier: 3} ',
+            Text(f' {bot.identifier: 3}▕',
                  style=TextStyleSpec(color=ColorPairs.INFO_INVERTED,
                                      bold=True)),
             Text(
@@ -82,7 +82,7 @@ def CoachbotLine(bot: Coachbot,
                 )
             ),
             Text(f' {version_str} '),
-            Text(f' [{position_str}] {theta_str}° ',
+            Text(f' [{position_str}] {theta_str}°▕',
                  style=TextStyleSpec(color=ColorPairs.INFO_INVERTED,
                                      bold=True)),
             Text(f' {bat_label}V ',
