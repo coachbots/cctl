@@ -107,16 +107,17 @@ async def start_status_server(app_state: AppState) -> None:
 
     async def handle_client(request: status.Request) -> status.Response:
         """This function handles a client asking a request to this server."""
-        logging.getLogger('servers').debug('Received Status request %s',
-                                           request)
 
         if request.type == 'signal':
             assert isinstance(request.body, Signal)
+            logging.getLogger('servers').debug('Signal=%s', request.body)
             app_state.coachbot_signals.on_next(request.body)
             return status.Response()
 
         if request.type == 'state':
             req_id, new_state = request.identifier, request.body
+            logging.getLogger('servers').debug(
+                'State request %d=%s', req_id, new_state)
 
             assert isinstance(new_state, CoachbotState)
             app_state.coachbot_states.get_subject(req_id).on_next(
