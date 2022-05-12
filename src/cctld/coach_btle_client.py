@@ -69,7 +69,7 @@ class CoachbotBTLEClient:
            client.set_mode_led_on(True)
 
     """
-    def __init__(self, address: str, iface=0) -> None:
+    def __init__(self, address: str, iface=0, max_attempts=5) -> None:
         """Initializes a CoachbotBTLEClient.
 
         Parameters:
@@ -87,9 +87,9 @@ class CoachbotBTLEClient:
         self.uart_service = None
         self.tx_channel = None
         self.rx_channel = None
+        self.max_attempts = max_attempts
 
-    async def set_mode(self, mode: CoachbotBTLEMode,
-                       max_attempts: int = 3) -> None:
+    async def set_mode(self, mode: CoachbotBTLEMode) -> None:
         """Sets the mode of the coachbot to the target mode.
 
         The implementation here is somewhat reduntant since there is no AT+
@@ -105,7 +105,7 @@ class CoachbotBTLEClient:
                 pass
 
         attempt = 0
-        while attempt < max_attempts:
+        while attempt < self.max_attempts:
             try:
                 await __helper()
                 attempt += 1
@@ -145,14 +145,12 @@ class CoachbotBTLEClient:
         except ValueError as err:
             raise CoachbotBTLEError from err
 
-    async def set_mode_led_on(self, state: bool,
-                              max_attempts: int = 3) -> None:
+    async def set_mode_led_on(self, state: bool) -> None:
         """Attempts to turn on/off the MODE LED (Red) on of the specified
         Coachbot BT module.
 
         Parameters:
             state (bool): Whether the LED should turn on or off.
-            max_attempts (int): The number of attempts one is willing to try.
 
         Raises:
             CoachbotBTLEStateException: If this function is called but the
@@ -179,7 +177,7 @@ class CoachbotBTLEClient:
                 raise CoachbotBTLEError('The reply was not OK. The reply was: '
                                         f'{reply}')
 
-        for _ in range(max_attempts):
+        for _ in range(self.max_attempts):
             try:
                 await __helper()
                 return
@@ -195,25 +193,30 @@ class CoachbotBTLEClient:
                 self._address, addrType=btle.ADDR_TYPE_RANDOM,
                 iface=self._iface)
 
-        try:
-            self.peripheral = await asyncio.get_event_loop().run_in_executor(
-                executor=None, func=peripheral_allocate)
-        except btle.BTLEException as btle_ex:
-            logging.getLogger('bluetooth').warning(
-                'Could not connect to device %s', self._address)
-            raise CoachbotBTLEError from btle_ex
+        for _ in range(self.max_attempts):
+            try:
+                self.peripheral = await asyncio.get_event_loop() \
+                    .run_in_executor(executor=None, func=peripheral_allocate)
+                assert self.peripheral is not None
+                self.uart_service = self.peripheral.getServiceByUUID(
+                    BOARD_UUIDS['adafruit-bluefruit']['uart-service'])
 
-        assert self.peripheral is not None
-        self.uart_service = self.peripheral.getServiceByUUID(
-            BOARD_UUIDS['adafruit-bluefruit']['uart-service'])
+                assert self.uart_service is not None
+                self.tx_channel = self.uart_service.getCharacteristics(
+                    BOARD_UUIDS['adafruit-bluefruit']['uart-tx-characteristic']
+                )[0]
+                self.rx_channel = self.uart_service.getCharacteristics(
+                    BOARD_UUIDS['adafruit-bluefruit']['uart-rx-characteristic']
+                )[0]
 
-        assert self.uart_service is not None
-        self.tx_channel = self.uart_service.getCharacteristics(
-            BOARD_UUIDS['adafruit-bluefruit']['uart-tx-characteristic'])[0]
-        self.rx_channel = self.uart_service.getCharacteristics(
-            BOARD_UUIDS['adafruit-bluefruit']['uart-rx-characteristic'])[0]
-
-        return self
+                return self
+            except btle.BTLEException:
+                logging.getLogger('bluetooth').warning(
+                    'Could not connect to device %s. Trying again...',
+                    self._address)
+        logging.getLogger('bluetooth').warning(
+            'Failed to connect to device %s. Giving up.', self._address)
+        raise CoachbotBTLEError('Connection error to device %s')
 
     async def __aexit__(self, exc_t, exc_tb, exc_v) -> bool:
         if self.peripheral is not None:
