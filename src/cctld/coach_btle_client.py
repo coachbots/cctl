@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 
 """This module defines the CoachbotBTLEClient class which is to be used to make
-requests to the bluetooth modules on the Coachbots."""
+requests to the bluetooth modules on the Coachbots.
+
+Todo:
+    The way this module is implement is sub-satisfactory. Much of the bugs have
+    been shoved under a rug in try-catches. Check the TODO's for more info.
+"""
 
 import logging
 import asyncio
@@ -132,7 +137,13 @@ class CoachbotBTLEClient:
             raise CoachbotBTLEError('Could  not toggle mode.The reply was not'
                                     f'OK. The reply was: {reply}')
 
-        return CoachbotBTLEMode(int(reply[0]))
+        # TODO: This hack here is done because sometimes the rx channel returns
+        # a reply of \r (due to message reading not being properly
+        # protocolized, and a likely mistiming issue).
+        try:
+            return CoachbotBTLEMode(int(reply[0]))
+        except ValueError as err:
+            raise CoachbotBTLEError from err
 
     async def set_mode_led_on(self, state: bool,
                               max_attempts: int = 3) -> None:
