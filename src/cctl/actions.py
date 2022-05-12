@@ -304,16 +304,17 @@ class CommandAction:
         return 0
 
     def _uploader(self):
-        with open(self._args.user_path[0], 'r') as source_f:
+        with open(self._args.usr_path[0], 'r') as source_f:
             source = source_f.read()
 
         async def worker():
             async with CCTLDClient(configuration.get_request_feed()) as client:
-                await asyncio.gather(*(
+                res = await asyncio.gather(*(
                     client.update_user_code(
                         Coachbot(bot, CoachbotState(None)), source)
                     for bot in range(100)),
                     return_exceptions=True)
+            print(res)
 
         asyncio.run(worker())
 
