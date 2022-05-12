@@ -50,7 +50,7 @@ async def create_bots_is_on(app_state: AppState, _: ipc.Request, __):
 
         start_time = time()
         while time() - start_time < max_timeout:
-            if host_is_reachable(bot.ip_address):
+            if await host_is_reachable(bot.ip_address):
                 return ipc.Response(ipc.ResultCode.OK)
             await asyncio.sleep(5e-1)
 
@@ -81,7 +81,7 @@ async def delete_bots_is_on(app_state: AppState, _: ipc.Request, __):
 
         start_time = time()
         while time() - start_time < max_timeout:
-            if not host_is_reachable(bot.ip_address):
+            if not await host_is_reachable(bot.ip_address):
                 app_state.coachbot_states.get_subject(
                     bot.identifier).on_next((bot.identifier,
                                              CoachbotState(None)))
@@ -119,7 +119,7 @@ async def create_bot_is_on(
 
         start_time = time()
         while time() - start_time < max_timeout:
-            if host_is_reachable(bot.ip_address):
+            if await host_is_reachable(bot.ip_address):
                 return ipc.Response(ipc.ResultCode.OK)
             await asyncio.sleep(5e-1)
     except CoachbotBTLEStateException as err:
@@ -157,7 +157,7 @@ async def delete_bot_is_on(
 
         start_time = time()
         while time() - start_time < max_timeout:
-            if not host_is_reachable(bot.ip_address):
+            if not await host_is_reachable(bot.ip_address):
                 app_state.coachbot_states.get_subject(
                     bot.identifier).on_next((bot.identifier,
                                              CoachbotState(None)))
