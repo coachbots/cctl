@@ -5,17 +5,43 @@
 import asyncio
 import logging
 import sys
+import os
 from cctld.models.app_state import CoachbotStateSubject
-from reactivex.subject import BehaviorSubject
 from reactivex.subject.subject import Subject
 
-from cctl.models.coachbot import CoachbotState
+from cctl.models.coachbot import Coachbot, CoachbotState
 from cctld import daemon, servers
 from cctld.daughters.arduino import ArduinoInfo
 from cctld.coach_btle_client import CoachbotBTLEClientManager
 from cctld.conf import Config
 from cctld.models import AppState
-import os
+
+from cctld.netutils import host_is_reachable
+
+
+async def auto_pruner(app_state: AppState):
+    """The auto_pruner is a truly hacky way to automatically purge values that
+    have possibly become stale from the ``coachbot_states``. How it works is
+    that it basically goes through each robot in a loop, checking if they are
+    currently awake and based on that setting them to ``None`` if they aren't.
+
+    Todo:
+        Really shouldn't need to exist, I feel like. Likely there is a better
+        solution, but it's what we've got for now. This is not at all with what
+        reactivex is about but I just don't know better for now.
+    """
+    async def __helper(bot_id, bot_state):
+        bot = Coachbot(bot_id, bot_state)
+        if not await host_is_reachable(bot.ip_address):
+            app_state.coachbot_states.get_subject(bot_id).on_next(
+                (bot_id, CoachbotState(None)))
+
+    while True:
+        asyncio.gather(*(__helper(bot_id, bot_state)
+                         for bot_id, bot_state in
+                         app_state.coachbot_states.tuple_value),
+                       return_exceptions=True)
+        await asyncio.sleep(5)
 
 
 async def __main(config: Config):
@@ -40,7 +66,8 @@ async def __main(config: Config):
         servers.start_status_server(app_state),
         servers.start_ipc_request_server(app_state),
         servers.start_ipc_feed_server(app_state),
-        servers.start_ipc_signal_forward_server(app_state)
+        servers.start_ipc_signal_forward_server(app_state),
+        auto_pruner(app_state)
     )
     await running_servers
 

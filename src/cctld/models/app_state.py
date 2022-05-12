@@ -33,19 +33,8 @@ class CoachbotStateSubject(Subject):
             state.subscribe(on_next=self._emit, on_completed=self._close,
                             on_error=self._close_err)
 
-        for state in self._internal_states:
-            rx.zip(state, state.pipe(rxops.time_interval())) \
-                .subscribe(self._prune_old)
-
     def _emit(self, _):
         self.on_next(self.value)
-
-    def _prune_old(self, value: Tuple):
-        if value[1].interval.total_seconds() \
-                > self.__class__.MAX_TIME_BEFORE_PRUNE:
-            identifier = value[0][0]
-            self._internal_states[identifier].on_next(
-                (identifier, CoachbotState(None)))
 
     def _close(self):
         for state in self._internal_states:
@@ -64,6 +53,10 @@ class CoachbotStateSubject(Subject):
             Possible concurrency headache.
         """
         return tuple(state.value[1] for state in self._internal_states)
+
+    @property
+    def tuple_value(self) -> Tuple[Tuple[int, CoachbotState], ...]:
+        return tuple(state.value for state in self._internal_states)
 
     def get_subject(self, i: int):
         return self._internal_states[i]

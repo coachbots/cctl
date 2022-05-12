@@ -40,6 +40,6 @@ async def host_is_reachable(hostname: str,
         bool: Whether the host was reachable on any attempt.
     """
     for _ in range(max_attempts):
-        if await ping(hostname, 1, 1e-1) == 0:
+        if await ping(hostname, 1, 1) == 0:
             return True
     return False
