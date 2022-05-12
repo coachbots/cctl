@@ -20,7 +20,7 @@ from cctl.ui.manager import Manager
 from cctl.utils.net import sftp_client
 
 from cctl.res import ERROR_CODES, RES_STR
-from cctl.api import camera_ctl, bot_ctl, charge_ctl, configuration
+from cctl.api import camera_ctl, bot_ctl, configuration
 
 
 def _parse_id(coach_id: str) -> Union[List[int], bool]:
