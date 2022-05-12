@@ -20,7 +20,7 @@ import reactivex as rx
 import zmq
 import zmq.asyncio
 
-from cctl.api.bot_ctl import Coachbot
+from cctl.models import Coachbot
 from cctl.models.coachbot import CoachbotState, Signal
 from cctl.protocols import ipc
 
