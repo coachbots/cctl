@@ -28,10 +28,11 @@ class CoachCommand:
         self._port = coachbot_command_port
         self._context = zmq.asyncio.Context()
 
-    def _build_socket(self):
+    def _build_socket(self) -> zmq.asyncio.Socket:
         sock = self._context.socket(zmq.REQ)
         sock.setsockopt(zmq.RCVTIMEO, 100)
         sock.setsockopt(zmq.RCVTIMEO, 100)
+        return sock
 
     def _close_socket(self):
         if self._socket is not None:
