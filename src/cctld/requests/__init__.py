@@ -38,7 +38,9 @@ async def create_bots_is_on(app_state: AppState, _: ipc.Request, __):
     max_timeout = 4
 
     async def boot_bot_on(client: CoachbotBTLEClient):
-        await client.set_mode(CoachbotBTLEMode.COMMAND)
+        await client.toggle_mode()
+        await client.set_mode_led_on(True)
+        await client.toggle_mode()
         await client.set_mode_led_on(True)
 
     async def __helper(bot: Coachbot):
@@ -69,7 +71,9 @@ async def delete_bots_is_on(app_state: AppState, _: ipc.Request, __):
     max_timeout = 4
 
     async def boot_bot_off(client: CoachbotBTLEClient):
-        await client.set_mode(CoachbotBTLEMode.COMMAND)
+        await client.toggle_mode()
+        await client.set_mode_led_on(False)
+        await client.toggle_mode()
         await client.set_mode_led_on(False)
 
     async def __helper(bot: Coachbot):
@@ -110,7 +114,9 @@ async def create_bot_is_on(
                    app_state.coachbot_states.value[ident])
 
     async def boot_bot_on(client: CoachbotBTLEClient):
-        await client.set_mode(CoachbotBTLEMode.COMMAND)
+        await client.toggle_mode()
+        await client.set_mode_led_on(True)
+        await client.toggle_mode()
         await client.set_mode_led_on(True)
 
     try:
@@ -148,7 +154,9 @@ async def delete_bot_is_on(
                    app_state.coachbot_states.value[ident])
 
     async def boot_bot_off(client: CoachbotBTLEClient):
-        await client.set_mode(CoachbotBTLEMode.COMMAND)
+        await client.toggle_mode()
+        await client.set_mode_led_on(False)
+        await client.toggle_mode()
         await client.set_mode_led_on(False)
 
     try:
