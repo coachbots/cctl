@@ -41,7 +41,8 @@ class CoachbotStateSubject(Subject):
         self.on_next(self.value)
 
     def _prune_old(self, value: Tuple):
-        if value[1] > self.__class__.MAX_TIME_BEFORE_PRUNE:
+        if value[1].interval.total_seconds() \
+                > self.__class__.MAX_TIME_BEFORE_PRUNE:
             identifier = value[0][0]
             self._internal_states[identifier].on_next(
                 (identifier, CoachbotState(None)))
