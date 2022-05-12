@@ -30,6 +30,18 @@ __email__ = 'contact@markovejnovic.com'
 __status__ = 'Development'
 
 
+async def _retried_reply(sock, reply: str, max_n: int) -> int:
+    for _ in range(max_n):
+        try:
+            await sock.send_string(reply)
+            return 0
+        except zmq.Again:
+            pass
+    logging.getLogger('servers').warning(
+        'Could not send status reply message. Failing')
+    return -1
+
+
 async def start_ipc_request_server(app_state: AppState):
     """The IPCServer is a server that is used to communicate with other
     processes that may query the state of the Coachbots.
@@ -79,16 +91,7 @@ async def start_ipc_request_server(app_state: AppState):
         request = ipc.Request.deserialize(request_raw)
         response = await handle_client(request)
         logging.getLogger('servers').debug('Responding with: %s', response)
-
-        for _ in range(max_rep_retry):
-            try:
-                await sock.send_string(response.serialize())
-                break
-            except zmq.Again:
-                pass
-
-        logging.getLogger('servers').warning(
-            'Could not send status reply message. Ignoring...')
+        await _retried_reply(sock, response.serialize(), max_rep_retry)
 
 
 async def start_status_server(app_state: AppState) -> None:
@@ -146,16 +149,7 @@ async def start_status_server(app_state: AppState) -> None:
         response = await handle_client(request)
         logging.getLogger('servers').debug('Responding with: %s', response)
 
-        for _ in range(max_rep_retry):
-            try:
-                await sock.send_string(response.serialize())
-                break
-            except zmq.Again:
-                pass
-
-        logging.getLogger('servers').warning(
-            'Could not send status reply message to %d. Ignoring...',
-            request.identifier)
+        await _retried_reply(sock, response.serialize(), max_rep_retry)
 
 
 async def start_ipc_feed_server(app_state: AppState) -> None:
