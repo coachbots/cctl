@@ -303,11 +303,22 @@ class CommandAction:
         asyncio.get_event_loop().run_until_complete(__helper())
         return 0
 
+    def _uploader(self):
+        with open(self._args.user_path[0], 'r') as source_f:
+            source = source_f.read()
+
+        async def worker():
+            async with CCTLDClient(configuration.get_request_feed()) as client:
+                await asyncio.gather(*(
+                    client.update_user_code(
+                        Coachbot(bot, CoachbotState(None)), source)
+                    for bot in range(100)),
+                    return_exceptions=True)
+
+        asyncio.run(worker())
+
     def exec(self) -> int:
         """Parses arguments automatically and handles booting."""
-        def _uploader():
-            bot_ctl.upload_code(self._args.usr_path[0],
-                                self._args.os_update)
 
         handlers = {
             RES_STR['cmd_cam']: self._camera_command_handler,
@@ -317,7 +328,7 @@ class CommandAction:
             RES_STR['cmd_fetch_logs']: self._fetch_logs_handler,
             RES_STR['cmd_start']: self._start_pause_handler,
             RES_STR['cmd_pause']: self._start_pause_handler,
-            RES_STR['cmd_update']: _uploader,
+            RES_STR['cmd_update']: self._uploader,
             RES_STR['cli']['exec']['name']: self.run_command_handler,
             RES_STR['cli']['install']['name']: self.install_packages_handler,
             RES_STR['cli']['charger']['name']: self.charger_on_off_handler,
