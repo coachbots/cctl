@@ -234,9 +234,11 @@ async def CCTLDCoachbotStateObservable(
 
     .. code-block:: python
 
-       my_observable, task = CCTLDCoachbotStateObservable()
+       my_observable, task = await CCTLDCoachbotStateObservable(
+           'tcp://127.0.0.1:16791')
        my_observer = rx.Observer(on_next=lambda next: print(next))
        my_observable.subscribe(my_observer)
+       await asyncio.wait([task])
     """
     my_subject = rx.Subject()
 
