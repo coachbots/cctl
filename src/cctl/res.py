@@ -92,12 +92,7 @@ RES_STR = {
                               'response: %d.',
         'state_change_max_attempts': 'Could not change state of bot %d.',
         'state_change_retry': 'Could not change state of bot %d. Trying ' +
-                              'again.',
-        'arduino_comm_err': 'Cannot communicate with the Arduino because %s.',
-        'arduino_upload_err': 'Could not successfully upload the Arduino ' +
-                              'script. The error-code was %d and stderr: %s',
-        'arduino_upload_success': 'Successfully uploaded the Arduino ' +
-                                  'script: %s.'
+                              'again.'
     },
 
     'cli': {

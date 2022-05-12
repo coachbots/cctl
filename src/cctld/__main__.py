@@ -8,9 +8,10 @@ import sys
 from reactivex.subject import BehaviorSubject
 from reactivex.subject.subject import Subject
 
-from cctld.coach_btle_client import CoachbotBTLEClientManager
 from cctl.models.coachbot import CoachbotState
 from cctld import daemon, servers
+from cctld.daughters.arduino import ArduinoInfo
+from cctld.coach_btle_client import CoachbotBTLEClientManager
 from cctld.conf import Config
 from cctld.models import AppState
 import os
@@ -24,7 +25,14 @@ async def __main(config: Config):
         coachbot_signals=Subject(),
         config=config,
         coachbot_btle_manager=CoachbotBTLEClientManager(
-            config.bluetooth.interfaces)
+            config.bluetooth.interfaces),
+        arduino_daughter=ArduinoInfo(
+            config.arduino.executable,
+            config.arduino.serial,
+            config.arduino.baud_rate,
+            config.arduino.board_type,
+            asyncio.Lock()
+        )
     )
 
     running_servers = asyncio.gather(

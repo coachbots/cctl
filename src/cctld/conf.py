@@ -86,6 +86,29 @@ class Config:
             return [int(i) for i in
                     config.get('bluetooth', 'interfaces').split(',')]
 
+    class Arduino:
+        """Returns all the information under the ``arduino`` header."""
+
+        @property
+        def executable(self) -> str:
+            """Returns the full path to the Arduino executable."""
+            return config.get('arduino', 'executable_path')
+
+        @property
+        def serial(self) -> str:
+            """Returns the full path on which the arduino is mounted."""
+            return config.get('arduino', 'serial')
+
+        @property
+        def baud_rate(self) -> int:
+            """Returns the Arduino daughterboard baud rate."""
+            return config.getint('arduino', 'baudrate')
+
+        @property
+        def board_type(self) -> str:
+            """Returns the board type of the Arduino."""
+            return config.get('arduino', 'board')
+
     @property
     def general(self) -> 'Config.General':
         return Config.General()
@@ -105,3 +128,7 @@ class Config:
     @property
     def coach_client(self) -> 'Config.CoachClient':
         return Config.CoachClient()
+
+    @property
+    def arduino(self) -> 'Config.Arduino':
+        return Config.Arduino()

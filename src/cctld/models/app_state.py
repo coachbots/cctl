@@ -6,11 +6,12 @@ state."""
 
 from typing import Tuple
 from dataclasses import dataclass
-from cctld.coach_btle_client import CoachbotBTLEClientManager
-
-from reactivex.subject.subject import Subject
-from cctl.models.coachbot import CoachbotState, Signal
 from reactivex.subject import BehaviorSubject
+from reactivex.subject.subject import Subject
+
+from cctld.coach_btle_client import CoachbotBTLEClientManager
+from cctld.daughters.arduino import ArduinoInfo
+from cctl.models.coachbot import CoachbotState, Signal
 from cctld.conf import Config
 
 
@@ -26,3 +27,4 @@ class AppState:
     config: Config
     coachbot_signals: Subject[Signal]
     coachbot_btle_manager: CoachbotBTLEClientManager
+    arduino_daughter: ArduinoInfo

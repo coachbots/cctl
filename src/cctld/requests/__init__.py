@@ -13,6 +13,7 @@ from cctl.protocols import ipc
 from cctld.coach_btle_client import CoachbotBTLEClient, CoachbotBTLEError, CoachbotBTLEMode, \
     CoachbotBTLEStateException
 from cctld.coach_commands import CoachCommand
+from cctld.daughters import arduino
 from cctld.models.app_state import AppState
 from cctld.requests.handler import handler
 
@@ -214,7 +215,27 @@ async def update_bot_user_code(app_state, request: ipc.Request,
     return ipc.Response(ipc.ResultCode.OK)
 
 
-@handler('^/teapot', 'read')
+@handler(r'^/teapot/?$', 'read')
 async def i_am_a_teapot(*args, **kwargs):
     """This function does not require documentation."""
     return ipc.Response(ipc.ResultCode.I_AM_A_TEAPOT)
+
+
+@handler(r'^/rail/is-on/?$', 'create')
+async def create_power_rail(app_state: AppState, *args, **kwargs):
+    """Starts the power rail on."""
+    try:
+        await arduino.charge_rail_set(app_state.arduino_daughter, True)
+        return ipc.Response(ipc.ResultCode.OK)
+    except arduino.ArduinoError as aerr:
+        return ipc.Response(ipc.ResultCode.INTERNAL_SERVER_ERROR, aerr)
+
+
+@handler(r'^/rail/is-on/?$', 'delete')
+async def delete_power_rail(app_state: AppState, *args, **kwargs):
+    """Starts the power rail on."""
+    try:
+        await arduino.charge_rail_set(app_state.arduino_daughter, False)
+        return ipc.Response(ipc.ResultCode.OK)
+    except arduino.ArduinoError as aerr:
+        return ipc.Response(ipc.ResultCode.INTERNAL_SERVER_ERROR, aerr)

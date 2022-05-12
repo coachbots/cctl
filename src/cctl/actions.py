@@ -307,16 +307,11 @@ class CommandAction:
 
     def charger_on_off_handler(self) -> int:
         """Controls whether the charger should be turned on or off."""
-        state = bool(self._args.state == 'on')
-        try:
-            asyncio.get_event_loop().run_until_complete(
-                charge_ctl.charge_rail_set(state))
-        except serial.SerialException as sex:
-            logging.error(RES_STR['arduino_comm_err'], sex)
-            return ERROR_CODES['daughterboard_comm_issue']
-        except RuntimeError as rex:
-            logging.error(rex)
-            return ERROR_CODES['daughterboard_comm_issue']
+        async def __helper():
+            async with CCTLDClient(configuration.get_request_feed()) as client:
+                await client.set_power_rail_on(self._args.state == 'on')
+
+        asyncio.get_event_loop().run_until_complete(__helper())
         return 0
 
     def exec(self) -> int:

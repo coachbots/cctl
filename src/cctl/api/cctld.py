@@ -187,6 +187,18 @@ class CCTLDClient:
             if response.result_code == ipc.ResultCode.STATE_CONFLICT:
                 raise CCTLDRespInvalidState(response.body)
 
+    async def set_power_rail_on(self, state: bool) -> None:
+        """Attempts to set the state of the power rail to on/off.
+
+        Parameters:
+            state (bool): The power rail target state.
+        """
+        with _CCTLDClientRequest(self._ctx, self._path) as req:
+            await req.request(ipc.Request(
+                method='create' if state else 'delete',
+                endpoint='/rail/is-on'
+            ))
+
     async def __aexit__(self, exc_t, exc_v, exc_tb):
         return False
 
