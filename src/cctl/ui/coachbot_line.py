@@ -21,7 +21,7 @@ def UserInfo(user_info: UserCodeState):
         ('❔ Unknown', ColorPairs.WARNING_INVERTED) \
             if (r := user_info.is_running) is None \
             else (
-                ('🦾 Running', ColorPairs.OK_INVERTED) if r \
+                ('🦾 Running ', ColorPairs.OK_INVERTED) if r \
                 else ('💀 Stopped', ColorPairs.ERROR_INVERTED))
     version_str = str(v if (v := user_info.version) is not None else '?.?.?')
     name_str = (n[:MAX_NAME_LEN - 3] + '...' if len(n) > MAX_NAME_LEN
