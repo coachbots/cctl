@@ -31,7 +31,7 @@ class CoachCommand:
         if self._socket is not None:
             self._socket.close()
 
-    async def __aexit__(self, exc_type, exc_traceback, exc_value):
+    async def __aexit__(self, exc_type, exc_value, exc_traceback):
         await self.close()
         if exc_type is not None:
             print(f'{exc_type} executing a CoachCommand occurred. Value: '
@@ -60,7 +60,7 @@ class CoachCommand:
             Rewrite. Implementation is currently legacy.
         """
         msg = coach_command.Request(
-            'create' if value else 'delete'
+            'create' if value else 'delete',
             '/user-code/running'
         ).to_dict()
         await self._execute_socket(lambda sock: sock.send_json(msg))
@@ -76,11 +76,11 @@ class CoachCommand:
             Rewrite. Legacy implementation.
         """
         msg = coach_command.Request('update', '/user-code/code',
-                                    body={ 'code': value }).to_dict()
+                                    body={'code': value}).to_dict()
         response = await self._execute_socket(lambda s: s.send_json(msg))
 
     async def set_led_color(self, value: Tuple[int, int, int]):
         """Sends a command to the coachbot to set the LED on or off."""
         msg = coach_command.Request('update', '/led/color',
-                                    body={ 'color': value }).to_dict()
+                                    body={'color': value}).to_dict()
         response = await self._execute_socket(lambda s: s.send_json(msg))
