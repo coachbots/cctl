@@ -315,7 +315,7 @@ class CommandAction:
         """Controls whether the charger should be turned on or off."""
         async def __helper():
             async with CCTLDClient(configuration.get_request_feed()) as client:
-                await client.set_power_rail_on(self._args.state == 'on')
+                await client.set_power_rail_on(self._args.state[0] == 'on')
 
         asyncio.get_event_loop().run_until_complete(__helper())
         return 0
