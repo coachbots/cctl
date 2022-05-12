@@ -9,6 +9,7 @@ import re
 from os import path
 import os
 import logging
+from cctl import models
 from compot.widgets import ObserverMainWindow
 from argparse import Namespace
 from reactivex import operators as rxops
@@ -169,7 +170,8 @@ class CommandAction:
             async def _wrapper():
                 async with CCTLDClient(configuration.get_request_feed()) as c:
                     results = await asyncio.gather(
-                        *[c.set_is_on(bot, target_on) for bot in bots],
+                        *[c.set_is_on(models.Coachbot(bot.identifier, None),
+                                      target_on) for bot in bots],
                         return_exceptions=True)
                     # TODO: Fix this
                     print(results)

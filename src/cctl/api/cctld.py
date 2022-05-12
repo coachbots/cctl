@@ -136,10 +136,7 @@ class CCTLDClient:
                 'endpoint': lambda _: '/bots/state/is-on'
             }
         }
-        endpoint = selector_map[type(bot)]['endpoint']
-        endpoint = next(value['endpoint']
-                        for instance, value in selector_map.items()
-                        if isinstance(bot, instance))
+        endpoint = selector_map[type(bot)]['endpoint'](bot)
         with _CCTLDClientRequest(self._ctx, self._path) as req:
             response = await req.request(ipc.Request(
                 method='create' if state else 'delete',
@@ -161,7 +158,7 @@ class CCTLDClient:
             CCTLDRespInvalidState: If the user code could not be turned on due
             to a state conflict (likely the bot being powered off).
         """
-        instance_map = {
+        selector_map = {
             Coachbot: {
                 'endpoint':
                     lambda bot: f'/bots/{bot.identifier}/user-code/running'
@@ -170,7 +167,7 @@ class CCTLDClient:
                 'endpoint': lambda _: '/bots/user-code/running'
             }
         }
-        endpoint = instance_map[type(bot)]['endpoint']
+        endpoint = selector_map[type(bot)]['endpoint'](bot)
         method = 'create' if state else 'delete'
 
         with _CCTLDClientRequest(self._ctx, self._path) as req:
