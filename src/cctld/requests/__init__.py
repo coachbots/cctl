@@ -144,6 +144,8 @@ async def read_bot_state(
 async def create_bots_user_running(app_state: AppState, _, __):
     """Starts the user code for all running coachbots."""
     async def __boot_bot(bot: Coachbot):
+        if bot.state.is_on:
+            return
         async with CoachCommand(
             bot.ip_address,
             app_state.config.coach_client.command_port
@@ -168,6 +170,8 @@ async def create_bots_user_running(app_state: AppState, _, __):
 async def delete_bots_user_running(app_state: AppState, _, __):
     """Stops the user code for all running coachbots."""
     async def __boot_bot(bot: Coachbot):
+        if not bot.state.is_on:
+            return
         async with CoachCommand(
             bot.ip_address,
             app_state.config.coach_client.command_port
