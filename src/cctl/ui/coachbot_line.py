@@ -57,9 +57,9 @@ def CoachbotLine(bot: Coachbot,
 
     position_str = f'{round(p.x, 2): 5} {round(p.y, 2): 5}' \
         if (p := state.position) is not None \
-        else f"{'?'.ljust(5)},{'?'.ljust(5)}"
+        else f"{'?'.ljust(5)},{'?'.rjust(5)}"
     theta_str = f'{round(t * 180 / math.pi, 1): 6}' \
-        if (t := state.theta) is not None else f"{'?'.ljust(6)}"
+        if (t := state.theta) is not None else f"{'?'.rjust(6)}"
 
     bat_label = f'{round(v, 2):>4}' if (v := state.bat_voltage) is not None \
         else f'?'
