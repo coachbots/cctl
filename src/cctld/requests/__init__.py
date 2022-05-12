@@ -12,7 +12,7 @@ from cctl.models import Coachbot
 from cctl.protocols import ipc
 from cctld.coach_btle_client import CoachbotBTLEClient, CoachbotBTLEError, CoachbotBTLEMode, \
     CoachbotBTLEStateException
-from cctld.coach_commands import CoachCommand
+from cctld.coach_commands import CoachCommand, CoachCommandError
 from cctld.daughters import arduino
 from cctld.models.app_state import AppState
 from cctld.requests.handler import handler
@@ -146,11 +146,15 @@ async def create_bots_user_running(app_state: AppState, _, __):
     async def __boot_bot(bot: Coachbot):
         if not bot.state.is_on:
             return
-        async with CoachCommand(
-            bot.ip_address,
-            app_state.config.coach_client.command_port
-        ) as cmd:
-            await cmd.set_user_code_running(True)
+        try:
+            async with CoachCommand(
+                bot.ip_address,
+                app_state.config.coach_client.command_port
+            ) as cmd:
+                await cmd.set_user_code_running(True)
+        except CoachCommandError as c_err:
+            return ipc.Response(ipc.ResultCode.INTERNAL_SERVER_ERROR,
+                                str(c_err))
 
     errs = await asyncio.gather(
         *(__boot_bot(Coachbot(i, bot)) for i, bot in
@@ -172,11 +176,15 @@ async def delete_bots_user_running(app_state: AppState, _, __):
     async def __boot_bot(bot: Coachbot):
         if not bot.state.is_on:
             return
-        async with CoachCommand(
-            bot.ip_address,
-            app_state.config.coach_client.command_port
-        ) as cmd:
-            await cmd.set_user_code_running(False)
+        try:
+            async with CoachCommand(
+                bot.ip_address,
+                app_state.config.coach_client.command_port
+            ) as cmd:
+                await cmd.set_user_code_running(False)
+        except CoachCommandError as c_err:
+            return ipc.Response(ipc.ResultCode.INTERNAL_SERVER_ERROR,
+                                str(c_err))
 
     errs = await asyncio.gather(
         *(__boot_bot(Coachbot(i, bot)) for i, bot in
@@ -204,10 +212,14 @@ async def create_bot_user_running(app_state, _, endpoint_groups):
     if current_state.user_code_running:
         return ipc.Response(ipc.ResultCode.OK)
 
-    async with CoachCommand(
-        Coachbot(ident, current_state).ip_address,
-            app_state.config.coach_client.command_port) as command:
-        await command.set_user_code_running(True)
+    try:
+        async with CoachCommand(
+            Coachbot(ident, current_state).ip_address,
+                app_state.config.coach_client.command_port) as command:
+            await command.set_user_code_running(True)
+    except CoachCommandError as c_err:
+        return ipc.Response(ipc.ResultCode.INTERNAL_SERVER_ERROR,
+                            str(c_err))
 
     return ipc.Response(ipc.ResultCode.OK)
 
@@ -224,10 +236,14 @@ async def delete_bot_user_running(app_state, _, endpoint_groups):
     if not current_state.user_code_running:
         return ipc.Response(ipc.ResultCode.OK)
 
-    async with CoachCommand(
-        Coachbot(ident, current_state).ip_address,
-            app_state.config.coach_client.command_port) as command:
-        await command.set_user_code_running(False)
+    try:
+        async with CoachCommand(
+            Coachbot(ident, current_state).ip_address,
+                app_state.config.coach_client.command_port) as command:
+            await command.set_user_code_running(False)
+    except CoachCommandError as c_err:
+        return ipc.Response(ipc.ResultCode.INTERNAL_SERVER_ERROR,
+                            str(c_err))
 
     return ipc.Response(ipc.ResultCode.OK)
 
@@ -243,15 +259,23 @@ async def update_bot_user_code(app_state, request: ipc.Request,
         return ipc.Response(ipc.ResultCode.STATE_CONFLICT)
 
     if current_state.user_code_running:
+        try:
+            async with CoachCommand(
+                Coachbot(ident, current_state).ip_address,
+                    app_state.config.coach_client.command_port) as command:
+                await command.set_user_code_running(False)
+        except CoachCommandError as c_err:
+            return ipc.Response(ipc.ResultCode.INTERNAL_SERVER_ERROR,
+                                str(c_err))
+
+    try:
         async with CoachCommand(
             Coachbot(ident, current_state).ip_address,
                 app_state.config.coach_client.command_port) as command:
-            await command.set_user_code_running(False)
-
-    async with CoachCommand(
-        Coachbot(ident, current_state).ip_address,
-            app_state.config.coach_client.command_port) as command:
-        await command.set_user_code(request.body)
+            await command.set_user_code(request.body)
+    except CoachCommandError as c_err:
+        return ipc.Response(ipc.ResultCode.INTERNAL_SERVER_ERROR,
+                            str(c_err))
     return ipc.Response(ipc.ResultCode.OK)
 
 
