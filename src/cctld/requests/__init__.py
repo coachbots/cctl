@@ -43,8 +43,11 @@ async def create_bots_is_on(app_state: AppState, _: ipc.Request, __):
         await app_state.coachbot_btle_manager.execute_request(
             bot.bluetooth_mac_address, boot_bot_on)
 
-    await asyncio.gather(*(__helper(Coachbot(i, state)) for i, state in
-                           enumerate(app_state.coachbot_states.value)))
+    errs = await asyncio.gather(*(__helper(Coachbot(i, state)) for i, state in
+                                enumerate(app_state.coachbot_states.value)),
+                                return_exceptions=True)
+    if len([err for err in errs if err is not None]) > 0:
+        return ipc.Response(ipc.ResultCode.INTERNAL_SERVER_ERROR)
 
     return ipc.Response(ipc.ResultCode.OK)
 
@@ -63,8 +66,11 @@ async def delete_bots_is_on(app_state: AppState, _: ipc.Request, __):
         await app_state.coachbot_btle_manager.execute_request(
             bot.bluetooth_mac_address, boot_bot_off)
 
-    await asyncio.gather(*(__helper(Coachbot(i, state)) for i, state in
-                           enumerate(app_state.coachbot_states.value)))
+    errs = await asyncio.gather(*(__helper(Coachbot(i, state)) for i, state in
+                                enumerate(app_state.coachbot_states.value)),
+                                return_exceptions=True)
+    if len([err for err in errs if err is not None]) > 0:
+        return ipc.Response(ipc.ResultCode.INTERNAL_SERVER_ERROR)
 
     return ipc.Response(ipc.ResultCode.OK)
 
