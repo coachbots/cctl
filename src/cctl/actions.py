@@ -304,6 +304,12 @@ class CommandAction:
         return 0
 
     def _uploader(self):
+        if self._args.os_update:
+            # TODO: Remove this. Only here due to being useful to do an OS
+            # update. Let cctld manage OS-updates too.
+            bot_ctl.upload_code(self._args.usr_path[0],
+                                self._args.os_update)
+
         with open(self._args.usr_path[0], 'r') as source_f:
             source = source_f.read()
 
