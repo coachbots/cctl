@@ -74,8 +74,8 @@ async def __upload_arduino_script(arduino: ArduinoInfo) -> None:
                     'The error-code was %d and stderr: %r' %
                     (proc.returncode or 0, stderr))
 
-            logging.debug('Successfully uploaded the Arduino script: %s.',
-                          stdout)
+            logging.debug('Successfully uploaded the Arduino script: %r.',
+                          stdout.decode)
 
     await exec_operation('compile')
     await exec_operation('upload')

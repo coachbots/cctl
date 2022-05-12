@@ -68,7 +68,12 @@ async def __main(config: Config):
     )
 
     # Update the arduino firmware if necessary.
-    await arduino.update(app_state.arduino_daughter, force=False)
+    try:
+        await arduino.update(app_state.arduino_daughter, force=False)
+    except RuntimeError:
+        logging.getLogger('arduino').error(
+            'Could not reprogram the Arduino. Continuing with a version '
+            'mismatch.')
 
     running_servers = asyncio.gather(
         servers.start_status_server(app_state),
