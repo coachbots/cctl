@@ -32,7 +32,11 @@ async def auto_pruner(app_state: AppState):
     """
     async def __helper(bot_id, bot_state):
         bot = Coachbot(bot_id, bot_state)
+        if not app_state.coachbot_states.get_subject(bot_id).value[1].is_on:
+            return
         if not await host_is_reachable(bot.ip_address):
+            logging.getLogger('auto-pruner').debug(
+                'Could not reach %d. Pruning away.', bot_id)
             app_state.coachbot_states.get_subject(bot_id).on_next(
                 (bot_id, CoachbotState(None)))
 
