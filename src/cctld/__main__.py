@@ -5,6 +5,7 @@
 import asyncio
 import logging
 import sys
+from cctld.models.app_state import CoachbotStateSubject
 from reactivex.subject import BehaviorSubject
 from reactivex.subject.subject import Subject
 
@@ -20,7 +21,7 @@ import os
 async def __main(config: Config):
     """The main entry point of cctld."""
     app_state = AppState(
-        coachbot_states=BehaviorSubject(
+        coachbot_states=CoachbotStateSubject(
             tuple(CoachbotState(False) for _ in range(100))),
         coachbot_signals=Subject(),
         config=config,

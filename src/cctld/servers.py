@@ -118,13 +118,9 @@ async def start_status_server(app_state: AppState) -> None:
         if request.type == 'state':
             req_id, new_state = request.identifier, request.body
 
-            old_states = app_state.coachbot_states.value
-            app_state.coachbot_states.on_next(
-                tuple(new_state
-                      if i == req_id
-                      else old_state
-                      for i, old_state in enumerate(old_states))
-            )
+            assert isinstance(new_state, CoachbotState)
+            app_state.coachbot_states.get_subject(req_id).on_next(
+                (req_id, new_state))
 
             return status.Response()
 
