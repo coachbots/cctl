@@ -144,7 +144,7 @@ async def read_bot_state(
 async def create_bots_user_running(app_state: AppState, _, __):
     """Starts the user code for all running coachbots."""
     async def __boot_bot(bot: Coachbot):
-        if bot.state.is_on:
+        if not bot.state.is_on:
             return
         async with CoachCommand(
             bot.ip_address,
