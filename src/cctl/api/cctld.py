@@ -201,10 +201,13 @@ class CCTLDClient:
             state (bool): The power rail target state.
         """
         with _CCTLDClientRequest(self._ctx, self._path) as req:
-            await req.request(ipc.Request(
+            response = await req.request(ipc.Request(
                 method='create' if state else 'delete',
                 endpoint='/rail/is-on'
             ))
+            if response.result_code != ipc.ResultCode.OK:
+                raise CCTLDRespInvalidState('Could not change the rail state '
+                                            'due to %s', response.body)
 
     async def __aexit__(self, exc_t, exc_v, exc_tb):
         return False

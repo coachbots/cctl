@@ -335,7 +335,7 @@ async def create_power_rail(app_state: AppState, *args, **kwargs):
         await arduino.charge_rail_set(app_state.arduino_daughter, True)
         return ipc.Response(ipc.ResultCode.OK)
     except arduino.ArduinoError as aerr:
-        return ipc.Response(ipc.ResultCode.INTERNAL_SERVER_ERROR, aerr)
+        return ipc.Response(ipc.ResultCode.INTERNAL_SERVER_ERROR, str(aerr))
 
 
 @handler(r'^/rail/is-on/?$', 'delete')
@@ -345,4 +345,4 @@ async def delete_power_rail(app_state: AppState, *args, **kwargs):
         await arduino.charge_rail_set(app_state.arduino_daughter, False)
         return ipc.Response(ipc.ResultCode.OK)
     except arduino.ArduinoError as aerr:
-        return ipc.Response(ipc.ResultCode.INTERNAL_SERVER_ERROR, aerr)
+        return ipc.Response(ipc.ResultCode.INTERNAL_SERVER_ERROR, str(aerr))

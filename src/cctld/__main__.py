@@ -6,6 +6,7 @@ import asyncio
 import logging
 import sys
 import os
+from cctld.daughters import arduino
 from cctld.models.app_state import CoachbotStateSubject
 from reactivex.subject.subject import Subject
 
@@ -65,6 +66,9 @@ async def __main(config: Config):
             asyncio.Lock()
         )
     )
+
+    # Update the arduino firmware if necessary.
+    await arduino.update(app_state.arduino_daughter, force=False)
 
     running_servers = asyncio.gather(
         servers.start_status_server(app_state),
