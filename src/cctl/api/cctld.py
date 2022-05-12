@@ -104,16 +104,16 @@ class CCTLDClient:
                 'endpoint': lambda bot: f'/bots/{bot.identifier}/bots/state',
                 'return': lambda body: CoachbotState.deserialize(body)
             },
-            Literal['all']: {
+            str: {
                 'endpoint': lambda _: '/bots/state',
                 'return': lambda body: tuple(CoachbotState.deserialize(b)
                                              for b in body)
             }
         }
-        endpoint, return_builder = next((value['endpoint'], value['return'])
-                                        for instance, value
-                                        in instance_map.items()
-                                        if isinstance(bot, instance))
+        endpoint, return_builder = (
+            (field := instance_map[type(bot)])['endpoint'],
+            field['return']
+        )
         with _CCTLDClientRequest(self._ctx, self._path) as req:
             response = await req.request(ipc.Request(
                 method='read',
@@ -132,10 +132,11 @@ class CCTLDClient:
             Coachbot: {
                 'endpoint': lambda bot: f'/bots/{bot.identifier}/state/is-on'
             },
-            Literal['all']: {
+            str: {
                 'endpoint': lambda _: '/bots/state/is-on'
             }
         }
+        endpoint = selector_map[type(bot)]['endpoint']
         endpoint = next(value['endpoint']
                         for instance, value in selector_map.items()
                         if isinstance(bot, instance))
@@ -165,13 +166,11 @@ class CCTLDClient:
                 'endpoint':
                     lambda bot: f'/bots/{bot.identifier}/user-code/running'
             },
-            Literal['all']: {
+            str: {
                 'endpoint': lambda _: '/bots/user-code/running'
             }
         }
-        endpoint = next(value['endpoint'] for instance, value
-                        in instance_map.items()
-                        if isinstance(bot, instance))(bot)
+        endpoint = instance_map[type(bot)]['endpoint']
         method = 'create' if state else 'delete'
 
         with _CCTLDClientRequest(self._ctx, self._path) as req:
