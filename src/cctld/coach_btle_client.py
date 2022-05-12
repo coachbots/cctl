@@ -109,7 +109,8 @@ class CoachbotBTLEClient:
                 logging.getLogger('bluetooth').warning(
                     'Could not toggle the mode to %s due to %s. Trying again.',
                     mode, err)
-        raise CoachbotBTLEError('Could not change the mode to %s.')
+        raise CoachbotBTLEError('Could not change the mode of %s to %s.',
+                                self._address, mode)
 
     async def toggle_mode(self) -> CoachbotBTLEMode:
         """Switches the mode of the Coachbot.
@@ -128,8 +129,8 @@ class CoachbotBTLEClient:
         reply = self.rx_channel.read().decode('ascii')
 
         if 'OK' not in reply:
-            raise CoachbotBTLEError('The reply was not OK. The reply was: '
-                                    f'{reply}')
+            raise CoachbotBTLEError('Could  not toggle mode.The reply was not'
+                                    f'OK. The reply was: {reply}')
 
         return CoachbotBTLEMode(int(reply[0]))
 

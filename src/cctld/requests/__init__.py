@@ -29,6 +29,46 @@ async def read_bots_state(app_state: AppState, _, __) -> ipc.Response:
     )
 
 
+@handler(r'^/bots/state/is-on/?$', 'create')
+async def create_bots_is_on(app_state: AppState, _: ipc.Request, __):
+    """Turns all bots on."""
+    async def boot_bot_on(client: CoachbotBTLEClient):
+        await client.set_mode(CoachbotBTLEMode.COMMAND)
+        await client.set_mode_led_on(True)
+
+    async def __helper(bot: Coachbot):
+        if bot.state.is_on:
+            return
+
+        await app_state.coachbot_btle_manager.execute_request(
+            bot.bluetooth_mac_address, boot_bot_on)
+
+    await asyncio.gather(__helper(Coachbot(i, state)) for i, state in
+                         enumerate(app_state.coachbot_states.value))
+
+    return ipc.Response(ipc.ResultCode.OK)
+
+
+@handler(r'^/bots/state/is-on/?$', 'delete')
+async def delete_bots_is_on(app_state: AppState, _: ipc.Request, __):
+    """Turns all bots on."""
+    async def boot_bot_off(client: CoachbotBTLEClient):
+        await client.set_mode(CoachbotBTLEMode.COMMAND)
+        await client.set_mode_led_on(False)
+
+    async def __helper(bot: Coachbot):
+        if bot.state.is_on:
+            return
+
+        await app_state.coachbot_btle_manager.execute_request(
+            bot.bluetooth_mac_address, boot_bot_off)
+
+    await asyncio.gather(__helper(Coachbot(i, state)) for i, state in
+                         enumerate(app_state.coachbot_states.value))
+
+    return ipc.Response(ipc.ResultCode.OK)
+
+
 @handler(r'^/bots/([0-9]+)/state/is-on/?$', 'create')
 async def create_bot_is_on(
     app_state: AppState,

@@ -121,17 +121,28 @@ class CCTLDClient:
             ))
             return return_builder(response.body)
 
-    async def set_is_on(self, bot: Coachbot, state: bool) -> None:
+    async def set_is_on(self, bot: CoachbotSelectorT, state: bool) -> None:
         """This function attempts to turn on a coachbot.
 
         Parameters:
             bot (Coachbot): The target coachbot
             state (bool): Whether the coachbot should be on or not.
         """
+        selector_map = {
+            Coachbot: {
+                'endpoint': lambda bot: f'/bots/{bot.identifier}/state/is-on'
+            },
+            Literal['all']: {
+                'endpoint': lambda _: '/bots/state/is-on'
+            }
+        }
+        endpoint = next(value['endpoint']
+                        for instance, value in selector_map.items()
+                        if isinstance(bot, instance))
         with _CCTLDClientRequest(self._ctx, self._path) as req:
             response = await req.request(ipc.Request(
                 method='create' if state else 'delete',
-                endpoint=f'/bots/{bot.identifier}/state/is-on'
+                endpoint=endpoint
             ))
             if response.result_code != ipc.ResultCode.OK:
                 raise CCTLDRespInvalidState(response.body)

@@ -151,7 +151,14 @@ class CommandAction:
         def _all_handler() -> int:
             logging.info(RES_STR['bot_all_booting_msg'],
                          target_str)
-            bot_ctl.boot_bots('all', target_on)
+
+            async def __wrapper():
+                async with CCTLDClient(configuration.get_request_feed()) as c:
+                    results = await c.set_is_on('all', target_on)
+                    # TODO: Fix this
+                    print(results)
+
+            asyncio.run(__wrapper())
             return 0
 
         def _some_handler(bots: Iterable[bot_ctl.Coachbot]) -> int:
@@ -162,10 +169,11 @@ class CommandAction:
             async def _wrapper():
                 async with CCTLDClient(configuration.get_request_feed()) as c:
                     results = await asyncio.gather(
-                        *[c.set_is_on(bot, True) for bot in bots],
+                        *[c.set_is_on(bot, target_on) for bot in bots],
                         return_exceptions=True)
                     # TODO: Fix this
                     print(results)
+
             asyncio.run(_wrapper())
             return 0
 
