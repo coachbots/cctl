@@ -16,7 +16,7 @@ from reactivex import operators as rxops
 import serial
 from cctl.api.bot_ctl import get_all_coachbots
 from cctl.api.cctld import CCTLDClient, CCTLDCoachbotStateObservable
-from cctl.models.coachbot import Coachbot
+from cctl.models.coachbot import Coachbot, CoachbotState
 from cctl.ui.manager import Manager
 from cctl.utils.net import sftp_client
 
@@ -264,12 +264,8 @@ class CommandAction:
 
         async def helper():
             async with CCTLDClient(configuration.get_request_feed()) as client:
-                print(
-                    await asyncio.gather(
-                        *[client.set_user_code_running(bot, target_on)
-                          for bot in get_all_coachbots()],
-                        return_exceptions=True)
-                )
+                print(await client.set_user_code_running('all', target_on))
+
         target_str = RES_STR['cmd_start'] if target_on \
             else RES_STR['cmd_pause']
 
