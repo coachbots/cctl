@@ -12,7 +12,7 @@ from typing import Any, Tuple, Union
 from cctl.models import Coachbot
 from cctl.models.coachbot import CoachbotState
 from cctl.protocols import ipc
-from cctld.coach_btle_client import CoachbotBTLEClient, CoachbotBTLEError, CoachbotBTLEMode, \
+from cctld.coach_btle_client import CoachbotBTLEClient, CoachbotBTLEError, \
     CoachbotBTLEStateException
 from cctld.coach_commands import CoachCommand, CoachCommandError
 from cctld.daughters import arduino
@@ -252,7 +252,7 @@ async def delete_bots_user_running(app_state: AppState, _, __):
 
 
 @handler(r'^/bots/([0-9]+)/user-code/running/?$', 'create')
-async def create_bot_user_running(app_state, _, endpoint_groups):
+async def create_bot_user_running(app_state: AppState, _, endpoint_groups):
     """Starts the user code."""
     ident = int(endpoint_groups[0])
     current_state = app_state.coachbot_states.value[ident]
@@ -260,7 +260,7 @@ async def create_bot_user_running(app_state, _, endpoint_groups):
     if not current_state.is_on:
         return ipc.Response(ipc.ResultCode.STATE_CONFLICT)
 
-    if current_state.user_code_running:
+    if current_state.user_code_state.is_running:
         return ipc.Response(ipc.ResultCode.OK)
 
     try:
@@ -276,7 +276,7 @@ async def create_bot_user_running(app_state, _, endpoint_groups):
 
 
 @handler(r'^/bots/([0-9]+)/user-code/running/?$', 'delete')
-async def delete_bot_user_running(app_state, _, endpoint_groups):
+async def delete_bot_user_running(app_state: AppState, _, endpoint_groups):
     """Stops the user code."""
     ident = int(endpoint_groups[0])
     current_state = app_state.coachbot_states.value[ident]
@@ -284,7 +284,7 @@ async def delete_bot_user_running(app_state, _, endpoint_groups):
     if not current_state.is_on:
         return ipc.Response(ipc.ResultCode.STATE_CONFLICT)
 
-    if not current_state.user_code_running:
+    if not current_state.user_code_state.is_running:
         return ipc.Response(ipc.ResultCode.OK)
 
     try:
@@ -300,7 +300,7 @@ async def delete_bot_user_running(app_state, _, endpoint_groups):
 
 
 @handler(r'^/bots/([0-9]+)/user-code/code/?$', 'update')
-async def update_bot_user_code(app_state, request: ipc.Request,
+async def update_bot_user_code(app_state: AppState, request: ipc.Request,
                                endpoint_groups):
     """Updates the user code."""
     ident = int(endpoint_groups[0])
@@ -309,7 +309,7 @@ async def update_bot_user_code(app_state, request: ipc.Request,
     if not current_state.is_on:
         return ipc.Response(ipc.ResultCode.STATE_CONFLICT)
 
-    if current_state.user_code_running:
+    if current_state.user_code_state.is_running:
         try:
             async with CoachCommand(
                 Coachbot(ident, current_state).ip_address,
