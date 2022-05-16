@@ -20,6 +20,9 @@ jobs:
           python-version: 3.8
           cache: 'pip'
 
+      - name: Install Pandoc
+        run: apt-get install pandoc
+
       - name: Install Deps
         run: pip install -r requirements.txt
 
