@@ -7,7 +7,7 @@ import sys
 from os import path
 import setuptools
 sys.path.insert(0, path.abspath('./src'))
-import cctl
+import cctl  # noqa: E402
 
 with open('README.md', 'r', encoding='utf-8') as fh:
     long_description = fh.read()
