@@ -9,17 +9,19 @@ import re
 from os import path
 import os
 import logging
+from cctl import models
 from compot.widgets import ObserverMainWindow
 from argparse import Namespace
 from reactivex import operators as rxops
 import serial
-from cctl.api.cctld import CCTLDCoachbotStateObservable
-from cctl.models.coachbot import Coachbot
+from cctl.api.bot_ctl import get_all_coachbots
+from cctl.api.cctld import CCTLDClient, CCTLDCoachbotStateObservable
+from cctl.models.coachbot import Coachbot, CoachbotState
 from cctl.ui.manager import Manager
 from cctl.utils.net import sftp_client
 
 from cctl.res import ERROR_CODES, RES_STR
-from cctl.api import camera_ctl, bot_ctl, charge_ctl, configuration
+from cctl.api import camera_ctl, bot_ctl, configuration
 
 
 def _parse_id(coach_id: str) -> Union[List[int], bool]:
@@ -242,11 +244,16 @@ class CommandAction:
 
     def _start_pause_handler(self) -> int:
         target_on = self._args.command == RES_STR['cmd_start']
+
+        async def helper():
+            async with CCTLDClient(configuration.get_request_feed()) as client:
+                print(await client.set_user_code_running('all', target_on))
+
         target_str = RES_STR['cmd_start'] if target_on \
             else RES_STR['cmd_pause']
 
         logging.info(RES_STR['bot_operating_msg'], target_str)
-        bot_ctl.set_user_code_running(target_on)
+        asyncio.run(helper())
         return 0
 
     def _fetch_logs_handler(self):
@@ -289,23 +296,36 @@ class CommandAction:
 
     def charger_on_off_handler(self) -> int:
         """Controls whether the charger should be turned on or off."""
-        state = bool(self._args.state == 'on')
-        try:
-            asyncio.get_event_loop().run_until_complete(
-                charge_ctl.charge_rail_set(state))
-        except serial.SerialException as sex:
-            logging.error(RES_STR['arduino_comm_err'], sex)
-            return ERROR_CODES['daughterboard_comm_issue']
-        except RuntimeError as rex:
-            logging.error(rex)
-            return ERROR_CODES['daughterboard_comm_issue']
+        async def __helper():
+            async with CCTLDClient(configuration.get_request_feed()) as client:
+                await client.set_power_rail_on(self._args.state[0] == 'on')
+
+        asyncio.get_event_loop().run_until_complete(__helper())
         return 0
+
+    def _uploader(self):
+        if self._args.os_update:
+            # TODO: Remove this. Only here due to being useful to do an OS
+            # update. Let cctld manage OS-updates too.
+            bot_ctl.upload_code(self._args.usr_path[0],
+                                self._args.os_update)
+
+        with open(self._args.usr_path[0], 'r') as source_f:
+            source = source_f.read()
+
+        async def worker():
+            async with CCTLDClient(configuration.get_request_feed()) as client:
+                res = await asyncio.gather(*(
+                    client.update_user_code(
+                        Coachbot(bot, CoachbotState(None)), source)
+                    for bot in range(100)),
+                    return_exceptions=True)
+            print(res)
+
+        asyncio.run(worker())
 
     def exec(self) -> int:
         """Parses arguments automatically and handles booting."""
-        def _uploader():
-            bot_ctl.upload_code(self._args.usr_path[0],
-                                self._args.os_update)
 
         handlers = {
             RES_STR['cmd_cam']: self._camera_command_handler,
@@ -315,7 +335,7 @@ class CommandAction:
             RES_STR['cmd_fetch_logs']: self._fetch_logs_handler,
             RES_STR['cmd_start']: self._start_pause_handler,
             RES_STR['cmd_pause']: self._start_pause_handler,
-            RES_STR['cmd_update']: _uploader,
+            RES_STR['cmd_update']: self._uploader,
             RES_STR['cli']['exec']['name']: self.run_command_handler,
             RES_STR['cli']['install']['name']: self.install_packages_handler,
             RES_STR['cli']['charger']['name']: self.charger_on_off_handler,

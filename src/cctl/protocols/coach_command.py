@@ -23,9 +23,13 @@ class Request:
     def from_dict(as_dict: Dict[str, Any]) -> 'Request':
         return Request(**as_dict)
 
+
 class StatusCode(IntEnum):
     """Represents a response status code."""
     OK = 200
+
+    STATE_CONFLICT = 409
+
 
 @dataclass
 class Response:

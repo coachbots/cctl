@@ -62,6 +62,7 @@ class ResultCode(IntEnum):
 
     I_AM_A_TEAPOT = 418
 
+    INTERNAL_SERVER_ERROR = 500
 
 @dataclass
 class Response:

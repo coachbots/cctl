@@ -17,20 +17,17 @@ __email__ = 'contact@markovejnovic.com'
 __status__ = 'Development'
 
 
-ctx = daemon.DaemonContext(
-    working_directory=Config().general.workdir,
-    umask=0o022,  # TODO: Change?
-    pidfile='/var/run/cctld/cctld.pid',
-    detach_process=None,  # Automatically handled
-    prevent_core=True,  # Make sure we're not leaking sensitive info
-    signal_map={
-        SIGTERM: None,  # TODO: Change to cleanup program and exit
-        SIGHUP: 'terminate',  # TODO: Change?
-        SIGUSR1: None  # TODO: Change to reload conf
-    }
-)
-
-
-def context() -> daemon.DaemonContext:
+def context(config: Config) -> daemon.DaemonContext:
     """Returns the program daemon context."""
-    return ctx
+    return daemon.DaemonContext(
+        working_directory=config.general.workdir,
+        umask=0o022,  # TODO: Change?
+        pidfile='/var/run/cctld/cctld.pid',
+        detach_process=None,  # Automatically handled
+        prevent_core=True,  # Make sure we're not leaking sensitive info
+        signal_map={
+            SIGTERM: None,  # TODO: Change to cleanup program and exit
+            SIGHUP: 'terminate',  # TODO: Change?
+            SIGUSR1: None  # TODO: Change to reload conf
+        }
+    )

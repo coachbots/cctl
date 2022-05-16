@@ -14,7 +14,7 @@ with open('README.md', 'r', encoding='utf-8') as fh:
 
 setuptools.setup(
     name='cctl',
-    version=cctl.__VERSION__,
+    version=cctl.__version__,
     author='Marko Vejnovic',
     author_email='contact@markovejnovic.com',
     description='Coachbot Control Software',
@@ -26,12 +26,19 @@ setuptools.setup(
     ],
     package_dir={'': 'src'},
     packages=setuptools.find_packages(where='src'),
-    python_requires='>=3.6',
+    python_requires='>=3.8',
     entry_points={
         'console_scripts': [
             'cctl = cctl.__main__:main',
-            'cctld = cctl.__main__:main'
+            'cctld = cctld.__main__:main'
         ]
     },
-    include_package_data=True
+    include_package_data=True,
+    install_requires=[
+        'pyzmq',
+        'pyserial',
+        'reactivex',
+        'bluepy',
+        'python-daemon'
+    ]
 )

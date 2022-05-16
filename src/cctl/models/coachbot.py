@@ -1,10 +1,16 @@
 #!/usr/bin/env python
 
 import json
+import importlib.resources as pkg_resources
 from typing import Dict, Any, Optional
 from dataclasses import dataclass, asdict
 
 from cctl.utils.math import Vec2
+import cctl_static
+
+
+COACHBOT_MAC_ADDRESSES = pkg_resources.read_text(
+    cctl_static, 'coachbot_btle_mac_addresses').split('\n')
 
 
 @dataclass
@@ -24,6 +30,11 @@ class Coachbot:
         """
         # TODO: Not robust
         return f'192.168.1.{self.identifier + 3}'
+
+    @property
+    def bluetooth_mac_address(self) -> str:
+        """Returns the mac address of this coachbot's bluetooth module."""
+        return COACHBOT_MAC_ADDRESSES[self.identifier]
 
 
 @dataclass
