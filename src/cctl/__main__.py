@@ -66,6 +66,54 @@ def main():
     cam_subparser.add_parser(RES_STR['cmd_cam_preview'],
                              help=RES_STR['cmd_cam_preview_desc'])
 
+    exec_parser = command_parser.add_parser(
+        RES_STR['cli']['exec']['name'], help=RES_STR['cli']['exec']['help'])
+    exec_parser.add_argument(
+        RES_STR['cli']['exec']['bots']['name'],
+        help=RES_STR['cli']['exec']['bots']['help'],
+        metavar=RES_STR['cli']['exec']['bots']['metavar'],
+        nargs=1
+    )
+    exec_parser.add_argument(
+        RES_STR['cli']['exec']['command']['name'],
+        help=RES_STR['cli']['exec']['command']['help'],
+        metavar=RES_STR['cli']['exec']['command']['metavar'],
+        nargs='+'
+    )
+    exec_parser.add_argument(
+        RES_STR['cli']['exec']['proxy']['name'],
+        help=RES_STR['cli']['exec']['proxy']['help'],
+        action='store_true'
+    )
+
+    install_parser = command_parser.add_parser(
+        RES_STR['cli']['install']['name'],
+        help=RES_STR['cli']['install']['help']
+    )
+    install_parser.add_argument(
+        RES_STR['cli']['install']['bots']['name'],
+        help=RES_STR['cli']['install']['bots']['help'],
+        metavar=RES_STR['cli']['install']['bots']['metavar'],
+        nargs=1
+    )
+    install_parser.add_argument(
+        RES_STR['cli']['install']['packages']['name'],
+        help=RES_STR['cli']['install']['packages']['help'],
+        metavar=RES_STR['cli']['install']['packages']['metavar'],
+        nargs='+'
+    )
+
+    charger_parser = command_parser.add_parser(
+        RES_STR['cli']['charger']['name'],
+        help=RES_STR['cli']['charger']['help']
+    )
+    charger_parser.add_argument(
+        RES_STR['cli']['charger']['state']['name'],
+        help=RES_STR['cli']['charger']['state']['help'],
+        metavar=RES_STR['cli']['charger']['state']['metavar'],
+        nargs=1
+    )
+
     args = parser.parse_args()
     if args.command is None:
         parser.print_help()

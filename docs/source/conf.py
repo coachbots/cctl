@@ -13,6 +13,7 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath('../../src'))
+import cctl
 
 
 # -- Project information -----------------------------------------------------
@@ -22,7 +23,7 @@ copyright = '2022, Marko Vejnovic <contact@markovejnovic.com>'
 author = 'Marko Vejnovic <contact@markovejnovic.com>'
 
 # The full version, including alpha/beta/rc tags
-release = '0.4.0'
+release = cctl.__version__
 
 
 # -- General configuration ---------------------------------------------------

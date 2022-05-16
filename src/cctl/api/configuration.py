@@ -26,10 +26,17 @@ mandatory_keys = {
     ],
     'coachswarm': [
         'conf_path',
+        'remote_path',
         'id_range_min',
         'id_range_max',
         'ssh_user',
-        'ssh_key'
+        'ssh_key',
+        'net_server_port_pub',
+        'net_server_port_rep',
+        'net_server_port_req',
+        'socks5_port',
+        'socks5_proxy_user',
+        'pi_password'
     ],
     'camera': [
         'raw_dev_name',
@@ -38,6 +45,12 @@ mandatory_keys = {
     'logs': [
         'syslog_path',
         'legacy_log_file_path'
+    ],
+    'arduino-daughter': [
+        'port',
+        'baudrate',
+        'board',
+        'arduino-executable'
     ]
 }
 
@@ -48,10 +61,19 @@ default_values = {
     },
     'coachswarm': {
         'conf_path': path.join(usr_conf_dir, 'coachswarm.conf'),
+        'remote_path': '/home/hanlin/control',
         'id_range_min': 0,
         'id_range_max': 99,
         'ssh_user': 'pi',
-        'ssh_key': path.join(path.expanduser('~'), '.ssh', 'id_coachbot')
+        'ssh_key': path.join(path.expanduser('~'), '.ssh', 'id_coachbot'),
+        'net_server_port_rep': 16891,
+        'net_server_port_pub': 16892,
+        'net_server_port_req': 16893,
+        'socks5_port': 16899,
+        'socks5_proxy_user': 'coachbot_proxy',
+        'pi_password': 'pi'  # TODO: This is so insecure. Problem is, there is
+                             # no dedicated linux user running on the
+                             # coachbots.
     },
     'camera': {
         'raw_dev_name': 'Piwebcam: UVC Camera',
@@ -64,6 +86,12 @@ default_values = {
     'logs': {
         'syslog_path': '/var/log/syslog',
         'legacy_log_file_path': '/home/pi/control/experiment_log'
+    },
+    'arduino-daughter': {
+        'port': '/dev/cctl-arduino',
+        'baudrate': 115200,
+        'board': 'arduino:avr:uno',
+        'arduino-executable': '/usr/local/bin/arduino-cli'
     }
 }
 
@@ -197,3 +225,63 @@ def get_valid_coachbot_range():
         config.getint('coachswarm', 'id_range_min'),
         config.getint('coachswarm', 'id_range_max') + 1
     )
+
+
+def get_coachswarm_net_rep_port() -> int:
+    """Returns the port used for the networking with the coachbots on the REP
+    transport."""
+    return config.getint('coachswarm', 'net_server_port_rep')
+
+
+def get_coachswarm_net_pub_port() -> int:
+    """Returns the port used for networking with the coachbots on the PUB
+    transport."""
+    return config.getint('coachswarm', 'net_server_port_pub')
+
+
+def get_coachswarm_net_req_port() -> int:
+    """Returns the port used for networking with the coachbots on the REQ
+    transport."""
+    return config.getint('coachswarm', 'net_server_port_req')
+
+
+def get_coachswarm_remote_path() -> str:
+    """Returns the path to the remote directory."""
+    return config.get('coachswarm', 'remote_path')
+
+
+def get_socks5_port() -> int:
+    """Returns the default socks5 port used when creating a proxy to cctl."""
+    return config.getint('coachswarm', 'socks5_port')
+
+
+def get_pi_password() -> str:
+    """Returns the pi user password. This is insecure, but a necessary evil
+    because code is executed as root on the legacy implementation.
+    """
+    return config.get('coachswarm', 'pi_password')
+
+
+def get_socks5_proxy_user() -> str:
+    """Returns the cctl user setup for proxying the internet."""
+    return config.get('coachswarm', 'socks5_proxy_user')
+
+
+def get_arduino_daughterboard_port() -> str:
+    """Returns the arduino daughterboard communication port."""
+    return config.get('arduino-daughter', 'port')
+
+
+def get_arduino_daughterboard_baud_rate() -> int:
+    """Returns the arduino daughterboard communication baudrate."""
+    return config.getint('arduino-daughter', 'baudrate')
+
+
+def get_arduino_daughterboard_board() -> str:
+    """Returns the arduino daughterboard type."""
+    return config.get('arduino-daughter', 'board')
+
+
+def get_arduino_executable_path() -> str:
+    """Returns the full path to the arduino executable."""
+    return path.abspath(config.get('arduino-daughter', 'arduino-executable'))

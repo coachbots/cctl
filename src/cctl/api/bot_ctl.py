@@ -4,19 +4,31 @@
 This module exposes various functions for controlling robots.
 """
 
-from typing import Callable, Iterable, Tuple, Union, List
+from contextlib import contextmanager
+from typing import Callable, Generator, Iterable, Tuple, Union, List
 from subprocess import DEVNULL, call
 import asyncio
 import os
+from os import path
 import shutil
 import time
 import logging
 import socket
 
+try:
+    import importlib.resources as pkg_resources
+except ImportError:
+    import importlib_resources as pkg_resources
+
+import paramiko
+from paramiko.channel import ChannelFile
+from cctl import netutils
+
 from cctl.api import configuration
 from cctl.res import RES_STR
 from cctl.netutils import async_host_is_reachable, get_broadcast_address, \
-    read_remote_file
+    get_ip_address, read_remote_file, ssh_client
+import static
 
 
 class Coachbot:
@@ -127,6 +139,13 @@ class Coachbot:
         return Coachbot(int(address.split('.')[-1]) -
                         Coachbot.IP_ADDRESS_SHIFT)
 
+    @property
+    def mac_address(self) -> str:
+        """Returns the MAC address of self."""
+        # TODO: Not sure if pkg_resources caches or not, this could be costly.
+        file = pkg_resources.read_text(static, 'mac_addresses').split('\n')
+        return file[self.identifier - 1]
+
     async def async_boot(self, state: bool) -> None:
         """
         Asynchronously changes the state of a bot to on or off.
@@ -155,15 +174,31 @@ class Coachbot:
             Currently, this function calls an extrenal script. It should,
             rather, be invoking it as a function from the module.
         """
-        await asyncio.create_subprocess_exec(
-            './ble_one.py',
-            str(int(state)),
-            str(self.identifier),
-            cwd=configuration.get_server_dir(),
-            stdout=asyncio.subprocess.DEVNULL,
-            stderr=asyncio.subprocess.DEVNULL
-        )
-        await self.async_wait_until_state(state)
+        MAX_ATTEMPTS = 4
+
+        count = 0
+        while not await self.async_is_alive() or count < MAX_ATTEMPTS:
+            process = await asyncio.create_subprocess_exec(
+                './ble_one.py',
+                str(int(state)),
+                str(self.identifier),
+                cwd=configuration.get_server_dir(),
+                stdout=asyncio.subprocess.DEVNULL,
+                stderr=asyncio.subprocess.DEVNULL
+            )
+            await asyncio.wait([process.wait()], timeout=10)
+            try:
+                process.terminate()
+                logging.debug(RES_STR['logging']['state_change_retry'],
+                              self.identifier)
+            except ProcessLookupError:
+                # The process finished successfully, we can leave this fxn.
+                await self.async_wait_until_state(state)
+                return
+            count += 1
+
+        logging.error(RES_STR['logging']['state_change_max_attempts'],
+                      self.identifier)
 
     def boot(self, state: bool) -> None:
         """
@@ -256,6 +291,90 @@ class Coachbot:
         """
         return asyncio.get_event_loop().run_until_complete(
             self.async_fetch_legacy_log())
+
+    async def async_upload_user_code(
+        self,
+        path_to_usr_code: str, os_update: bool,
+        path_to_os: str = path.join(configuration.get_server_dir(),
+                                    'temp')) -> bool:
+        """Asynchronously uploads code to the specified Coachbot if it is
+        alive.
+
+        Checks whether the coachbot is online.
+
+        Parameters:
+            path_to_usr_code (str): The path to the user code to upload.
+            os_update (bool): Flag indicating whether an os update should be
+                performed.
+
+        Returns:
+            bool: Whether the Coachbot was updated.
+        """
+        if not self.is_alive():
+            return False
+
+        remote_path = configuration.get_coachswarm_remote_path()
+
+        if os_update:
+            try:
+                # TODO: Not really async
+                with netutils.sftp_client(self.address) as sftp:
+                    for file in sftp.listdir(remote_path):
+                        sftp.remove(path.join(remote_path, file))
+                    for file in os.listdir(path_to_os):
+                        sftp.put(path.join(path_to_os, file),
+                                 path.join(remote_path, file))
+            except paramiko.SFTPError as sftp_err:
+                logging.error(sftp_err)
+
+            await self.async_boot(False)
+            await self.async_boot(True)
+
+        # Not really async.
+        with open(path_to_usr_code, 'rb') as usr_code:
+            netutils.write_remote_file(
+                self.address, configuration.get_coachswarm_remote_path(),
+                usr_code.read())
+
+        return True
+
+    @contextmanager
+    def run_ssh(self, command: str,
+                back_proxy: int) -> Generator[Tuple[ChannelFile, ChannelFile,
+                                                    ChannelFile], None, None]:
+        """Runs a command over ssh. This command invokes a shell.
+
+        Parameters:
+            command (str): The command to execute on the Coachbot.
+            back_proxy (int): A flag that controls whether the Coachbot should
+                be connected back to cctl. If this flag is set to a non-zero
+                number, then the Coachbot will open up a SOCKS5 proxy back to
+                the machine running cctl. The number given is the port the
+                machine will open its proxy to. This flag is useful when you
+                want to execute a command that requires internet access.
+
+        Raises:
+            SSHError: If an error is thrown during command execution.
+        """
+        with ssh_client(self.address) as client:
+            should_proxy = back_proxy > 0
+            try:
+                if should_proxy:
+                    interface = configuration.get_server_interface()
+                    proxy_user = configuration.get_socks5_proxy_user()
+
+                    _, stdout, _ = client.exec_command(
+                        f'sh -c "ssh -D {back_proxy} -f -C -q -N ' +
+                        f'-i ~/.ssh/id_{proxy_user} ' +
+                        f'{proxy_user}@{get_ip_address(interface)} ' +
+                        '& echo $!"')
+                    stdout.channel.recv_exit_status()
+                yield client.exec_command(command)
+            finally:
+                if should_proxy is not None:
+                    # TODO: Change this nonsense command
+                    _, stdout, _ = client.exec_command('pkill -15 ssh')
+                    stdout.channel.recv_exit_status()
 
 
 def get_all_coachbots() -> List[Coachbot]:
@@ -419,6 +538,26 @@ def blink(robot_id: Union[int, str]) -> None:
         raise ValueError(RES_STR['invalid_bot_id_exception'])
 
     _blink_internal(robot_id)
+
+
+async def async_upload_codes(path_to_usr_code: str, os_update: bool,
+                             targets: Union[List[Coachbot], str]) -> None:
+    """Uploads user code and possibly OS code in an asynchronous manner to the
+    specified targets.
+
+    Parameters:
+        path_to_usr_code (str): The path to the user code to upload.
+        os_update (bool): Flag indicating whether an os update should be
+            performed.
+        targets (Iterable[Coachbot] | str): The targets to upload to. If this
+            is a string, then the function uploads to all online bots.
+    """
+
+    m_targets = targets if isinstance(targets, List) \
+        else await async_get_alives(get_all_coachbots())
+
+    asyncio.gather(bot.async_upload_user_code(path_to_usr_code, os_update)
+                   for bot in m_targets)
 
 
 def upload_code(path_to_usr_code: str, os_update: bool) -> None:

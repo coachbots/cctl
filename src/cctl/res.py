@@ -5,8 +5,7 @@ RES_STR = {
     'app_desc': 'cctl is the utility for coachbot control.',
     'cmd_command_help': 'Control Robot State',
     'cmd_command': 'command',
-    'cmd_on': 'on',
-    'cmd_off': 'off',
+    'cmd_on': 'on', 'cmd_off': 'off',
     'cmd_id': 'id',
     'cmd_on_help': 'Boot a range of robots up.',
     'cmd_off_help': 'Boot a range of robots down.',
@@ -81,7 +80,70 @@ RES_STR = {
     'fetch_logs_legacy_dir_not_specified': 'Invalid use of legacy. It must ' +
                                            'be used with the -d flag.',
     'fetch_logs_all_msg': 'Fetching logs from all coachbots into %s.',
-    'fetch_logs_some_msg': 'Fetching logs from bots %s into %s.'
+    'fetch_logs_some_msg': 'Fetching logs from bots %s into %s.',
+    'logging': {
+        'rep_bind': 'About to bind REP transport to %s',
+        'pub_bind': 'About to bind PUB transport to %s',
+        'pub_signal': 'Sending signal %s over PUB transport.',
+        'req_signal_timeout': 'direct_signal did not receive a reply.',
+        'req_retry': 'Could not reach robot %d. Retrying.',
+        'req_response_raw': 'REQ transport received a response %s',
+        'req_invalid_status': 'direct_signal received an invalid ' +
+                              'response: %d.',
+        'state_change_max_attempts': 'Could not change state of bot %d.',
+        'state_change_retry': 'Could not change state of bot %d. Trying ' +
+                              'again.',
+        'arduino_comm_err': 'Cannot communicate with the Arduino because %s.',
+        'arduino_upload_err': 'Could not successfully upload the Arduino ' +
+                              'script. The error-code was %d and stderr: %s',
+        'arduino_upload_success': 'Successfully uploaded the Arduino ' +
+                                  'script: %s.'
+    },
+
+    'cli': {
+        'exec': {
+            'name': 'exec',
+            'help': 'Executes the given command on the coachbot.',
+            'command': {
+                'name': 'exec_command',
+                'help': 'The command to execute on the coachbots.',
+                'metavar': 'COMMAND'
+            },
+            'bots': {
+                'name': '--bots',
+                'help': 'The bots to run the command on.',
+                'metavar': 'BOTS...'
+            },
+            'proxy': {
+                'name': '--proxy',
+                'help': 'Whether to create a proxy pointing back to cctl ' +
+                        'enabling internet access.'
+            }
+        },
+        'install': {
+            'name': 'install',
+            'help': 'Installs the given packages on the specified coachbots.',
+            'packages': {
+                'name': 'install_packages',
+                'help': 'The packages to install on the coachbots.',
+                'metavar': 'PACKAGES'
+            },
+            'bots': {
+                'name': '--bots',
+                'help': 'The bots to run the command on.',
+                'metavar': 'BOTS...'
+            },
+        },
+        'charger': {
+            'name': 'charger',
+            'help': 'Controls the power of the charger.',
+            'state': {
+                'name': 'state',
+                'help': 'Whether the charger should be [on] or [off].',
+                'metavar': 'STATE'
+            }
+        }
+    }
 }
 
 ERROR_CODES = {
@@ -90,5 +152,6 @@ ERROR_CODES = {
     'unknown_camera_error': 121,
     'camera_raw_error': 122,
     'processed_stream_creating_error': 124,
-    'malformed_cli_args': 141
+    'malformed_cli_args': 141,
+    'daughterboard_comm_issue': 161
 }

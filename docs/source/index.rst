@@ -16,6 +16,8 @@
    configuration
    usage
    api
+   networking
+   modules
 
 
 Indices and tables

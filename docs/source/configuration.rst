@@ -49,6 +49,27 @@ When you're done with that, you can simply run:
 to check if everything went as expected. You should get a printout of all
 coachbots reporting a successful connection.
 
+Udev Rules
+----------
+
+We must create some new udev rules in order for the daughterboards to create
+correct Linux devices. To do this, you can simply edit
+``/etc/udev/rules.d/72-cctl-daughters.rules`` (create if it doesn't exist) to
+look like:
+
+.. code-block:: udev
+
+   SUBSYSTEM=="tty" ATTRS{manufacturer}=="Arduino*" \
+   ATTRS{serial}=="<YOUR_SERIAL>" SYMLINK+="cctl-arduino"
+
+To find the serial number, you can run ``udevadm info -a -n /dev/ttyACM<X>``
+where ``<X>`` is the number that you are certain the Arduino is on.
+
+You can plug out and then plug back in the Arduino daughterboard.
+
+Now that you've done this, you are guaranteed to have ``/dev/cctl-arduino`` as
+a file (instead of ``/dev/ttyACM*``).
+
 Configuration Files
 -------------------
 
@@ -125,6 +146,16 @@ is an example file with all supported keys.
    # The legacy log file path. This file is the file that used to be fetched
    # with ./collect_data.py and ./harvest.py
    legacy_log_file_path = /home/pi/control/experiment_log
+
+   [arduino-daughter]
+   # The port the arduino daughterboard is connected to.
+   port = /dev/ttyACM0
+   # The communication baudrate
+   baudrate = 115200
+   # The fully qualified board name of the daughterboard
+   board = arduino:avr:uno
+   # The arduino-cli executable path
+   arduino-executable = /usr/local/bin/arduino-cli
 
 coachswarm.conf
 ---------------

@@ -2,6 +2,8 @@
 
 """Defines the main class that handles all commands."""
 
+import sys
+import asyncio
 from typing import Callable, Iterable, Union, List
 import re
 from os import path
@@ -10,10 +12,12 @@ import logging
 from argparse import Namespace
 from subprocess import call
 from multiprocessing import Process
+import serial
 import time
+from cctl.netutils import sftp_client
 
 from cctl.res import ERROR_CODES, RES_STR
-from cctl.api import camera_ctl, bot_ctl, configuration
+from cctl.api import camera_ctl, bot_ctl, charge_ctl, configuration
 
 
 def _parse_id(coach_id: str) -> Union[List[int], bool]:
@@ -125,11 +129,13 @@ class CommandAction:
     def _bot_id_handler(
             self,
             all_handler: Callable[[], int],
-            some_handler: Callable[[List[bot_ctl.Coachbot]], int]) -> int:
+            some_handler: Callable[[List[bot_ctl.Coachbot]], int],
+            identifiers=None) -> int:
         """This small method iterates through all bot-ids and runs handlers
         approperiately."""
         targets = []
-        for identifier in self._args.id:
+        target_ids = identifiers if identifiers is not None else self._args.id
+        for identifier in target_ids:
             parsed = _parse_id(identifier)
 
             if isinstance(parsed, bool):
@@ -172,6 +178,70 @@ class CommandAction:
             return 0
 
         return self._bot_id_handler(_all_handler, _some_handler)
+
+    def run_command_handler(self) -> int:
+        """Handles the case of cctl exec.
+
+        Returns:
+            The exit code.
+        """
+        command = ' '.join(self._args.exec_command)
+        bots = self._args.bots[0].split(',')
+        prox_port = configuration.get_socks5_port() if self._args.proxy else -1
+
+        def _some_handler(bots: List[bot_ctl.Coachbot]) -> int:
+            for bot in bots:
+                with bot.run_ssh(command, prox_port) as conn:
+                    _, stdout, stderr = conn
+                    print(stdout.read().decode())
+                    print(stderr.read().decode(), file=sys.stderr)
+                    stdout.channel.recv_exit_status()
+            return 0
+
+        return self._bot_id_handler(
+            lambda: _some_handler(bot_ctl.get_alives()), _some_handler, bots)
+
+    def install_packages_handler(self) -> int:
+        """Handles the case of 'cctl install packages'
+
+        Returns:
+            The exit code.
+        """
+        packages = self._args.install_packages
+        bots = self._args.bots[0].split(',')
+        prox_port = configuration.get_socks5_port()
+
+        pip_cmd_fmt = f'echo {configuration.get_pi_password()} | sudo -S ' + \
+            'pip install %s ' + \
+            f'--proxy socks5:127.0.0.1:{configuration.get_socks5_port()}'
+
+        def _some_handler(bots: List[bot_ctl.Coachbot]) -> int:
+            for bot in bots:
+                for package in packages:
+                    full_path = path.abspath(package)
+                    if path.exists(full_path):
+                        pkg_name = path.basename(full_path)
+                        remote_path = f'/tmp/{pkg_name}'
+                        with sftp_client(bot.address) as client:
+                            client.put(full_path, remote_path)
+                            with bot.run_ssh(pip_cmd_fmt % (remote_path),
+                                             prox_port) as conn:
+                                _, sout, serr = conn
+                                print(sout.read().decode())
+                                print(serr.read().decode(), file=sys.stderr)
+                                sout.channel.recv_exit_status()
+                                continue
+
+                    with bot.run_ssh(pip_cmd_fmt % (package),
+                                     prox_port) as conn:
+                        _, stdout, stderr = conn
+                        print(stdout.read().decode())
+                        print(stderr.read().decode(), file=sys.stderr)
+                        stdout.channel.recv_exit_status()
+            return 0
+
+        return self._bot_id_handler(
+            lambda: _some_handler(bot_ctl.get_alives()), _some_handler, bots)
 
     def _start_pause_handler(self) -> int:
         target_on = self._args.command == RES_STR['cmd_start']
@@ -220,6 +290,20 @@ class CommandAction:
         # TODO: Implement
         raise NotImplementedError
 
+    def charger_on_off_handler(self) -> int:
+        """Controls whether the charger should be turned on or off."""
+        state = bool(self._args.state == 'on')
+        try:
+            asyncio.get_event_loop().run_until_complete(
+                charge_ctl.charge_rail_set(state))
+        except serial.SerialException as sex:
+            logging.error(RES_STR['arduino_comm_err'], sex)
+            return ERROR_CODES['daughterboard_comm_issue']
+        except RuntimeError as rex:
+            logging.error(rex)
+            return ERROR_CODES['daughterboard_comm_issue']
+        return 0
+
     def exec(self) -> int:
         """Parses arguments automatically and handles booting."""
         def _uploader():
@@ -235,6 +319,9 @@ class CommandAction:
             RES_STR['cmd_start']: self._start_pause_handler,
             RES_STR['cmd_pause']: self._start_pause_handler,
             RES_STR['cmd_update']: _uploader,
+            RES_STR['cli']['exec']['name']: self.run_command_handler,
+            RES_STR['cli']['install']['name']: self.install_packages_handler,
+            RES_STR['cli']['charger']['name']: self.charger_on_off_handler,
 
             # TODO: make this a member method
             RES_STR['cmd_manage']: CommandAction.manage_system,
