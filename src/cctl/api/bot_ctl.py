@@ -15,6 +15,8 @@ import time
 import logging
 import socket
 
+from cctl.models.coachbot import CoachbotState
+
 try:
     import importlib.resources as pkg_resources
 except ImportError:
@@ -22,13 +24,13 @@ except ImportError:
 
 import paramiko
 from paramiko.channel import ChannelFile
-from cctl import netutils
+from cctl.utils import net as netutils
 
 from cctl.api import configuration
 from cctl.res import RES_STR
-from cctl.netutils import async_host_is_reachable, get_broadcast_address, \
+from cctl.utils.net import async_host_is_reachable, get_broadcast_address, \
     get_ip_address, read_remote_file, ssh_client
-import static
+import cctl_static
 
 
 class Coachbot:
@@ -143,7 +145,8 @@ class Coachbot:
     def mac_address(self) -> str:
         """Returns the MAC address of self."""
         # TODO: Not sure if pkg_resources caches or not, this could be costly.
-        file = pkg_resources.read_text(static, 'mac_addresses').split('\n')
+        file = pkg_resources.read_text(cctl_static,
+                                       'mac_addresses').split('\n')
         return file[self.identifier - 1]
 
     async def async_boot(self, state: bool) -> None:
@@ -331,7 +334,7 @@ class Coachbot:
             await self.async_boot(True)
 
         # Not really async.
-        with open(path_to_usr_code, 'rb') as usr_code:
+        with open(path_to_usr_code, 'r') as usr_code:
             netutils.write_remote_file(
                 self.address, configuration.get_coachswarm_remote_path(),
                 usr_code.read())

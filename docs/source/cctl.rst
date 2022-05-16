@@ -8,7 +8,12 @@ Subpackages
    :maxdepth: 4
 
    cctl.api
+   cctl.daughters
+   cctl.models
    cctl.network
+   cctl.protocols
+   cctl.ui
+   cctl.utils
 
 Submodules
 ----------
@@ -17,14 +22,6 @@ cctl.actions module
 -------------------
 
 .. automodule:: cctl.actions
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-cctl.netutils module
---------------------
-
-.. automodule:: cctl.netutils
    :members:
    :undoc-members:
    :show-inheritance:

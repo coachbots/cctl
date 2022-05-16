@@ -46,11 +46,9 @@ mandatory_keys = {
         'syslog_path',
         'legacy_log_file_path'
     ],
-    'arduino-daughter': [
-        'port',
-        'baudrate',
-        'board',
-        'arduino-executable'
+    'cctld': [
+        'state_feed',
+        'request_feed'
     ]
 }
 
@@ -87,11 +85,9 @@ default_values = {
         'syslog_path': '/var/log/syslog',
         'legacy_log_file_path': '/home/pi/control/experiment_log'
     },
-    'arduino-daughter': {
-        'port': '/dev/cctl-arduino',
-        'baudrate': 115200,
-        'board': 'arduino:avr:uno',
-        'arduino-executable': '/usr/local/bin/arduino-cli'
+    'cctld': {
+        'state_feed': 'ipc:///run/cctld/state_feed',
+        'request_feed': 'ipc:///run/cctld/feed_pipe'
     }
 }
 
@@ -267,21 +263,11 @@ def get_socks5_proxy_user() -> str:
     return config.get('coachswarm', 'socks5_proxy_user')
 
 
-def get_arduino_daughterboard_port() -> str:
-    """Returns the arduino daughterboard communication port."""
-    return config.get('arduino-daughter', 'port')
+def get_state_feed() -> str:
+    """Returns the full path to the cctld state feed."""
+    return config.get('cctld', 'state_feed')
 
 
-def get_arduino_daughterboard_baud_rate() -> int:
-    """Returns the arduino daughterboard communication baudrate."""
-    return config.getint('arduino-daughter', 'baudrate')
-
-
-def get_arduino_daughterboard_board() -> str:
-    """Returns the arduino daughterboard type."""
-    return config.get('arduino-daughter', 'board')
-
-
-def get_arduino_executable_path() -> str:
-    """Returns the full path to the arduino executable."""
-    return path.abspath(config.get('arduino-daughter', 'arduino-executable'))
+def get_request_feed() -> str:
+    """Returns the request feed of cctld."""
+    return config.get('cctld', 'request_feed')

@@ -1,0 +1,18 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "",
+    "title": "ipc.Response",
+    "description": "An ipc.Response that cctld returns",
+    "type": "object",
+    "properties": {
+        "result_code": {
+            "description": "The resulting code.",
+            "type": "string",
+            "enum": [200, 201, 202, 204, 400, 401, 403, 404, 405, 409, 418]
+        },
+        "body": {
+            "description": "The response body.",
+            "type": "string"
+        }
+    }
+}

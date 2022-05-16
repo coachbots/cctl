@@ -120,3 +120,6 @@ def main():
         return 0
 
     return CommandAction(args).exec()
+
+if __name__ == '__main__':
+    main()
