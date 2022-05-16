@@ -4,12 +4,10 @@
 state."""
 
 
-from typing import Iterable, Tuple, Union
+from typing import Iterable, Tuple
 from dataclasses import dataclass
-import reactivex as rx
 from reactivex.subject import BehaviorSubject
 from reactivex.subject.subject import Subject
-from reactivex import operators as rxops
 
 from cctl.models.coachbot import CoachbotState, Signal
 from cctld.coach_btle_client import CoachbotBTLEClientManager

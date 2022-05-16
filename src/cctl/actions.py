@@ -9,12 +9,9 @@ import re
 from os import path
 import os
 import logging
-from cctl import models
 from compot.widgets import ObserverMainWindow
 from argparse import Namespace
 from reactivex import operators as rxops
-import serial
-from cctl.api.bot_ctl import get_all_coachbots
 from cctl.api.cctld import CCTLDClient, CCTLDCoachbotStateObservable
 from cctl.models.coachbot import Coachbot, CoachbotState
 from cctl.ui.manager import Manager
