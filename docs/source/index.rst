@@ -17,7 +17,6 @@ last updated.
 
    rationale
    installation
-   configuration
    usage
    how-do-i
    api
