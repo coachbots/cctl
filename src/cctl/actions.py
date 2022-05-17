@@ -77,7 +77,7 @@ class CommandAction:
                 data_stream.on_error(key_int)
                 task.cancel()
 
-        asyncio.get_event_loop().run_until_complete(__helper())
+        asyncio.run(__helper())
 
     def __init__(self, args: Namespace):
         self._args = args
