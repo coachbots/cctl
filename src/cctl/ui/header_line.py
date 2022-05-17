@@ -20,7 +20,7 @@ def HeaderLine(measurement: MeasurementSpec = MeasurementSpec.INJECTED()):
             Text(' Booted▕',
                  style=TextStyleSpec(color=ColorPairs.INFO_INVERTED,
                                      bold=True)),
-            Text(' OS Ver.▕',
+            Text('  OS Ver. ▕',
                  style=TextStyleSpec(color=ColorPairs.INFO_INVERTED,
                                      bold=True)),
             Text(' [  Position ]   Angle▕',

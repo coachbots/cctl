@@ -51,9 +51,9 @@ def CoachbotLine(bot: Coachbot,
     """
     state = bot.state
 
-    version_str = ('v' + v).rjust(6) \
+    version_str = ('v' + v).rjust(8) \
         if (v := bot.state.os_version) is not None \
-        else 'v?.?.?'.rjust(6)
+        else 'v?.?.?'.rjust(8)
 
     position_str = f'{round(p.x, 2): 5} {round(p.y, 2): 5}' \
         if (p := state.position) is not None \
@@ -62,11 +62,14 @@ def CoachbotLine(bot: Coachbot,
         if (t := state.theta) is not None else f"{'?'.rjust(6)}"
 
     bat_label = f'{round(v, 2):>4}' if (v := state.bat_voltage) is not None \
-        else f'   ?'
-    bat_color = (ColorPairs.OK_INVERTED if v > 3.8 \
-        else (ColorPairs.WARNING_INVERTED if v > 3.6 \
-              else ColorPairs.ERROR_INVERTED)) \
-        if (v := state.bat_voltage) is not None else ColorPairs.INFO
+        else '   ?'
+    bat_color = (ColorPairs.OK_INVERTED
+                 if v > 3.8
+                 else (ColorPairs.WARNING_INVERTED
+                       if v > 3.6
+                       else ColorPairs.ERROR_INVERTED)) \
+        if (v := state.bat_voltage) is not None \
+        else ColorPairs.INFO
 
     left_widget = Row(
         (
