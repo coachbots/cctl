@@ -69,11 +69,16 @@ class CommandAction:
             data_stream, task = await CCTLDCoachbotStateObservable(
                 configuration.get_state_feed())
 
-            ObserverMainWindow(
-                Manager, data_stream.pipe(rxops.map(
-                    lambda sts: [Coachbot(i, st) for i, st in enumerate(sts)]))
-            )
-            await task
+            try:
+                ObserverMainWindow(
+                    Manager, data_stream.pipe(rxops.map(
+                        lambda sts: [Coachbot(i, st) for i, st
+                                     in enumerate(sts)]))
+                )
+                await task
+            except KeyboardInterrupt as key_int:
+                data_stream.on_error(key_int)
+                task.cancel()
 
         asyncio.get_event_loop().run_until_complete(__helper())
 
