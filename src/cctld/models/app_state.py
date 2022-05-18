@@ -10,7 +10,6 @@ from reactivex.subject import BehaviorSubject
 from reactivex.subject.subject import Subject
 
 from cctl.models.coachbot import CoachbotState, Signal
-from cctld.coach_btle_client import CoachbotBTLEClientManager
 from cctld.daughters.arduino import ArduinoInfo
 from cctld.conf import Config
 
@@ -71,5 +70,4 @@ class AppState:
     coachbot_states: CoachbotStateSubject
     config: Config
     coachbot_signals: Subject[Signal]
-    coachbot_btle_manager: CoachbotBTLEClientManager
     arduino_daughter: ArduinoInfo

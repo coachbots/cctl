@@ -13,7 +13,6 @@ from reactivex.subject.subject import Subject
 from cctl.models.coachbot import Coachbot, CoachbotState
 from cctld import daemon, servers
 from cctld.daughters.arduino import ArduinoInfo
-from cctld.coach_btle_client import CoachbotBTLEClientManager
 from cctld.conf import Config
 from cctld.models import AppState
 
@@ -56,8 +55,6 @@ async def __main(config: Config):
             tuple(CoachbotState(False) for _ in range(100))),
         coachbot_signals=Subject(),
         config=config,
-        coachbot_btle_manager=CoachbotBTLEClientManager(
-            config.bluetooth.interfaces),
         arduino_daughter=ArduinoInfo(
             config.arduino.executable,
             config.arduino.serial,
