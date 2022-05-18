@@ -38,7 +38,7 @@ setuptools.setup(
         'pyzmq',
         'pyserial',
         'reactivex',
-        'bluepy',
+        'bleak',
         'python-daemon'
     ]
 )

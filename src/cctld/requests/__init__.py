@@ -7,17 +7,13 @@ is buit upon the import of this module."""
 import asyncio
 import json
 import logging
-from time import time
 from typing import Any, Tuple, Union
 from cctl.models import Coachbot
-from cctl.models.coachbot import CoachbotState
 from cctl.protocols import ipc
-from cctld.coach_btle_client import CoachbotBTLEClient, CoachbotBTLEError, \
-    CoachbotBTLEStateException
+from cctld import ble
 from cctld.coach_commands import CoachCommand, CoachCommandError
 from cctld.daughters import arduino
 from cctld.models.app_state import AppState
-from cctld.netutils import host_is_reachable
 from cctld.requests.handler import handler
 
 
@@ -35,32 +31,17 @@ async def read_bots_state(app_state: AppState, _, __) -> ipc.Response:
 @handler(r'^/bots/state/is-on/?$', 'create')
 async def create_bots_is_on(app_state: AppState, _: ipc.Request, __):
     """Turns all bots on."""
-    max_timeout = 4
+    off_bots = [Coachbot(i, state) for i, state
+                in enumerate(app_state.coachbot_states.value)
+                if not state.is_on]
 
-    async def boot_bot_on(client: CoachbotBTLEClient):
-        await client.toggle_mode()
-        await client.set_mode_led_on(True)
-        await client.toggle_mode()
-        await client.set_mode_led_on(True)
+    errs = []
+    async for err in ble.boot_bots(off_bots, True):
+        errs.append(err)
 
-    async def __helper(bot: Coachbot):
-        if bot.state.is_on:
-            return
-
-        await app_state.coachbot_btle_manager.execute_request(
-            bot.bluetooth_mac_address, boot_bot_on)
-
-        start_time = time()
-        while time() - start_time < max_timeout:
-            if await host_is_reachable(bot.ip_address):
-                return ipc.Response(ipc.ResultCode.OK)
-            await asyncio.sleep(5e-1)
-
-    errs = await asyncio.gather(*(__helper(Coachbot(i, state)) for i, state in
-                                enumerate(app_state.coachbot_states.value)),
-                                return_exceptions=True)
-    if len([err for err in errs if err is not None]) > 0:
-        return ipc.Response(ipc.ResultCode.INTERNAL_SERVER_ERROR)
+    if len(errs) > 0:
+        return ipc.Response(ipc.ResultCode.STATE_CONFLICT,
+                            ' '.join([str(err) for err in errs]))
 
     return ipc.Response(ipc.ResultCode.OK)
 
@@ -68,35 +49,16 @@ async def create_bots_is_on(app_state: AppState, _: ipc.Request, __):
 @handler(r'^/bots/state/is-on/?$', 'delete')
 async def delete_bots_is_on(app_state: AppState, _: ipc.Request, __):
     """Turns all bots off."""
-    max_timeout = 4
+    on_bots = [Coachbot(i, state) for i, state
+               in enumerate(app_state.coachbot_states.value) if state.is_on]
 
-    async def boot_bot_off(client: CoachbotBTLEClient):
-        await client.toggle_mode()
-        await client.set_mode_led_on(False)
-        await client.toggle_mode()
-        await client.set_mode_led_on(False)
+    errs = []
+    async for err in ble.boot_bots(on_bots, False):
+        errs.append(err)
 
-    async def __helper(bot: Coachbot):
-        if bot.state.is_on:
-            return
-
-        await app_state.coachbot_btle_manager.execute_request(
-            bot.bluetooth_mac_address, boot_bot_off)
-
-        start_time = time()
-        while time() - start_time < max_timeout:
-            if not await host_is_reachable(bot.ip_address):
-                app_state.coachbot_states.get_subject(
-                    bot.identifier).on_next((bot.identifier,
-                                             CoachbotState(None)))
-                return ipc.Response(ipc.ResultCode.OK)
-            await asyncio.sleep(5e-1)
-
-    errs = await asyncio.gather(*(__helper(Coachbot(i, state)) for i, state in
-                                enumerate(app_state.coachbot_states.value)),
-                                return_exceptions=True)
-    if len([err for err in errs if err is not None]) > 0:
-        return ipc.Response(ipc.ResultCode.INTERNAL_SERVER_ERROR)
+    if len(errs) > 0:
+        return ipc.Response(ipc.ResultCode.STATE_CONFLICT,
+                            ' '.join([str(err) for err in errs]))
 
     return ipc.Response(ipc.ResultCode.OK)
 
@@ -108,37 +70,19 @@ async def create_bot_is_on(
     endpoint_groups: Tuple[Union[str, Any], ...],
 ):
     """Turns a bot on."""
-    max_timeout = 4
-
     bot = Coachbot((ident := int(endpoint_groups[0])),
                    app_state.coachbot_states.value[ident])
 
-    async def boot_bot_on(client: CoachbotBTLEClient):
-        await client.toggle_mode()
-        await client.set_mode_led_on(True)
-        await client.toggle_mode()
-        await client.set_mode_led_on(True)
+    errors = []
+    async for error in ble.boot_bots([bot], True):
+        errors.append(error)
 
-    try:
-        await app_state.coachbot_btle_manager.execute_request(
-            bot.bluetooth_mac_address, boot_bot_on)
+    if len(errors) != 0:
+        logging.getLogger('bluetooth').error('Could not turn bot %s on.',
+                                             bot)
+        return ipc.Response(ipc.ResultCode.STATE_CONFLICT, str(errors[0]))
 
-        start_time = time()
-        while time() - start_time < max_timeout:
-            if await host_is_reachable(bot.ip_address):
-                return ipc.Response(ipc.ResultCode.OK)
-            await asyncio.sleep(5e-1)
-    except CoachbotBTLEStateException as err:
-        logging.getLogger('requests').error(
-            'Could not change the state of bot %s due to %s', bot, err)
-        return ipc.Response(ipc.ResultCode.STATE_CONFLICT, str(err))
-    except CoachbotBTLEError as err:
-        logging.getLogger('requests').error(
-            'Could not change the state of bot %s due to %s', bot, err)
-        return ipc.Response(ipc.ResultCode.INTERNAL_SERVER_ERROR)
-
-    return ipc.Response(ipc.ResultCode.STATE_CONFLICT,
-                        'Could not reach the bot.')
+    return ipc.Response(ipc.ResultCode.OK)
 
 
 @handler(r'^/bots/([0-9]+)/state/is-on/?$', 'delete')
@@ -148,34 +92,19 @@ async def delete_bot_is_on(
     endpoint_groups: Tuple[Union[str, Any], ...]
 ):
     """Turns a bot off."""
-    max_timeout = 4
-
     bot = Coachbot((ident := int(endpoint_groups[0])),
                    app_state.coachbot_states.value[ident])
 
-    async def boot_bot_off(client: CoachbotBTLEClient):
-        await client.toggle_mode()
-        await client.set_mode_led_on(False)
-        await client.toggle_mode()
-        await client.set_mode_led_on(False)
+    errors = []
+    async for error in ble.boot_bots([bot], False):
+        errors.append(error)
 
-    try:
-        await app_state.coachbot_btle_manager.execute_request(
-            bot.bluetooth_mac_address, boot_bot_off)
+    if len(errors) != 0:
+        logging.getLogger('bluetooth').error('Could not turn bot %s on.',
+                                             bot)
+        return ipc.Response(ipc.ResultCode.STATE_CONFLICT, str(errors[0]))
 
-        start_time = time()
-        while time() - start_time < max_timeout:
-            if not await host_is_reachable(bot.ip_address):
-                app_state.coachbot_states.get_subject(
-                    bot.identifier).on_next((bot.identifier,
-                                             CoachbotState(None)))
-                return ipc.Response(ipc.ResultCode.OK)
-            await asyncio.sleep(5e-1)
-    except CoachbotBTLEError as err:
-        return ipc.Response(ipc.ResultCode.STATE_CONFLICT, str(err))
-
-    return ipc.Response(ipc.ResultCode.STATE_CONFLICT,
-                        'Reached the bot meaning it\'s not off.')
+    return ipc.Response(ipc.ResultCode.OK)
 
 
 @handler(r'^/bots/([0-9]+)/state/?$', 'read')

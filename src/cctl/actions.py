@@ -154,14 +154,27 @@ class CommandAction:
         def _all_handler() -> int:
             logging.info(RES_STR['bot_all_booting_msg'],
                          target_str)
-            bot_ctl.boot_bots('all', target_on)
+
+            async def helper():
+                async with CCTLDClient(configuration.get_request_feed()) \
+                        as client:
+                    await client.set_is_on('all', target_on)
+            asyncio.run(helper())
             return 0
 
         def _some_handler(bots: Iterable[bot_ctl.Coachbot]) -> int:
             logging.info(RES_STR['bot_booting_many_msg'],
                          ','.join([str(bot.identifier) for bot in bots]),
                          target_str)
-            bot_ctl.boot_bots(bots, target_on)
+
+            async def helper():
+                for bot in bots:
+                    async with CCTLDClient(configuration.get_request_feed()) \
+                            as client:
+                        await client.set_is_on(Coachbot(bot.identifier,
+                                                        CoachbotState(None)),
+                                               target_on)
+            asyncio.run(helper())
             return 0
 
         return self._bot_id_handler(_all_handler, _some_handler)
