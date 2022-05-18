@@ -58,3 +58,19 @@ Get Remote Terminal Access Into the Robot
 .. code-block:: bash
 
    BOT_ID=90 ssh pi@192.168.1.$(($BOT_ID + 3))
+
+Restart **cctld**
+-----------------
+
+If it is configured as a `systemd` service:
+
+.. code-block:: bash
+
+   systemctl restart cctld
+
+View **cctld** logs
+-------------------
+
+.. code-block:: bash
+
+   journalctl -ru cctld
