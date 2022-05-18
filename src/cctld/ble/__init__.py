@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
+"""This exposes the BLE functions to CCTLD."""
+
 import asyncio
 import logging
 from typing import Iterable, AsyncGenerator
-from bleak import BleakError, BleakDBusError
+from bleak.exc import BleakError, BleakDBusError
 from cctl.models import Coachbot
 from cctl.protocols.ble import BluefruitMode
 from .client import CoachbotBLEClient
@@ -12,7 +14,8 @@ from .errors import BLENotReachableError
 
 async def boot_bots(
     bots: Iterable[Coachbot],
-    state: bool) -> AsyncGenerator[BLENotReachableError, None]:
+    state: bool
+) -> AsyncGenerator[BLENotReachableError, None]:
     """Attempts to boot the given iterable MAC addresses up.
 
     Parameters:
@@ -26,7 +29,7 @@ async def boot_bots(
     """
     max_attempts = 5
 
-    queue = asyncio.Queue()
+    queue: asyncio.Queue = asyncio.Queue()
 
     for bot in bots:
         await queue.put((bot, bot.bluetooth_mac_address, 0))
