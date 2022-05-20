@@ -8,9 +8,7 @@ Subpackages
    :maxdepth: 4
 
    cctl.api
-   cctl.daughters
    cctl.models
-   cctl.network
    cctl.protocols
    cctl.ui
    cctl.utils

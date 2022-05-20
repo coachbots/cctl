@@ -4,6 +4,22 @@ cctl.protocols package
 Submodules
 ----------
 
+cctl.protocols.ble module
+-------------------------
+
+.. automodule:: cctl.protocols.ble
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+cctl.protocols.coach\_command module
+------------------------------------
+
+.. automodule:: cctl.protocols.coach_command
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 cctl.protocols.ipc module
 -------------------------
 

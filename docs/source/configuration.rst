@@ -213,7 +213,7 @@ between the coachbots and it. The configuration file should be stored in
 this file does not exist, **cctld** will **not start**. The format of the file
 is:
 
-.. include:: ../../src/static/cctld.conf
+.. include:: ../../src/cctl_static/cctld.conf
    :code: ini
    :name: cctld.conf
    
@@ -227,7 +227,7 @@ are more than welcome to). However, I personally prefer to use
 **systemd** know about **cctld** and let it manage it as a proper service.
 Something along the lines of the following should work.
 
-.. include:: ../../src/static/cctld.service
+.. include:: ../../src/cctl_static/cctld.service
     :code:
     :name: /etc/systemd/system/cctld.service
 

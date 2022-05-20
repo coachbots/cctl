@@ -7,11 +7,21 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
+   cctld.ble
+   cctld.daughters
    cctld.models
    cctld.requests
 
 Submodules
 ----------
+
+cctld.coach\_commands module
+----------------------------
+
+.. automodule:: cctld.coach_commands
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 cctld.conf module
 -----------------
@@ -25,6 +35,14 @@ cctld.daemon module
 -------------------
 
 .. automodule:: cctld.daemon
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+cctld.netutils module
+---------------------
+
+.. automodule:: cctld.netutils
    :members:
    :undoc-members:
    :show-inheritance:

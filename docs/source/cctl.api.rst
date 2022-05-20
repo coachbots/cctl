@@ -28,14 +28,6 @@ cctl.api.cctld module
    :undoc-members:
    :show-inheritance:
 
-cctl.api.charge\_ctl module
----------------------------
-
-.. automodule:: cctl.api.charge_ctl
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 cctl.api.configuration module
 -----------------------------
 
@@ -48,14 +40,6 @@ cctl.api.logs module
 --------------------
 
 .. automodule:: cctl.api.logs
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-cctl.api.network module
------------------------
-
-.. automodule:: cctl.api.network
    :members:
    :undoc-members:
    :show-inheritance:

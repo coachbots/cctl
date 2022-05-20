@@ -1,5 +1,5 @@
-Rationale
-=========
+Getting Started
+===============
 
 **cctl** is a system for controlling the Coachbots. It comes from a necessity
 to expose Coachbot state, minimize pain when working with a swarm of robots and
@@ -76,6 +76,9 @@ is configured to support this.
 
 If you are now interested in using **cctl**, then you should probably visit the
 `Cli Documentation <cli.html>`__ or the `API Documentation <api.html>`__.
+
+If you would like to control **cctld**, then please check out the `CCTLD
+Control <cctld-control.html>`__ documentation.
 
 If you are trying to develop for **cctl**, you should read the `Developer
 Documentation <dev-docs.html>`__ for information on existing code and possibly

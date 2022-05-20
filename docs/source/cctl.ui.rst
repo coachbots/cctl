@@ -12,6 +12,14 @@ cctl.ui.coachbot\_line module
    :undoc-members:
    :show-inheritance:
 
+cctl.ui.header\_line module
+---------------------------
+
+.. automodule:: cctl.ui.header_line
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 cctl.ui.manager module
 ----------------------
 
