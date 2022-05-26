@@ -9,6 +9,7 @@ from compot.widgets import Row, RowSpacing, Text, TextStyleSpec, ProgressBar
 
 from cctl.models import Coachbot, UserCodeState
 
+
 @Composable
 def UserInfo(user_info: UserCodeState):
     """The ``UserInfo`` widget displays information about the currently running
@@ -19,11 +20,19 @@ def UserInfo(user_info: UserCodeState):
 
     run_str, run_color = \
         ('❔ Unknown', ColorPairs.WARNING_INVERTED) \
+<<<<<<< Updated upstream
             if (r := user_info.is_running) is None \
             else (
                 ('🦾 Running ', ColorPairs.OK_INVERTED) if r \
                 else ('🛑 Stopped', ColorPairs.ERROR_INVERTED))
     version_str = str(v if (v := user_info.version) is not None else '?.?.?')
+=======
+        if (r := user_info.is_running) is None \
+        else (
+            ('🦾 Running', ColorPairs.OK_INVERTED) if r
+            else ('💀 Stopped', ColorPairs.ERROR_INVERTED))
+    version_str = v if (v := user_info.version) is not None else '?.?.?'
+>>>>>>> Stashed changes
     name_str = (n[:MAX_NAME_LEN - 3] + '...' if len(n) > MAX_NAME_LEN
                 else n) \
         if (n := user_info.name) is not None else 'Unknown Name'
@@ -40,6 +49,7 @@ def UserInfo(user_info: UserCodeState):
                  style=TextStyleSpec(color=ColorPairs.INFO_INVERTED))
         ),
     )
+
 
 @Composable
 def CoachbotLine(bot: Coachbot,

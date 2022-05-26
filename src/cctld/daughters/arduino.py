@@ -127,6 +127,7 @@ async def charge_rail_set(arduino: ArduinoInfo, power: bool) -> None:
         try:
             with Serial(arduino.device_file, arduino.baud_rate) as ser:
                 ser.write(b'A' if power else b'D')
+            await asyncio.sleep(10e-3)  # Relay delay is 10ms
         except SerialException as serr:
             raise ArduinoError from serr
     await __helper()
