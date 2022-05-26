@@ -101,7 +101,7 @@ class CCTLDClient:
         """
         instance_map = {
             Coachbot: {
-                'endpoint': lambda bot: f'/bots/{bot.identifier}/bots/state',
+                'endpoint': lambda bot: f'/bots/{bot.identifier}/state',
                 'return': lambda body: CoachbotState.deserialize(body)
             },
             str: {
