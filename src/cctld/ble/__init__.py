@@ -2,14 +2,98 @@
 
 """This exposes the BLE functions to CCTLD."""
 
+from typing import Any, Callable, Coroutine, Iterable, AsyncGenerator, List, \
+    Tuple
 import asyncio
+import copy
+from dataclasses import dataclass
 import logging
-from typing import Iterable, AsyncGenerator
+from uuid import UUID
+
 from bleak.exc import BleakError, BleakDBusError
+
 from cctl.models import Coachbot
 from cctl.protocols.ble import BluefruitMode
+
 from .client import CoachbotBLEClient
 from .errors import BLENotReachableError
+
+
+__author__ = 'Marko Vejnovic <contact@markovejnovic.com>'
+__copyright__ = 'Copyright 2022, Northwestern University'
+__credits__ = ['Marko Vejnovic', 'Lin Liu', 'Billie Strong']
+__license__ = 'Proprietary'
+__version__ = '1.0.13'
+__maintainer__ = 'Marko Vejnovic'
+__email__ = 'contact@markovejnovic.com'
+__status__ = 'Development'
+
+
+BleRunnableT = Callable[..., Coroutine[Any, Any, Any]]
+
+
+@dataclass
+class BleTaskT:
+    """Represents a BLE Task that is managed by the work queue."""
+    runnable: BleRunnableT
+    args: Tuple[Any, ...]
+    uid: UUID
+
+
+work_queue: asyncio.Queue[BleTaskT] = asyncio.Queue()
+
+
+async def run():
+    """Runs the BLE server. This server will execute BLETaskT in the queue,
+    forever.
+    """
+    while True:
+        task = await work_queue.get()
+        await task.runnable(task.args)
+
+
+async def add_task(runnable: BleRunnableT, *args, task_uuid=UUID()) -> None:
+    """Adds an additional task to the BLE server.
+
+    Parameters:
+        runnable (BleRunnableT): The function that represents a BLE-related
+        task.
+        *args: The arguments that will be passed to the function.
+        task_uuid (UUID): The UUID of the task, if you wish to provide your
+            own. If not passed, this function generates one on its own.
+
+    Returns:
+        UUID: A UUID identifying this task. This UUID allows you to
+        differentiate between different tasks.
+    """
+    await work_queue.put(BleTaskT(runnable, args, task_uuid))
+
+
+async def run_tasks(args: List[Tuple[BleRunnableT, Tuple[Any, ...]]]):
+    """Runs the specified task on the BLE server. This function is similar to
+    the ``add_task`` function, however, unlike that function, this function
+    waits for the tasks to be fully executed."""
+    all_ids = [UUID() for _ in args]
+    remaining_uuids = copy.deepcopy(all_ids)
+    results: List[Tuple[UUID, Any]] = []
+
+    async def wrapper(fxn: BleRunnableT, uuid: UUID, *args: Tuple[Any, ...]):
+        result = fxn(*args)
+        del remaining_uuids[remaining_uuids.index(uuid)]
+        results.append((uuid, result))
+
+    for uuid, task in zip(remaining_uuids, args):
+        await add_task(wrapper, task[0], uuid, task[1], task_uuid=uuid)
+
+    while len(remaining_uuids) > 0:
+        await asyncio.sleep(300)
+
+    # TODO: Rewrite this algo a bit.
+    # Supposed to sort results to match all_ids. Currently O(n^2) complexity.
+    return [
+        next(filter(lambda r: r[0] == u, results))[1]
+        for u in all_ids
+    ]
 
 
 async def boot_bots(
@@ -29,16 +113,13 @@ async def boot_bots(
     """
     max_attempts = 5
 
-    queue: asyncio.Queue = asyncio.Queue()
+    async def runnable(bot: Coachbot):
+        attempts = 0
+        addr = bot.bluetooth_mac_address
 
-    for bot in bots:
-        await queue.put((bot, bot.bluetooth_mac_address, 0))
-
-    while not queue.empty():
-        bot, addr, attempts = await queue.get()
         try:
             async with CoachbotBLEClient(addr, pair=True,
-                                         timeout=10) as client:
+                                         timeout=10,) as client:
                 await client.set_mode(BluefruitMode(True))
                 await client.set_mode_led(state)
                 await client.set_mode(BluefruitMode(False))
@@ -49,9 +130,13 @@ async def boot_bots(
                 logging.getLogger('bluetooth').warning(
                     'Could not command %s due to %s. Will Retry...',
                     addr, err)
-                await queue.put((bot, addr, attempts + 1))
+                # TODO: Request the same operation again.
             else:
                 logging.getLogger('bluetooth').error(
                     'Could not command %s after %d attempts. Giving Up.',
                     addr, max_attempts)
-                yield BLENotReachableError(bot)
+                return BLENotReachableError(bot)
+
+    results = await run_tasks([(runnable, (bot, )) for bot in bots])
+    for result in results:
+        yield result
