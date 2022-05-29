@@ -78,7 +78,7 @@ async def start_ipc_request_server(app_state: AppState):
             frontend.bind(frontend_address)
             backend.bind(backend_address)
         except zmq.ZMQError as zmq_err:
-            logging.getLogger('servers').error(
+            logging.getLogger('servers.router').error(
                 'Could not bind to the requested UNIX file %s. Please check '
                 'permissions. Error: %s',
                 app_state.config.ipc.request_feed, zmq_err)
@@ -94,7 +94,7 @@ async def start_ipc_request_server(app_state: AppState):
         try:
             server.connect(address)
         except zmq.ZMQError as zmq_err:
-            logging.getLogger('servers').error(
+            logging.getLogger('servers.router').error(
                 'Could not bind to the Dealer. This likely indicates a bug. '
                 'Error: %s', zmq_err)
             sys.exit(ExitCode.EX_NOPERM)
@@ -109,7 +109,8 @@ async def start_ipc_request_server(app_state: AppState):
 
     async def handle_client(request: ipc.Request) -> ipc.Response:
         """This function handles a client asking a request to this server. """
-        logging.getLogger('servers').debug('Received IPC request %s', request)
+        logging.getLogger('servers.request').debug(
+            'Received IPC request %s', request)
 
         if request.method not in ipc.VALID_METHODS:
             return ipc.Response(ipc.ResultCode.BAD_REQUEST)
@@ -117,7 +118,7 @@ async def start_ipc_request_server(app_state: AppState):
         try:
             handler, matchs = get_handler(request.endpoint, request.method)
         except KeyError:
-            logging.getLogger('servers').warning(
+            logging.getLogger('servers.request').warning(
                 'Invalid method %s requested by %s.', request.method,
                 'client'  # TODO: Get client name/PID.
             )
@@ -126,8 +127,8 @@ async def start_ipc_request_server(app_state: AppState):
             return ipc.Response(ipc.ResultCode.NOT_FOUND)
 
         response = await handler(app_state, request, tuple(matchs))
-        logging.getLogger('servers').debug('Returning IPC response %s',
-                                           response)
+        logging.getLogger('servers.request').debug(
+            'Returning IPC response %s', response)
         return response
 
     async def rep_listen(
@@ -138,7 +139,8 @@ async def start_ipc_request_server(app_state: AppState):
             request_raw = await frontend.recv_string()
             request = ipc.Request.deserialize(request_raw)
             response = await handle_client(request)
-            logging.getLogger('servers').debug('Responding with: %s', response)
+            logging.getLogger('servers.request').debug(
+                'Responding with: %s', response)
             await _retried_reply(sock, response.serialize(), max_rep_retry)
 
     ctx = zmq.asyncio.Context()
@@ -156,10 +158,14 @@ async def start_ipc_request_server(app_state: AppState):
 
         if socks.get(frontend) == zmq.POLLIN:
             request_raw = await frontend.recv_string()
+            logging.getLogger('servers.api.router.frontend').debug(
+                'Received message: %s', request_raw)
             await backend.send_string(request_raw)
 
         if socks.get(backend) == zmq.POLLIN:
             request_raw = await backend.recv_string()
+            logging.getLogger('servers.api.router.backend').debug(
+                'Received message: %s', request_raw)
             await frontend.send_string(request_raw)
 
 
@@ -179,14 +185,15 @@ async def start_status_server(app_state: AppState) -> None:
 
         if request.type == 'signal':
             assert isinstance(request.body, Signal)
-            logging.getLogger('servers').debug('Signal=%s', request.body)
+            logging.getLogger('servers.status.signal').debug(
+                'Received signal %s.', request.body)
             app_state.coachbot_signals.on_next(request.body)
             return status.Response()
 
         if request.type == 'state':
             req_id, new_state = request.identifier, request.body
-            logging.getLogger('servers').debug(
-                'State request %d=%s', req_id, new_state)
+            logging.getLogger('servers.status.state').debug(
+                'Received state from %d: %s.', req_id, new_state)
 
             assert isinstance(new_state, CoachbotState)
             app_state.coachbot_states.get_subject(req_id).on_next(
@@ -213,7 +220,8 @@ async def start_status_server(app_state: AppState) -> None:
         request = status.Request.deserialize(request_raw)
 
         response = await handle_client(request)
-        logging.getLogger('servers').debug('Responding with: %s', response)
+        logging.getLogger('servers.status').debug('Responding with: %s.',
+                                                  response)
 
         await _retried_reply(sock, response.serialize(), max_rep_retry)
 
@@ -227,7 +235,7 @@ async def start_ipc_feed_server(app_state: AppState) -> None:
     try:
         sock.bind(app_state.config.ipc.state_feed)
     except zmq.ZMQError as zmq_err:
-        logging.getLogger('servers').error(
+        logging.getLogger('servers.feed').error(
             'Could not bind to %s. Please check whether you have permissions.'
             'Error: %s',
             app_state.config.ipc.state_feed, zmq_err)
@@ -237,7 +245,7 @@ async def start_ipc_feed_server(app_state: AppState) -> None:
         sock.send_json([new_state.to_dict() for new_state in new_states])
 
     def close():
-        logging.getLogger('servers').info('Closing IPC Feed Server.')
+        logging.getLogger('servers.feed').info('Closing IPC Feed Server.')
         sock.close()
 
     app_state.coachbot_states.subscribe(on_next=on_coachbot_state_change,
@@ -255,7 +263,7 @@ async def start_ipc_signal_forward_server(app_state: AppState) -> None:
     try:
         sock.bind(app_state.config.ipc.signal_feed)
     except zmq.ZMQError as zmq_err:
-        logging.getLogger('servers').error(
+        logging.getLogger('servers.signalforward').error(
             'Could not bind to %s. Please check whether you have permissions.'
             'Error: %s',
             app_state.config.ipc.state_feed, zmq_err)
@@ -265,7 +273,8 @@ async def start_ipc_signal_forward_server(app_state: AppState) -> None:
         sock.send_json(signal.to_dict())
 
     def close():
-        logging.getLogger('servers').info('Closing IPC Signal Forward Server.')
+        logging.getLogger('serverssignalforward').info(
+            'Closing IPC Signal Forward Server.')
         sock.close()
 
     app_state.coachbot_signals.subscribe(on_next=on_signal,
