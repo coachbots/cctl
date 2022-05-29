@@ -161,7 +161,7 @@ async def start_ipc_request_server(app_state: AppState):
     ]
 
     while True:
-        socks = dict(await poller.poll())
+        socks = dict(await poller.poll(300))
 
         if (frontin := (socks.get(frontend) == zmq.POLLIN)) \
                 or socks.get(backend) == zmq.POLLIN:
