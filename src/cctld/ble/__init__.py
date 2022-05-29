@@ -66,7 +66,9 @@ async def add_task(runnable: BleRunnableT, *args, task_uuid=uuid4()) -> None:
         UUID: A UUID identifying this task. This UUID allows you to
         differentiate between different tasks.
     """
-    await work_queue.put(BleTaskT(runnable, args, task_uuid))
+    task = BleTaskT(runnable, args, task_uuid)
+    logging.getLogger('bluetooth').debug('Adding task: %s.', task)
+    await work_queue.put(task)
 
 
 async def run_tasks(args: List[Tuple[BleRunnableT, Tuple[Any, ...]]]):
@@ -86,7 +88,7 @@ async def run_tasks(args: List[Tuple[BleRunnableT, Tuple[Any, ...]]]):
         await add_task(wrapper, task[0], uuid, task[1], task_uuid=uuid)
 
     while len(remaining_uuids) > 0:
-        await asyncio.sleep(300)
+        await asyncio.sleep(300e-3)
 
     # TODO: Rewrite this algo a bit.
     # Supposed to sort results to match all_ids. Currently O(n^2) complexity.
