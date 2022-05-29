@@ -100,19 +100,6 @@ async def start_ipc_request_server(app_state: AppState):
             sys.exit(ExitCode.EX_NOPERM)
         return server
 
-    async def reply_handle(
-        socket: zmq.Socket,
-        handler: Callable[[ipc.Request], Awaitable[ipc.Response]]
-    ) -> None:
-        """This function waits for the specified socket to receive data. It
-        then passes that data to the specified handler.
-        """
-        request_raw = await frontend.recv_string()
-        request = ipc.Request.deserialize(request_raw)
-        response = await handler(request)
-        logging.getLogger('servers').debug('Responding with: %s', response)
-        await _retried_reply(socket, response.serialize(), max_rep_retry)
-
     async def create_poller(*args: zmq.Socket) -> zmq.asyncio.Poller:
         """Creates a poller and registers all sockets passed as arguments."""
         poller = zmq.asyncio.Poller()
@@ -148,7 +135,11 @@ async def start_ipc_request_server(app_state: AppState):
         handle_client: Callable[[ipc.Request], Awaitable[ipc.Response]]
     ) -> None:
         while True:
-            await reply_handle(sock, handle_client)
+            request_raw = await frontend.recv_string()
+            request = ipc.Request.deserialize(request_raw)
+            response = await handle_client(request)
+            logging.getLogger('servers').debug('Responding with: %s', response)
+            await _retried_reply(sock, response.serialize(), max_rep_retry)
 
     ctx = zmq.asyncio.Context()
     frontend, backend = await create_router(ctx)
@@ -161,15 +152,15 @@ async def start_ipc_request_server(app_state: AppState):
     ]
 
     while True:
-        socks = dict(await poller.poll(300))
+        socks = dict(await poller.poll(1))
 
-        if (frontin := (socks.get(frontend) == zmq.POLLIN)) \
-                or socks.get(backend) == zmq.POLLIN:
-            inlet, outlet = (frontend, backend) \
-                if frontin else (backend, frontend)
+        if socks.get(frontend) == zmq.POLLIN:
+            request_raw = await frontend.recv_string()
+            await backend.send_string(request_raw)
 
-            request_raw = await inlet.recv_string()
-            await outlet.send_string(request_raw)
+        if socks.get(backend) == zmq.POLLIN:
+            request_raw = await backend.recv_string()
+            await frontend.send_string(request_raw)
 
 
 async def start_status_server(app_state: AppState) -> None:
