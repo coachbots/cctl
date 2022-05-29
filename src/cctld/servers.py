@@ -73,6 +73,7 @@ async def start_ipc_request_server(app_state: AppState):
         """
         frontend = ctx.socket(zmq.ROUTER)
         frontend.setsockopt(zmq.SNDTIMEO, 100)
+        backend = ctx.socket(zmq.DEALER)
         try:
             frontend.bind(frontend_address)
             backend.bind(backend_address)
@@ -82,7 +83,7 @@ async def start_ipc_request_server(app_state: AppState):
                 'permissions. Error: %s',
                 app_state.config.ipc.request_feed, zmq_err)
             sys.exit(ExitCode.EX_NOPERM)
-        return frontend, frontend
+        return frontend, backend
 
     async def create_reply(
         ctx: zmq.asyncio.Context,
