@@ -6,16 +6,17 @@ Currently, the following servers are exposed:
     * Status Server (``5678``, by default)
 """
 
+import asyncio
 import sys
 import logging
-from typing import Tuple
+from typing import Awaitable, Callable, Tuple
 
 import zmq
 import zmq.asyncio
 
-from cctld.models import AppState
 from cctl.protocols import ipc, status
 from cctl.models import CoachbotState, Signal
+from cctld.models import AppState
 from cctld.res import ExitCode
 from cctld.requests.handler import get as get_handler
 
@@ -24,7 +25,7 @@ __author__ = 'Marko Vejnovic <contact@markovejnovic.com>'
 __copyright__ = 'Copyright 2022, Northwestern University'
 __credits__ = ['Marko Vejnovic', 'Lin Liu', 'Billie Strong']
 __license__ = 'Proprietary'
-__version__ = '1.0.0'
+__version__ = '1.0.13'
 __maintainer__ = 'Marko Vejnovic'
 __email__ = 'contact@markovejnovic.com'
 __status__ = 'Development'
@@ -46,10 +47,77 @@ async def start_ipc_request_server(app_state: AppState):
     """The IPCServer is a server that is used to communicate with other
     processes that may query the state of the Coachbots.
 
-    Under the hood, this server uses ZMQ to ensure huge scalability.
+    .. note::
+
+       Although this server is to be used as a REP server, under the bonnet
+       it's actually a ROUTER-DEALER server feeding into worker REP servers.
+       This ensures that the server does not end up bottlenecking due to one
+       long request.
     """
     # Detrmines the maximum number of attempts to reply.
+
+    num_workers = 8
     max_rep_retry = 3
+    BACKEND_ADDRESS = 'inproc://ipc-dealer'
+
+    async def create_router(
+        ctx: zmq.asyncio.Context,
+        frontend_address: str = app_state.config.ipc.request_feed,
+        backend_address: str = BACKEND_ADDRESS
+    ) -> Tuple[zmq.Socket, zmq.Socket]:
+        """Creates and binds a a ``zmq.ROUTER``, ``zmq.DEALER`` server.
+
+        Returns:
+            Tuple[zmq.Socket, zmq.Socket]: The frontend and backend sockets
+            respectivelly.
+        """
+        frontend = ctx.socket(zmq.ROUTER)
+        frontend.setsockopt(zmq.SNDTIMEO, 100)
+        try:
+            frontend.bind(frontend_address)
+            backend.bind(backend_address)
+        except zmq.ZMQError as zmq_err:
+            logging.getLogger('servers').error(
+                'Could not bind to the requested UNIX file %s. Please check '
+                'permissions. Error: %s',
+                app_state.config.ipc.request_feed, zmq_err)
+            sys.exit(ExitCode.EX_NOPERM)
+        return frontend, frontend
+
+    async def create_reply(
+        ctx: zmq.asyncio.Context,
+        address: str = BACKEND_ADDRESS
+    ) -> zmq.Socket:
+        """Creates a reply worker."""
+        server = ctx.socket(zmq.REP)
+        try:
+            server.connect(address)
+        except zmq.ZMQError as zmq_err:
+            logging.getLogger('servers').error(
+                'Could not bind to the Dealer. This likely indicates a bug. '
+                'Error: %s', zmq_err)
+            sys.exit(ExitCode.EX_NOPERM)
+        return server
+
+    async def reply_handle(
+        socket: zmq.Socket,
+        handler: Callable[[ipc.Request], Awaitable[ipc.Response]]
+    ) -> None:
+        """This function waits for the specified socket to receive data. It
+        then passes that data to the specified handler.
+        """
+        request_raw = await frontend.recv_string()
+        request = ipc.Request.deserialize(request_raw)
+        response = await handler(request)
+        logging.getLogger('servers').debug('Responding with: %s', response)
+        await _retried_reply(socket, response.serialize(), max_rep_retry)
+
+    async def create_poller(*args: zmq.Socket) -> zmq.asyncio.Poller:
+        """Creates a poller and registers all sockets passed as arguments."""
+        poller = zmq.asyncio.Poller()
+        for sock in args:
+            poller.register(sock)
+        return poller
 
     async def handle_client(request: ipc.Request) -> ipc.Response:
         """This function handles a client asking a request to this server. """
@@ -74,24 +142,31 @@ async def start_ipc_request_server(app_state: AppState):
                                            response)
         return response
 
+    async def rep_listen(
+        sock: zmq.Socket,
+        handle_client: Callable[[ipc.Request], Awaitable[ipc.Response]]
+    ) -> None:
+        while True:
+            await reply_handle(sock, handle_client)
+
     ctx = zmq.asyncio.Context()
-    sock = ctx.socket(zmq.REP)
-    sock.setsockopt(zmq.SNDTIMEO, 100)
-    try:
-        sock.bind(app_state.config.ipc.request_feed)
-    except zmq.ZMQError as zmq_err:
-        logging.getLogger('servers').error(
-            'Could not bind to the requested UNIX file %s. Please check '
-            'permissions. Error: %s',
-            app_state.config.ipc.request_feed, zmq_err)
-        sys.exit(ExitCode.EX_NOPERM)
+    frontend, backend = await create_router(ctx)
+    poller = await create_poller(frontend, backend)
+
+    rep_workers = [await create_reply(ctx) for _ in range(num_workers)]
+    rep_tasks = [asyncio.create_task(rep_listen(sock, handle_client))
+                 for sock in rep_workers]
 
     while True:
-        request_raw = await sock.recv_string()
-        request = ipc.Request.deserialize(request_raw)
-        response = await handle_client(request)
-        logging.getLogger('servers').debug('Responding with: %s', response)
-        await _retried_reply(sock, response.serialize(), max_rep_retry)
+        socks = dict(await poller.poll())
+
+        if (frontin := (socks.get(frontend) == zmq.POLLIN)) \
+                or socks.get(backend) == zmq.POLLIN:
+            inlet, outlet = (frontend, backend) \
+                if frontin else (backend, frontend)
+
+            request_raw = await inlet.recv_string()
+            await outlet.send_string(request_raw)
 
 
 async def start_status_server(app_state: AppState) -> None:
