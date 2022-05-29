@@ -8,7 +8,7 @@ import asyncio
 import copy
 from dataclasses import dataclass
 import logging
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from bleak.exc import BleakError, BleakDBusError
 
@@ -52,7 +52,7 @@ async def run():
         await task.runnable(task.args)
 
 
-async def add_task(runnable: BleRunnableT, *args, task_uuid=UUID()) -> None:
+async def add_task(runnable: BleRunnableT, *args, task_uuid=uuid4()) -> None:
     """Adds an additional task to the BLE server.
 
     Parameters:
@@ -73,7 +73,7 @@ async def run_tasks(args: List[Tuple[BleRunnableT, Tuple[Any, ...]]]):
     """Runs the specified task on the BLE server. This function is similar to
     the ``add_task`` function, however, unlike that function, this function
     waits for the tasks to be fully executed."""
-    all_ids = [UUID() for _ in args]
+    all_ids = [uuid4() for _ in args]
     remaining_uuids = copy.deepcopy(all_ids)
     results: List[Tuple[UUID, Any]] = []
 
