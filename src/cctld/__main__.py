@@ -6,16 +6,16 @@ import asyncio
 import logging
 import sys
 import os
-from cctld.daughters import arduino
-from cctld.models.app_state import CoachbotStateSubject
 from reactivex.subject.subject import Subject
 
 from cctl.models.coachbot import Coachbot, CoachbotState
-from cctld import daemon, servers
+
+from cctld.daughters import arduino
+from cctld.models.app_state import CoachbotStateSubject
+from cctld import daemon, servers, ble
 from cctld.daughters.arduino import ArduinoInfo
 from cctld.conf import Config
 from cctld.models import AppState
-
 from cctld.netutils import host_is_reachable
 
 
@@ -77,12 +77,15 @@ async def __main(config: Config):
         servers.start_ipc_request_server(app_state),
         servers.start_ipc_feed_server(app_state),
         servers.start_ipc_signal_forward_server(app_state),
+        ble.run(),
         auto_pruner(app_state)
     )
     await running_servers
 
 
 def main():
+    """The main entry point of the program. This sets up logging and runs the
+    program asynchronously."""
     config = Config()
 
     # Automatically create the workdir folder if it does not exist.
@@ -92,6 +95,7 @@ def main():
     logging.basicConfig(stream=sys.stderr,
                         level=(logging.DEBUG if __debug__ else logging.INFO))
     logging.getLogger('bleak').setLevel(logging.INFO)
+    logging.getLogger('asyncio').setLevel(logging.INFO)
 
     # Attempt to create the required directory for the IPC feeds. This may
     # fail. The admin is responsible for this anyways -- this simply minimizes
