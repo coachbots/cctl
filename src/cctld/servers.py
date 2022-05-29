@@ -104,7 +104,7 @@ async def start_ipc_request_server(app_state: AppState):
         """Creates a poller and registers all sockets passed as arguments."""
         poller = zmq.asyncio.Poller()
         for sock in args:
-            poller.register(sock)
+            poller.register(sock, zmq.POLLIN)
         return poller
 
     async def handle_client(request: ipc.Request) -> ipc.Response:
