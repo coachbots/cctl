@@ -15,8 +15,6 @@ import time
 import logging
 import socket
 
-from cctl.models.coachbot import CoachbotState
-
 try:
     import importlib.resources as pkg_resources
 except ImportError:

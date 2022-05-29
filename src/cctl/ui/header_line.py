@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from compot import ColorPairs, LayoutSpec, MeasurementSpec, LayoutSpec
+from compot import ColorPairs, LayoutSpec, MeasurementSpec
 from compot.composable import Composable
 from compot.widgets import Row, RowSpacing, Text, TextStyleSpec
 

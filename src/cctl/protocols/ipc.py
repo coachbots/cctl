@@ -64,6 +64,7 @@ class ResultCode(IntEnum):
 
     INTERNAL_SERVER_ERROR = 500
 
+
 @dataclass
 class Response:
     """Represents a basic IPCResponse that cctld supports."""

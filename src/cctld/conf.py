@@ -49,7 +49,6 @@ class Config:
             commands."""
             return config.getint('coach_client', 'command_port')
 
-
     class CoachServers:
         """Returns the configurations under the ``coach_servers``header."""
 

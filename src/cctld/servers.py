@@ -154,8 +154,10 @@ async def start_ipc_request_server(app_state: AppState):
     poller = await create_poller(frontend, backend)
 
     rep_workers = [await create_reply(ctx) for _ in range(num_workers)]
-    rep_tasks = [asyncio.create_task(rep_listen(sock, handle_client))
-                 for sock in rep_workers]
+    rep_tasks = [  # noqa: F841
+        asyncio.create_task(rep_listen(sock, handle_client))
+        for sock in rep_workers
+    ]
 
     while True:
         socks = dict(await poller.poll())
