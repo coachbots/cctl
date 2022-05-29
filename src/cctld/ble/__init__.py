@@ -40,7 +40,7 @@ class BleTaskT:
     uid: UUID
 
 
-work_queue: asyncio.Queue[BleTaskT] = asyncio.Queue()
+work_queue: asyncio.Queue = asyncio.Queue()
 
 
 async def run():
