@@ -6,7 +6,7 @@ from typing import Any, Callable, Coroutine, Iterable, AsyncGenerator, List, \
     Tuple
 import asyncio
 import copy
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import logging
 from uuid import UUID, uuid4
 
@@ -32,7 +32,7 @@ __status__ = 'Development'
 @dataclass
 class BleInfo:
     """This dataclass contains the data that is required for BLE operation."""
-    queue: asyncio.Queue
+    queue: asyncio.Queue = field(default_factory=lambda: asyncio.Queue())
 
 
 BleRunnableT = Callable[..., Coroutine[Any, Any, Any]]

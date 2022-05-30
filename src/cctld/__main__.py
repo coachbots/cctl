@@ -60,8 +60,9 @@ async def __main(config: Config):
             config.arduino.serial,
             config.arduino.baud_rate,
             config.arduino.board_type,
-            asyncio.Lock()
-        )
+            asyncio.Lock(),
+        ),
+        ble=ble.BleInfo()
     )
 
     # Update the arduino firmware if necessary.
