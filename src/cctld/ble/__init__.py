@@ -2,8 +2,8 @@
 
 """This exposes the BLE functions to CCTLD."""
 
-from contextlib import asynccontextmanager
 from __future__ import annotations
+from contextlib import asynccontextmanager
 from typing import Iterable, AsyncGenerator, Tuple
 import asyncio
 import logging
@@ -39,7 +39,7 @@ class BleManager:
             the numbers that ``hciconfig`` will return.
         """
         intfcs = list(avail_interfaces)
-        self.queue: asyncio.Queue = asyncio.Queue(maxsize=len(intfcs))
+        self.queue: asyncio.Queue[int] = asyncio.Queue(maxsize=len(intfcs))
         for intf in intfcs:
             self.queue.put_nowait(intf)
 
