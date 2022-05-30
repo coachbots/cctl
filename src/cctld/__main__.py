@@ -78,7 +78,7 @@ async def __main(config: Config):
         servers.start_ipc_request_server(app_state),
         servers.start_ipc_feed_server(app_state),
         servers.start_ipc_signal_forward_server(app_state),
-        ble.run(),
+        ble.run(app_state.ble),
         auto_pruner(app_state)
     )
     await running_servers
