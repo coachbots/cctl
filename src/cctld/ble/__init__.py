@@ -29,6 +29,12 @@ __email__ = 'contact@markovejnovic.com'
 __status__ = 'Development'
 
 
+@dataclass
+class BleInfo:
+    """This dataclass contains the data that is required for BLE operation."""
+    queue: asyncio.Queue
+
+
 BleRunnableT = Callable[..., Coroutine[Any, Any, Any]]
 
 
@@ -40,22 +46,21 @@ class BleTaskT:
     uid: UUID
 
 
-work_queue: asyncio.Queue = asyncio.Queue()
-
-
-async def run():
+async def run(ble_info: BleInfo):
     """Runs the BLE server. This server will execute BLETaskT in the queue,
     forever.
     """
     while True:
-        task = await work_queue.get()
+        task = await ble_info.queue.get()
         await task.runnable(task.args)
 
 
-async def add_task(runnable: BleRunnableT, *args, task_uuid=uuid4()) -> None:
+async def add_task(ble_info: BleInfo, runnable: BleRunnableT, *args,
+                   task_uuid=uuid4()) -> None:
     """Adds an additional task to the BLE server.
 
     Parameters:
+        ble_info (BleInfo): The BleInfo AppState object.
         runnable (BleRunnableT): The function that represents a BLE-related
         task.
         *args: The arguments that will be passed to the function.
@@ -68,10 +73,11 @@ async def add_task(runnable: BleRunnableT, *args, task_uuid=uuid4()) -> None:
     """
     task = BleTaskT(runnable, args, task_uuid)
     logging.getLogger('bluetooth').debug('Adding task: %s.', task)
-    await work_queue.put(task)
+    await ble_info.queue.put(task)
 
 
-async def run_tasks(args: List[Tuple[BleRunnableT, Tuple[Any, ...]]]):
+async def run_tasks(ble_info: BleInfo,
+                    args: List[Tuple[BleRunnableT, Tuple[Any, ...]]]):
     """Runs the specified task on the BLE server. This function is similar to
     the ``add_task`` function, however, unlike that function, this function
     waits for the tasks to be fully executed."""
@@ -85,7 +91,8 @@ async def run_tasks(args: List[Tuple[BleRunnableT, Tuple[Any, ...]]]):
         results.append((uuid, result))
 
     for uuid, task in zip(remaining_uuids, args):
-        await add_task(wrapper, task[0], uuid, task[1], task_uuid=uuid)
+        await add_task(ble_info, wrapper, task[0], uuid, task[1],
+                       task_uuid=uuid)
 
     while len(remaining_uuids) > 0:
         await asyncio.sleep(300e-3)
@@ -99,12 +106,14 @@ async def run_tasks(args: List[Tuple[BleRunnableT, Tuple[Any, ...]]]):
 
 
 async def boot_bots(
+    ble_info: BleInfo,
     bots: Iterable[Coachbot],
     state: bool
 ) -> AsyncGenerator[BLENotReachableError, None]:
     """Attempts to boot the given iterable MAC addresses up.
 
     Parameters:
+        ble_info (BleInfo): The BleInfo of the AppState.
         bot_macs (Iterable[Coachbot]): The MAC addresses to attempt to boot up.
         state (bool): The state to attempt to boot to. If True, the bots turn
             on, otherwise they turn off.
@@ -139,6 +148,6 @@ async def boot_bots(
                     addr, max_attempts)
                 return BLENotReachableError(bot)
 
-    results = await run_tasks([(runnable, (bot, )) for bot in bots])
+    results = await run_tasks(ble_info, [(runnable, (bot, )) for bot in bots])
     for result in results:
         yield result
