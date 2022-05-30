@@ -16,7 +16,7 @@ import zmq.asyncio
 
 from cctl.protocols import ipc, status
 from cctl.models import CoachbotState, Signal
-from cctld.netutils.zmq import async_proxy
+from cctld.utils.zmq import async_proxy
 from cctld.models import AppState
 from cctld.res import ExitCode
 from cctld.requests.handler import get as get_handler

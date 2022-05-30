@@ -16,7 +16,7 @@ from cctld import daemon, servers, ble
 from cctld.daughters.arduino import ArduinoInfo
 from cctld.conf import Config
 from cctld.models import AppState
-from cctld.netutils import host_is_reachable
+from cctld.utils.net import host_is_reachable
 
 
 async def auto_pruner(app_state: AppState):

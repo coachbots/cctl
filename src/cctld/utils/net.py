@@ -4,6 +4,7 @@
 
 import asyncio
 
+
 async def ping(hostname: str, count: int = 1,
                max_timeout: float = 1) -> int:
     """Asynchronously pings a hostname.
