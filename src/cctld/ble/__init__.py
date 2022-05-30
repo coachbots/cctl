@@ -45,6 +45,10 @@ class BleTaskT:
     args: Tuple[Any, ...]
     uid: UUID
 
+    async def run(self) -> Any:
+        """Runs this task asynchronously. Returns a coroutine, in reality."""
+        return await self.runnable(*self.args)
+
 
 async def run(ble_info: BleInfo):
     """Runs the BLE server. This server will execute BLETaskT in the queue,
@@ -52,7 +56,7 @@ async def run(ble_info: BleInfo):
     """
     while True:
         task = await ble_info.queue.get()
-        await task.runnable(task.args)
+        await task.run()
 
 
 async def add_task(ble_info: BleInfo, runnable: BleRunnableT, *args,
@@ -90,7 +94,7 @@ async def run_tasks(ble_info: BleInfo,
         del remaining_uuids[remaining_uuids.index(uuid)]
         results.append((uuid, result))
 
-    for uuid, task in zip(remaining_uuids, args):
+    for uuid, task in zip(all_ids, args):
         await add_task(ble_info, wrapper, task[0], uuid, task[1],
                        task_uuid=uuid)
 
