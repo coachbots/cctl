@@ -10,7 +10,6 @@ import logging
 from typing import Any, Tuple, Union
 from cctl.models import Coachbot
 from cctl.protocols import ipc
-from cctld import ble
 from cctld.coach_commands import CoachCommand, CoachCommandError
 from cctld.daughters import arduino
 from cctld.models.app_state import AppState
@@ -36,7 +35,7 @@ async def create_bots_is_on(app_state: AppState, _: ipc.Request, __):
                 if not state.is_on]
 
     errs = []
-    async for err in ble.boot_bots(app_state.ble, off_bots, True):
+    async for err in app_state.ble_manager.boot_bots(off_bots, True):
         errs.append(err)
 
     if len(errs) > 0:
@@ -53,7 +52,7 @@ async def delete_bots_is_on(app_state: AppState, _: ipc.Request, __):
                in enumerate(app_state.coachbot_states.value) if state.is_on]
 
     errs = []
-    async for err in ble.boot_bots(app_state.ble, on_bots, False):
+    async for err in app_state.ble_manager.boot_bots(on_bots, False):
         errs.append(err)
 
     if len(errs) > 0:
@@ -74,8 +73,8 @@ async def create_bot_is_on(
                    app_state.coachbot_states.value[ident])
 
     errors = []
-    async for error in ble.boot_bots(app_state.ble, [bot], True):
-        errors.append(error)
+    async for err in app_state.ble_manager.boot_bots([bot], True):
+        errors.append(err)
 
     if len(errors) != 0:
         logging.getLogger('bluetooth').error('Could not turn bot %s on.',
@@ -96,8 +95,8 @@ async def delete_bot_is_on(
                    app_state.coachbot_states.value[ident])
 
     errors = []
-    async for error in ble.boot_bots(app_state.ble, [bot], False):
-        errors.append(error)
+    async for err in app_state.ble_manager.boot_bots([bot], False):
+        errors.append(err)
 
     if len(errors) != 0:
         logging.getLogger('bluetooth').error('Could not turn bot %s on.',

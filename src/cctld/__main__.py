@@ -62,7 +62,7 @@ async def __main(config: Config):
             config.arduino.board_type,
             asyncio.Lock(),
         ),
-        ble=ble.BleInfo()
+        ble_manager=ble.BleManager(config.bluetooth.interfaces)
     )
 
     # Update the arduino firmware if necessary.
@@ -78,7 +78,6 @@ async def __main(config: Config):
         servers.start_ipc_request_server(app_state),
         servers.start_ipc_feed_server(app_state),
         servers.start_ipc_signal_forward_server(app_state),
-        ble.run(app_state.ble),
         auto_pruner(app_state)
     )
     await running_servers
