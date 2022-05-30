@@ -4,20 +4,23 @@
 
 import asyncio
 from typing import Any, Callable
-import reactivex as rx
+from reactivex.subject import BehaviorSubject
 
 
-async def wait_until(observable: rx.Observable,
+async def wait_until(subject: BehaviorSubject,
                      predicate: Callable[[Any], bool]) -> None:
     """This function blocks execution until ``predicate`` returns ``True`` on
     the given ``Observable``.
     """
+    if predicate(subject.value):
+        return
+
     event = asyncio.Event()
 
     def wrapper(value: Any):
         if predicate(value):
             event.set()
 
-    subscription = observable.subscribe(on_next=wrapper)
+    subscription = subject.subscribe(on_next=wrapper)
     await event.wait()
     subscription.dispose()
