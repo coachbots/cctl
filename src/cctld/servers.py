@@ -16,6 +16,7 @@ import zmq.asyncio
 
 from cctl.protocols import ipc, status
 from cctl.models import CoachbotState, Signal
+from cctld.netutils.zmq import async_proxy
 from cctld.models import AppState
 from cctld.res import ExitCode
 from cctld.requests.handler import get as get_handler
@@ -64,7 +65,7 @@ async def start_ipc_request_server(app_state: AppState):
         ctx: zmq.asyncio.Context,
         frontend_address: str = app_state.config.ipc.request_feed,
         backend_address: str = BACKEND_ADDRESS
-    ) -> Tuple[zmq.Socket, zmq.Socket]:
+    ) -> Tuple[zmq.asyncio.Socket, zmq.asyncio.Socket]:
         """Creates and binds a a ``zmq.ROUTER``, ``zmq.DEALER`` server.
 
         Returns:
@@ -88,7 +89,7 @@ async def start_ipc_request_server(app_state: AppState):
     async def create_reply(
         ctx: zmq.asyncio.Context,
         address: str = BACKEND_ADDRESS
-    ) -> zmq.Socket:
+    ) -> zmq.asyncio.Socket:
         """Creates a reply worker."""
         server = ctx.socket(zmq.REP)
         try:
@@ -99,13 +100,6 @@ async def start_ipc_request_server(app_state: AppState):
                 'Error: %s', zmq_err)
             sys.exit(ExitCode.EX_NOPERM)
         return server
-
-    async def create_poller(*args: zmq.Socket) -> zmq.asyncio.Poller:
-        """Creates a poller and registers all sockets passed as arguments."""
-        poller = zmq.asyncio.Poller()
-        for sock in args:
-            poller.register(sock, zmq.POLLIN)
-        return poller
 
     async def handle_client(request: ipc.Request) -> ipc.Response:
         """This function handles a client asking a request to this server. """
@@ -126,17 +120,14 @@ async def start_ipc_request_server(app_state: AppState):
         except ValueError:
             return ipc.Response(ipc.ResultCode.NOT_FOUND)
 
-        response = await handler(app_state, request, tuple(matchs))
-        logging.getLogger('servers.request').debug(
-            'Returning IPC response %s', response)
-        return response
+        return await handler(app_state, request, tuple(matchs))
 
     async def rep_listen(
-        sock: zmq.Socket,
+        sock: zmq.asyncio.Socket,
         handle_client: Callable[[ipc.Request], Awaitable[ipc.Response]]
     ) -> None:
         while True:
-            request_raw = await frontend.recv_string()
+            request_raw = await sock.recv_string()
             request = ipc.Request.deserialize(request_raw)
             response = await handle_client(request)
             logging.getLogger('servers.request').debug(
@@ -145,7 +136,6 @@ async def start_ipc_request_server(app_state: AppState):
 
     ctx = zmq.asyncio.Context()
     frontend, backend = await create_router(ctx)
-    poller = await create_poller(frontend, backend)
 
     rep_workers = [await create_reply(ctx) for _ in range(num_workers)]
     rep_tasks = [  # noqa: F841
@@ -153,20 +143,7 @@ async def start_ipc_request_server(app_state: AppState):
         for sock in rep_workers
     ]
 
-    while True:
-        socks = dict(await poller.poll())
-
-        if socks.get(frontend) == zmq.POLLIN:
-            request_raw = await frontend.recv_string()
-            logging.getLogger('servers.api.router.frontend').debug(
-                'Received message: %s', request_raw)
-            await backend.send_string(request_raw)
-
-        if socks.get(backend) == zmq.POLLIN:
-            request_raw = await backend.recv_string()
-            logging.getLogger('servers.api.router.backend').debug(
-                'Received message: %s', request_raw)
-            await frontend.send_string(request_raw)
+    await async_proxy(frontend, backend)
 
 
 async def start_status_server(app_state: AppState) -> None:
