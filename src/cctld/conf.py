@@ -109,6 +109,37 @@ class Config:
             """Returns the board type of the Arduino."""
             return config.get('arduino', 'board')
 
+    class Camera:
+        @property
+        def lens_k1(self) -> float:
+            """Returns the k1 correction factor."""
+            return config.getfloat('overhead-camera', 'lens_k1')
+
+        @property
+        def lens_k2(self) -> float:
+            """Returns the k2 correction factor."""
+            return config.getfloat('overhead-camera', 'lens_k2')
+
+        @property
+        def lens_cx(self) -> float:
+            """Returns the cx correction factor."""
+            return config.getfloat('overhead-camera', 'lens_cx')
+
+        @property
+        def lens_cy(self) -> float:
+            """Returns the cy correction factor."""
+            return config.getfloat('overhead-camera', 'lens_cy')
+
+        @property
+        def raw_stream(self) -> str:
+            """Returns the path of the raw stream."""
+            return config.get('overhead-camera', 'raw_stream')
+
+        @property
+        def processed_stream(self) -> str:
+            """Returns the path of the processed stream."""
+            return config.get('overhead-camera', 'processed_stream')
+
     @property
     def general(self) -> 'Config.General':
         return Config.General()
@@ -132,3 +163,7 @@ class Config:
     @property
     def arduino(self) -> 'Config.Arduino':
         return Config.Arduino()
+
+    @property
+    def camera(self) -> 'Config.Camera':
+        return Config.Camera()

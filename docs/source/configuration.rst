@@ -101,21 +101,30 @@ Udev Rules
 
 We must create some new udev rules in order for the daughterboards to create
 correct Linux devices. To do this, you can simply edit
-``/etc/udev/rules.d/72-cctl-daughters.rules`` (create if it doesn't exist) to
+``/etc/udev/rules.d/72-cctl.rules`` (create if it doesn't exist) to
 look like:
 
 .. code-block:: text
 
+   # Create a symlink from the rail arduino to /dev/tty-cctl-arduino
    SUBSYSTEM=="tty" ATTRS{manufacturer}=="Arduino*" \
-   ATTRS{serial}=="<YOUR_SERIAL>" SYMLINK+="cctl-arduino"
+   ATTRS{serial}=="<YOUR_SERIAL>" SYMLINK+="tty-cctl-arduino"
+
+   # Create a symlink from the Piwebcam to /dev/video-cctl-overhead-raw
+   SUBSYSTEM=="video4linux" ENV{ID_MODEL_ENC}=="Piwebcam" \
+   ENV{ID_MODEL}=="Piwebcam" ENV{ID_MODEL_ID}=="0104" \
+   ENV{ID_SERIAL_SHORT}=="00000000be3e8505" ENV{ID_TYPE}=="video" \
+   SYMLINK+="video-cctl-overhead-raw"
+
+   # Create a processed stream whenever the arduino is connected.
 
 To find the serial number, you can run ``udevadm info -a -n /dev/ttyACM<X>``
 where ``<X>`` is the number that you are certain the Arduino is on.
 
 You can plug out and then plug back in the Arduino daughterboard.
 
-Now that you've done this, you are guaranteed to have ``/dev/cctl-arduino`` as
-a file (as a symlink to  ``/dev/ttyACM*``).
+Now that you've done this, you are guaranteed to have ``/dev/tty-cctl-arduino``
+as a file (as a symlink to  ``/dev/ttyACM*``).
 
 Configuration Files
 ^^^^^^^^^^^^^^^^^^^
