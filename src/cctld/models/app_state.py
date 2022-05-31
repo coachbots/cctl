@@ -12,6 +12,7 @@ from reactivex.subject.subject import Subject
 from cctl.models.coachbot import CoachbotState, Signal
 from cctld.daughters.arduino import ArduinoInfo
 from cctld.conf import Config
+from cctld import camera
 
 
 class CoachbotStateSubject(Subject):
@@ -71,3 +72,4 @@ class AppState:
     config: Config
     coachbot_signals: Subject[Signal]
     arduino_daughter: ArduinoInfo
+    camera_stream: camera.ProcessingStream

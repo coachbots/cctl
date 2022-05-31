@@ -1,9 +1,12 @@
 """This module exposes functions for controlling camera source and sink."""
 
 import asyncio
+from ctypes import ArgumentError
 import logging
 from asyncio.subprocess import create_subprocess_exec, Process, DEVNULL
+from subprocess import PIPE
 from typing import Optional
+from cctld.utils.asyncio import process_running
 from cctld.conf import Config
 
 
@@ -36,7 +39,28 @@ class ProcessingStream:
                                          ' '.join(command))
         self.running_process = await create_subprocess_exec(
             *command,
-            stdin=DEVNULL, stdout=DEVNULL, stderr=DEVNULL)
+            stdin=DEVNULL, stdout=DEVNULL, stderr=PIPE)
+
+    async def error_handler(self, error: Exception):
+        """Called upon the camera processing stream failing."""
+        if isinstance(error, RuntimeError):
+            assert self.running_process is not None
+            _, stderr = await self.running_process.communicate()
+        else:
+            stderr = b''
+
+        logging.getLogger('camera').error('%s Stderr: %s', error, stderr)
+
+    async def start_watchdog(self) -> None:
+        """Runs a watchdog which ensures the camera stream is working."""
+        while True:
+            if self.running_process is None:
+                await self.error_handler(
+                    ArgumentError('Running Process is None.'))
+            elif not process_running(self.running_process):
+                await self.error_handler(
+                    RuntimeError('Running Process Died.'))
+            return
 
     async def kill_stream(self) -> None:
         """Terminates the running stream."""

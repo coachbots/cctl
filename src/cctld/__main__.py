@@ -11,7 +11,7 @@ from cctld.models.app_state import CoachbotStateSubject
 from reactivex.subject.subject import Subject
 
 from cctl.models.coachbot import Coachbot, CoachbotState
-from cctld import daemon, servers
+from cctld import camera, daemon, servers
 from cctld.daughters.arduino import ArduinoInfo
 from cctld.conf import Config
 from cctld.models import AppState
@@ -61,10 +61,10 @@ async def __main(config: Config):
             config.arduino.baud_rate,
             config.arduino.board_type,
             asyncio.Lock()
-        )
+        ),
+        camera_stream=camera.ProcessingStream(config)
     )
 
-    # Update the arduino firmware if necessary.
     try:
         await arduino.update(app_state.arduino_daughter, force=False)
     except RuntimeError:
@@ -72,11 +72,18 @@ async def __main(config: Config):
             'Could not reprogram the Arduino. Continuing with a version '
             'mismatch.')
 
+    try:
+        await app_state.camera_stream.start_stream()
+    except RuntimeError:
+        logging.getLogger('camera').error(
+            'Could not start camera stream. No camera support is available.')
+
     running_servers = asyncio.gather(
         servers.start_status_server(app_state),
         servers.start_ipc_request_server(app_state),
         servers.start_ipc_feed_server(app_state),
         servers.start_ipc_signal_forward_server(app_state),
+        app_state.camera_stream.start_watchdog(),
         auto_pruner(app_state)
     )
     await running_servers
