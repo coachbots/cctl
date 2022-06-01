@@ -49,8 +49,8 @@ class ProcessingStream:
         ffmpeg_transcoding_cmd = \
             f'ffmpeg {hw_accel} -loglevel error -nostats -hide_banner ' + \
             f'-framerate 30 -i {self.output_stream} -map 0:v -c:v {codec} ' + \
-            f'-b:v {bitrate}K -bufsize {bitrate}K' + \
-            '-f asf - '
+            f'-b:v {bitrate}K -bufsize {bitrate}K ' + \
+            '-f asf -'
         vlc_command = \
             'cvlc - --sout ' + \
             "'#transcode{" + 'acodec=none' + \
