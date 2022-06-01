@@ -4,6 +4,19 @@ Configuration
 **cctl** requires some minor manual configuration to be done before you can
 fully use it.
 
+Setting Up The CCTLD User
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**cctld** should not be run as root. Besides being insecure, it will not work.
+We are best off creating a **cctld** user. It will need the **video** and
+**dialout** group permissions so we can do the following:
+
+.. code-block:: bash
+
+   sudo useradd -r -s /bin/false cctld  # Ban it from logging in.
+   sudo adduser cctld video  # Required to communicate with the video stream
+   sudo adduser cctld dialout  # Required to communicate with the arduino
+
 Setting up a Proxy User
 ^^^^^^^^^^^^^^^^^^^^^^^
 
