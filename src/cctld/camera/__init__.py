@@ -118,7 +118,13 @@ class ProcessingStream:
         """Terminates the running stream."""
         for key, proc in self.processes.items():
             if proc is not None:
-                proc.terminate()
+                try:
+                    logging.getLogger('camera').error(
+                        'Killing process %s', proc)
+                    proc.terminate()
+                except ProcessLookupError as p_ex:
+                    logging.getLogger('camera').error(
+                        'Process already killed: %s', p_ex)
                 self.processes[key] = None
 
     def __del__(self):
