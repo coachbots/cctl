@@ -3,7 +3,7 @@
 import asyncio
 from ctypes import ArgumentError
 import logging
-from asyncio.subprocess import create_subprocess_exec, Process, DEVNULL
+from asyncio.subprocess import create_subprocess_exec, Process, DEVNULL, create_subprocess_shell
 from subprocess import PIPE
 from typing import Dict, Optional
 from cctld.utils.asyncio import process_running
@@ -44,22 +44,14 @@ class ProcessingStream:
         bitrate = self.netstream_conf.bitrate
         rtsp_host = self.netstream_conf.rtsp_host
         codec = self.netstream_conf.codec
-        command = [str(c) for c in [
-            'cvlc',
-            f'v4l2://{self.output_stream}',
-            '--sout='
-            '#transcode{'
-                f'codec={codec},vb={bitrate},acodec=none'  # noqa: E131
-            '}'
-            ':'
-            'rtp{'
-                f'sdp={rtsp_host}/cctl/overhead'  # noqa: E131
-            '}'
-        ]]
+        command = \
+            f'cvlc v4l2://{self.output_stream} --sout ' + \
+            "'#transcode{" + f'codec={codec},vb={bitrate},acodec=none' + \
+            '}:rtp{' + f'sdp={rtsp_host}/cctl/overhead' + '}'
         logging.getLogger('camera').info('Starting RTSP stream: %s.',
-                                         ' '.join(command))
-        self.processes['netstream'] = await create_subprocess_exec(
-            *command,
+                                         command)
+        self.processes['netstream'] = await create_subprocess_shell(
+            command,
             stdin=DEVNULL, stdout=DEVNULL, stderr=PIPE)
 
     async def start_processing_stream(self) -> None:
