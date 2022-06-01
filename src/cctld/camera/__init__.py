@@ -47,7 +47,7 @@ class ProcessingStream:
         command = [str(c) for c in [
             'cvlc',
             f'v4l2://{self.output_stream}',
-            '--sout',
+            '--sout='
             '#transcode{'
                 f'codec={codec},vb={bitrate},acodec=none'  # noqa: E131
             '}'
