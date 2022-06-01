@@ -46,7 +46,7 @@ class ProcessingStream:
         codec = self.netstream_conf.codec
         command = [str(c) for c in [
             'cvlc',
-            f'v4l2:/{self.output_stream}',
+            f'v4l2://{self.output_stream}',
             '--sout',
             "'#"
                 'transcode{'  # noqa: E131
