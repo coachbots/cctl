@@ -326,7 +326,7 @@ class CommandAction:
         """Parses arguments automatically and handles booting."""
 
         handlers = {
-            RES_STR['cmd_cam']: self._camera_command_handler,
+            'cam': self._camera_command_handler,
             RES_STR['cmd_on']: self._on_off_handler,
             RES_STR['cmd_off']: self._on_off_handler,
             RES_STR['cmd_blink']: self._blink_handler,
