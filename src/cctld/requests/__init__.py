@@ -301,3 +301,16 @@ async def read_config(app_state: AppState, *args, **kwargs):
             'bitrate': app_state.config.video_stream.bitrate
         }
     }))
+
+
+@handler(r'^/info/video/?$', 'read')
+async def read_info_video(app_state: AppState, *args, **kwargs):
+    """Returns the endpoint info for video streaming."""
+    host = app_state.config.video_stream.rtsp_host
+    return ipc.Response(ipc.ResultCode.OK, json.dumps({
+        'overhead-camera': {
+            'endpoint': f'{host}/cctl/cam/overhead',
+            'codec': app_state.config.video_stream.codec,
+            'description': 'A H264 Stream of the Camera Above the Coachbots.'
+        }
+    }))

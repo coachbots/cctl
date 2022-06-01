@@ -50,11 +50,11 @@ class ProcessingStream:
             f'ffmpeg {hw_accel} -loglevel error -nostats -hide_banner ' + \
             f'-framerate 30 -i {self.output_stream} -map 0:v -c:v {codec} ' + \
             f'-b:v {bitrate}K -bufsize {bitrate}K' + \
-            '-f asf -'
+            '-f asf - '
         vlc_command = \
             'cvlc - --sout ' + \
             "'#transcode{" + 'acodec=none' + \
-            '}:rtp{' + f'sdp={rtsp_host}/cctl/overhead' + "}'"
+            '}:rtp{' + f'sdp={rtsp_host}/cctl/cam/overhead' + "}'"
         command = f'{ffmpeg_transcoding_cmd} | {vlc_command}'
         logging.getLogger('camera').info('Starting RTSP stream: %s.',
                                          command)

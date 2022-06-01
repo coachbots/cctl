@@ -14,7 +14,8 @@ __status__ = 'Development'
 
 
 import asyncio
-from typing import Iterable, Optional, Tuple, Union
+import json
+from typing import Dict, Iterable, Optional, Tuple, Union
 from typing_extensions import Literal
 import reactivex as rx
 import zmq
@@ -208,6 +209,13 @@ class CCTLDClient:
             if response.result_code != ipc.ResultCode.OK:
                 raise CCTLDRespInvalidState('Could not change the rail state '
                                             'due to %s', response.body)
+
+    async def get_video_info(self) -> Dict[str, Dict[str, str]]:
+        """Returns information about the video streams."""
+        with _CCTLDClientRequest(self._ctx, self._path) as req:
+            response = await req.request(ipc.Request(
+                method='read', endpoint='/info/video'))
+            return json.loads(response.body)
 
     async def __aexit__(self, exc_t, exc_v, exc_tb):
         return False

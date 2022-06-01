@@ -24,8 +24,8 @@ def main():
                                            help=RES_STR['cmd_off_help'])
     blink_parser = command_parser.add_parser(RES_STR['cmd_blink'],
                                              help=RES_STR['cmd_blink_desc'])
-    camera_parser = command_parser.add_parser(RES_STR['cmd_cam'],
-                                              help=RES_STR['cmd_cam_desc'])
+    camera_parser = command_parser.add_parser(
+        'cam', help='Overhead Camera Control')
     command_parser.add_parser(RES_STR['cmd_start'],
                               help=RES_STR['cmd_start_desc'])
     command_parser.add_parser(RES_STR['cmd_pause'],
@@ -57,14 +57,13 @@ def main():
                                nargs=1, help=RES_STR['usr_code_path_desc'])
 
     cam_subparser = camera_parser.add_subparsers(
-        title=RES_STR['cmd_cam_cmd_title'],
-        help=RES_STR['cmd_cam_cmd_help'],
+        title='camera-command',
+        help='Camera Command',
         dest='cam_command'
     )
-    cam_subparser.add_parser(RES_STR['cmd_cam_setup'],
-                             help=RES_STR['cmd_cam_setup_desc'])
-    cam_subparser.add_parser(RES_STR['cmd_cam_preview'],
-                             help=RES_STR['cmd_cam_preview_desc'])
+    cam_subparser.add_parser(
+        'info', help='Displays information about the camera stream.')
+    cam_subparser.add_parser('preview', help='Previews the overhead camera.')
 
     exec_parser = command_parser.add_parser(
         RES_STR['cli']['exec']['name'], help=RES_STR['cli']['exec']['help'])

@@ -2,6 +2,7 @@
 
 """Defines the main class that handles all commands."""
 
+from asyncio.subprocess import create_subprocess_exec
 import sys
 import asyncio
 from typing import Callable, Iterable, Union, List
@@ -18,7 +19,7 @@ from cctl.ui.manager import Manager
 from cctl.utils.net import sftp_client
 
 from cctl.res import ERROR_CODES, RES_STR
-from cctl.api import camera_ctl, bot_ctl, configuration
+from cctl.api import bot_ctl, configuration
 
 
 def _parse_id(coach_id: str) -> Union[List[int], bool]:
@@ -85,47 +86,29 @@ class CommandAction:
     def _camera_command_handler(self) -> int:
         """Handles camera commands.
 
-        Note:
-            This function may exit prematurely using sys.exit if something
-            fails. This is expected behavior.
-
         Returns:
             0 for a successful invokation, -1 otherwise.
         """
-        if self._args.cam_command == RES_STR['cmd_cam_setup']:
-            try:
-                camera_ctl.start_processing_stream()
-            except camera_ctl.CameraError as v_err:
-                if v_err.identifier == camera_ctl.CameraEnum.CAMERA_RAW.value:
-                    logging.error(RES_STR['camera_raw_error'])
-                    return ERROR_CODES['camera_raw_error']
+        # TODO: Unnecessary helper.
+        async def helper():
+            async with CCTLDClient(configuration.get_request_feed()) as client:
+                cam_info = (await client.get_video_info())['overhead-camera']
 
-                if v_err.identifier == \
-                        camera_ctl.CameraEnum.CAMERA_CORRECTED.value:
-                    logging.info(RES_STR['camera_stream_does_not_exist'])
-                    try:
-                        camera_ctl.make_processed_stream()
-                    except camera_ctl.CameraError:
-                        return ERROR_CODES['processed_stream_creating_error']
+            if self._args.cam_command == 'info':
+                print(f"Stream\t{cam_info['endpoint']}\n"
+                      f"Codec\t{cam_info['codec']}\n"
+                      f"Description\t{cam_info['description']}")
+                return 0
 
-                    try:
-                        camera_ctl.start_processing_stream()
-                    except camera_ctl.CameraError:
-                        logging.error(RES_STR['unknown_camera_error'])
-                        return ERROR_CODES['unknown_camera_error']
-            except FileExistsError:
-                pass
+            if self._args.cam_command == 'preview':
+                proc = await create_subprocess_exec(
+                    *['ffplay', cam_info['endpoint']])
+                await proc.communicate()
+                return 0
 
-            return 0
-        if self._args.cam_command == RES_STR['cmd_cam_preview']:
-            try:
-                camera_ctl.start_processed_preview()
-            except camera_ctl.CameraError:
-                logging.error(RES_STR['unknown_camera_error'])
-                return ERROR_CODES['unknown_camera_error']
-            return 0
+            return -1
 
-        return -1
+        return asyncio.run(helper())
 
     def _bot_id_handler(
             self,
