@@ -117,9 +117,9 @@ class Config:
             return config.getint('video-stream', 'bitrate')
 
         @property
-        def rtsp_port(self) -> int:
-            """Returns the video stream port."""
-            return config.getint('video-stream', 'rtsp_port')
+        def rtsp_host(self) -> str:
+            """Returns the host on which the RTSP stream will be played."""
+            return config.get('video-stream', 'rtsp_host')
 
         @property
         def codec(self) -> str:

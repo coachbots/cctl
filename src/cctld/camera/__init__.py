@@ -42,7 +42,7 @@ class ProcessingStream:
     async def start_net_stream(self) -> None:
         """Starts the video processing and RTSP stream."""
         bitrate = self.netstream_conf.bitrate
-        port = self.netstream_conf.rtsp_port
+        rtsp_host = self.netstream_conf.rtsp_host
         codec = self.netstream_conf.codec
         command = [str(c) for c in [
             'cvlc',
@@ -54,7 +54,7 @@ class ProcessingStream:
                 '}'  # noqa: E131
                 ':'  # noqa: E131
                 'rtp{'  # noqa: E131
-                    f'sdp=rtsp://:{port}/cctl/overhead'  # noqa: E131
+                    f'sdp={rtsp_host}/cctl/overhead'  # noqa: E131
                 '}'  # noqa: E131
             "'"
         ]]

@@ -283,3 +283,21 @@ async def delete_power_rail(app_state: AppState, *args, **kwargs):
         return ipc.Response(ipc.ResultCode.OK)
     except arduino.ArduinoError as aerr:
         return ipc.Response(ipc.ResultCode.INTERNAL_SERVER_ERROR, str(aerr))
+
+
+@handler(r'^/config/?$', 'read')
+async def read_config(app_state: AppState, *args, **kwargs):
+    """Returns configuration variables that may be of use to the cctl
+    client."""
+    return ipc.Response(ipc.ResultCode.OK, json.dumps({
+        'feeds': {
+            'request': app_state.config.ipc.request_feed,
+            'state': app_state.config.ipc.state_feed,
+            'signal': app_state.config.ipc.state_feed
+        },
+        'video': {
+            'stream': app_state.config.video_stream.rtsp_host,
+            'codec': app_state.config.video_stream.codec,
+            'bitrate': app_state.config.video_stream.bitrate
+        }
+    }))
