@@ -20,9 +20,11 @@ class ProcessingStream:
             'cx': configuration.camera.lens_cx,
             'cy': configuration.camera.lens_cy
         }
+        self.netstream_conf = configuration.video_stream
         self.input_stream = configuration.camera.raw_stream
         self.output_stream = configuration.camera.processed_stream
-        self.running_process: Optional[Process] = None
+        self.ffmpeg_process: Optional[Process] = None
+        self.stream_process: Optional[Process] = None
         self.hw_accel = configuration.camera.hardware_accel
         if self.hw_accel is None:
             logging.getLogger('camera').warning(
@@ -31,7 +33,37 @@ class ProcessingStream:
                 'field. Performance penalty induced. Continuing...')
 
     async def start_stream(self) -> None:
-        """Starts the video stream."""
+        """Starts the camera processing and upload stream."""
+        await self.start_processing_stream()
+        await self.start_net_stream()
+
+    async def start_net_stream(self) -> None:
+        """Starts the video processing and RTSP stream."""
+        bitrate = self.netstream_conf.bitrate
+        port = self.netstream_conf.rtsp_port
+        codec = self.netstream_conf.codec
+        command = [str(c) for c in [
+            'cvlc', '-vvv'
+            f'v4l2:/{self.output_stream}',
+            '--sout',
+            "'#"
+                'transcode{'  # noqa: E131
+                    f'codec={codec},vb={bitrate},acodec=none'  # noqa: E131
+                '}'  # noqa: E131
+                ':'  # noqa: E131
+                'rtp{'  # noqa: E131
+                    f'sdp=rtsp://:{port}/cctl/overhead'  # noqa: E131
+                '}'  # noqa: E131
+            "'"
+        ]]
+        logging.getLogger('camera').info('Starting RTSP stream: %s.',
+                                         ' '.join(command))
+        self.stream_process = await create_subprocess_exec(
+            *command,
+            stdin=DEVNULL, stdout=DEVNULL, stderr=PIPE)
+
+    async def start_processing_stream(self) -> None:
+        """Starts the video processing stream."""
         lenscorrection_filt = ':'.join([
             f'{key}={value}' for key, value in self.lens_correction.items()
         ])
@@ -49,15 +81,16 @@ class ProcessingStream:
         ]]
         logging.getLogger('camera').info('Starting processing stream: %s.',
                                          ' '.join(command))
-        self.running_process = await create_subprocess_exec(
+        self.ffmpeg_process = await create_subprocess_exec(
             *command,
             stdin=DEVNULL, stdout=DEVNULL, stderr=PIPE)
 
-    async def error_handler(self, error: Exception):
+    async def error_handler(self, process: Optional[Process],
+                            error: Exception):
         """Called upon the camera processing stream failing."""
         if isinstance(error, RuntimeError):
-            assert self.running_process is not None
-            _, stderr = await self.running_process.communicate()
+            assert process is not None
+            _, stderr = await process.communicate()
         else:
             stderr = b''
 
@@ -65,22 +98,30 @@ class ProcessingStream:
 
     async def start_watchdog(self) -> None:
         """Runs a watchdog which ensures the camera stream is working."""
+        async def on_end(process: Optional[Process], error: Exception):
+            await self.error_handler(process, error)
+            await self.kill_stream()
+
         while True:
-            if self.running_process is None:
-                await self.error_handler(
-                    ArgumentError('Running Process is None.'))
-                return
-            if not await process_running(self.running_process):
-                await self.error_handler(
-                    RuntimeError('Running Process Died.'))
-                return
+            if self.ffmpeg_process is None:
+                return await on_end(self.ffmpeg_process,
+                                    ArgumentError('FFMpeg Process is None.'))
+            if not await process_running(self.ffmpeg_process):
+                return await on_end(self.ffmpeg_process,
+                                    RuntimeError('FFMpeg Process Died.'))
+            if self.stream_process is None:
+                return await on_end(self.stream_process,
+                                    ArgumentError('Stream Process is None.'))
+            if not await process_running(self.stream_process):
+                return await on_end(self.stream_process,
+                                    RuntimeError('Stream Process Died.'))
             await asyncio.sleep(1)
 
     async def kill_stream(self) -> None:
         """Terminates the running stream."""
-        if self.running_process is None:
-            return
-        self.running_process.terminate()
+        for proc in (self.ffmpeg_process, self.stream_process):
+            if proc is not None:
+                proc.terminate()
 
     def __del__(self):
         asyncio.get_event_loop().run_until_complete(self.kill_stream())

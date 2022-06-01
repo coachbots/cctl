@@ -109,6 +109,23 @@ class Config:
             """Returns the board type of the Arduino."""
             return config.get('arduino', 'board')
 
+    class VideoStream:
+        """This class exposes video-related configuration points."""
+        @property
+        def bitrate(self) -> int:
+            """Returns the video stream bitrate in kbps"""
+            return config.getint('video-stream', 'bitrate')
+
+        @property
+        def rtsp_port(self) -> int:
+            """Returns the video stream port."""
+            return config.getint('video-stream', 'rtsp_port')
+
+        @property
+        def codec(self) -> str:
+            """Returns the codec used for transcoding."""
+            return config.get('video-stream', 'codec')
+
     class Camera:
         @property
         def lens_k1(self) -> float:
@@ -177,3 +194,7 @@ class Config:
     @property
     def camera(self) -> 'Config.Camera':
         return Config.Camera()
+
+    @property
+    def video_stream(self) -> 'Config.VideoStream':
+        return Config.VideoStream()
