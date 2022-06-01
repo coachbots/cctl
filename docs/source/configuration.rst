@@ -114,7 +114,8 @@ look like:
    SUBSYSTEM=="video4linux" ENV{ID_MODEL_ENC}=="Piwebcam" \
    ENV{ID_MODEL}=="Piwebcam" ENV{ID_MODEL_ID}=="0104" \
    ENV{ID_SERIAL_SHORT}=="00000000be3e8505" ENV{ID_TYPE}=="video" \
-   SYMLINK+="video-cctl-overhead-raw"
+   SYMLINK+="video71" \
+   RUN{program}+="/sbin/modprobe v4l2loopback video_nr=72"
 
    # Create a processed stream whenever the arduino is connected.
 

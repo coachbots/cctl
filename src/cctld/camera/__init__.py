@@ -58,12 +58,11 @@ class ProcessingStream:
                 await self.error_handler(
                     ArgumentError('Running Process is None.'))
                 return
-            if not process_running(self.running_process):
+            if not await process_running(self.running_process):
                 await self.error_handler(
                     RuntimeError('Running Process Died.'))
                 return
             await asyncio.sleep(1)
-
 
     async def kill_stream(self) -> None:
         """Terminates the running stream."""
