@@ -11,7 +11,7 @@ __maintainer__ = 'Marko Vejnovic'
 __email__ = 'contact@markovejnovic.com'
 __status__ = 'Development'
 
-from configparser import ConfigParser
+from configparser import ConfigParser, NoOptionError
 import logging
 import sys
 from typing import List, Optional
@@ -145,7 +145,10 @@ class Config:
             """Returns a string that determines which hardware acceleration
             will be used. Returns None if no hardware acceleration is defined.
             """
-            return config.get('overhead-camera', 'hwaccel')
+            try:
+                return config.get('overhead-camera', 'hwaccel')
+            except NoOptionError:
+                return None
 
     @property
     def general(self) -> 'Config.General':
