@@ -44,10 +44,18 @@ class ProcessingStream:
         bitrate = self.netstream_conf.bitrate
         rtsp_host = self.netstream_conf.rtsp_host
         codec = self.netstream_conf.codec
-        command = \
-            f'cvlc v4l2://{self.output_stream} --sout ' + \
-            "'#transcode{" + f'vcodec={codec},vb={bitrate},acodec=none' + \
+        hw_accel = f'-hwaccel {self.hw_accel}' \
+            if self.hw_accel is not None else ''
+        ffmpeg_transcoding_cmd = \
+            f'ffmpeg {hw_accel} -loglevel error -nostats -hide_banner ' + \
+            f'-framerate 30 -i {self.output_stream} -map 0:v -c:v {codec} ' + \
+            f'-b:v {bitrate}K -bufsize {bitrate}K' + \
+            '-f asf -'
+        vlc_command = \
+            'cvlc - --sout ' + \
+            "'#transcode{" + 'acodec=none' + \
             '}:rtp{' + f'sdp={rtsp_host}/cctl/overhead' + "}'"
+        command = f'{ffmpeg_transcoding_cmd} | {vlc_command}'
         logging.getLogger('camera').info('Starting RTSP stream: %s.',
                                          command)
         self.processes['netstream'] = await create_subprocess_shell(
@@ -64,7 +72,7 @@ class ProcessingStream:
             *(['-hwaccel', self.hw_accel] if self.hw_accel is not None
               else []),
             '-loglevel', 'error', '-nostats', '-hide_banner',
-            '-re', '-framerate', 30,
+            '-framerate', 30,
             '-i', self.input_stream,
             '-map', '0:v',
             '-vf', f'lenscorrection={lenscorrection_filt},format=yuv420p',
