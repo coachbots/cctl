@@ -33,7 +33,7 @@ class ProcessingStream:
             'ffmpeg', '-re', '-i', self.input_stream,
             '-map', '0:v',
             '-vf', f'lenscorrection={lenscorrection_filt},format=yuv420p',
-            '-f v4l2', self.output_stream
+            '-f', 'v4l2', self.output_stream
         ]
         logging.getLogger('camera').info('Starting processing stream: %s.',
                                          ' '.join(command))
