@@ -46,7 +46,7 @@ class ProcessingStream:
         codec = self.netstream_conf.codec
         command = \
             f'cvlc v4l2://{self.output_stream} --sout ' + \
-            "'#transcode{" + f'codec={codec},vb={bitrate},acodec=none' + \
+            "'#transcode{" + f'vcodec={codec},vb={bitrate},acodec=none' + \
             '}:rtp{' + f'sdp={rtsp_host}/cctl/overhead' + "}'"
         logging.getLogger('camera').info('Starting RTSP stream: %s.',
                                          command)
@@ -113,7 +113,7 @@ class ProcessingStream:
                         'Killing process %s', proc)
                     proc.terminate()
                 except ProcessLookupError as p_ex:
-                    logging.getLogger('camera').error(
+                    logging.getLogger('camera').debug(
                         'Process already killed: %s', p_ex)
                 self.processes[key] = None
 
