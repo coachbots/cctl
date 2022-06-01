@@ -35,7 +35,7 @@ class ProcessingStream:
         lenscorrection_filt = ':'.join([
             f'{key}={value}' for key, value in self.lens_correction.items()
         ])
-        command = [
+        command = [str(c) for c in [
             'ffmpeg',
             *(['-hwaccel', self.hw_accel] if self.hw_accel is not None
               else []),
@@ -46,7 +46,7 @@ class ProcessingStream:
             '-vf', f'lenscorrection={lenscorrection_filt},format=yuv420p',
             '-f', 'v4l2', self.output_stream,
             '-async', 1, '-vsync', 1
-        ]
+        ]]
         logging.getLogger('camera').info('Starting processing stream: %s.',
                                          ' '.join(command))
         self.running_process = await create_subprocess_exec(
