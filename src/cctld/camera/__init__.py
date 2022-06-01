@@ -47,7 +47,7 @@ class ProcessingStream:
         command = \
             f'cvlc v4l2://{self.output_stream} --sout ' + \
             "'#transcode{" + f'codec={codec},vb={bitrate},acodec=none' + \
-            '}:rtp{' + f'sdp={rtsp_host}/cctl/overhead' + '}'
+            '}:rtp{' + f'sdp={rtsp_host}/cctl/overhead' + "}'"
         logging.getLogger('camera').info('Starting RTSP stream: %s.',
                                          command)
         self.processes['netstream'] = await create_subprocess_shell(
