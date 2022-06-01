@@ -37,6 +37,10 @@ class ProcessingStream:
     async def start_stream(self) -> None:
         """Starts the camera processing and upload stream."""
         await self.start_processing_stream()
+        # Wait for some time for the processing stream to setup. About 5
+        # seconds is enough. This is not an ideal solution, but communicating
+        # with ffmpeg is simply too big of a hassle. TODO: Possibly replace?
+        await asyncio.sleep(5)
         await self.start_net_stream()
 
     async def start_net_stream(self) -> None:
