@@ -14,7 +14,7 @@ __status__ = 'Development'
 from configparser import ConfigParser
 import logging
 import sys
-from typing import List
+from typing import List, Optional
 
 from cctld.res import ExitCode
 
@@ -139,6 +139,13 @@ class Config:
         def processed_stream(self) -> str:
             """Returns the path of the processed stream."""
             return config.get('overhead-camera', 'processed_stream')
+
+        @property
+        def hardware_accel(self) -> Optional[str]:
+            """Returns a string that determines which hardware acceleration
+            will be used. Returns None if no hardware acceleration is defined.
+            """
+            return config.get('overhead-camera', 'hwaccel')
 
     @property
     def general(self) -> 'Config.General':

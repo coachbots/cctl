@@ -23,6 +23,12 @@ class ProcessingStream:
         self.input_stream = configuration.camera.raw_stream
         self.output_stream = configuration.camera.processed_stream
         self.running_process: Optional[Process] = None
+        self.hw_accel = configuration.camera.hardware_accel
+        if self.hw_accel is None:
+            logging.getLogger('camera').warning(
+                'Hardware acceleration disabled. Check that '
+                '/etc/coachswarm/cctld.conf has an overhead-camera/hwaccel '
+                'field. Performance penalty induced. Continuing...')
 
     async def start_stream(self) -> None:
         """Starts the video stream."""
@@ -30,10 +36,16 @@ class ProcessingStream:
             f'{key}={value}' for key, value in self.lens_correction.items()
         ])
         command = [
-            'ffmpeg', '-re', '-i', self.input_stream,
+            'ffmpeg',
+            *(['-hwaccel', self.hw_accel] if self.hw_accel is not None
+              else []),
+            '-loglevel', 'error', '-nostats', '-hide_banner',
+            '-re', '-framerate', 30,
+            '-i', self.input_stream,
             '-map', '0:v',
             '-vf', f'lenscorrection={lenscorrection_filt},format=yuv420p',
-            '-f', 'v4l2', self.output_stream
+            '-f', 'v4l2', self.output_stream,
+            '-async', 1, '-vsync', 1
         ]
         logging.getLogger('camera').info('Starting processing stream: %s.',
                                          ' '.join(command))
