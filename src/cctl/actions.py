@@ -95,7 +95,8 @@ class CommandAction:
                 cam_info = (await client.get_video_info())['overhead-camera']
 
             if self._args.cam_command == 'info':
-                print(f"Stream\t\t{cam_info['endpoint']}\n"
+                print(f"Enabled\t\t{cam_info['enabled']}\n"
+                      f"Stream\t\t{cam_info['endpoint']}\n"
                       f"Codec\t\t{cam_info['codec']}\n"
                       f"Description\t{cam_info['description']}")
                 return 0
