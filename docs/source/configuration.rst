@@ -16,6 +16,36 @@ We are best off creating a **cctld** user. It will need the **video** and
    sudo useradd -r -s /bin/false cctld  # Ban it from logging in.
    sudo adduser cctld video  # Required to communicate with the video stream
    sudo adduser cctld dialout  # Required to communicate with the arduino
+   sudo adduser cctld bluetooth  # Required to communicate with the bluetooth
+                                 # interfaces.
+
+
+.. warning::
+
+   This assumes that there exists a ``bluetooth`` group with permissions to
+   access the bluetooth interface (default on Ubuntu). If this group does not
+   exist, you must create it and add the D-Bus permissions:
+
+   .. code-block:: bash
+
+      groupadd bluetooth
+      sudo nano /etc/dbus-1/system.d/bluetooth.conf
+
+   Then, in that file, you are to add the following policy:
+
+   .. code-block:: xml
+
+      <policy group="bluetooth">
+        <allow send_destination="org.bluez"/>
+        <allow send_interface="org.bluez.Agent1"/>
+        <allow send_interface="org.bluez.GattCharacteristic1"/>
+        <allow send_interface="org.bluez.GattDescriptor1"/>
+        <allow send_interface="org.freedesktop.DBus.ObjectManager"/>
+        <allow send_interface="org.freedesktop.DBus.Properties"/>
+        <allow send_interface="org.freedesktop.DBus.Properties"/>
+      </policy>
+
+   After you do this, then you can do ``sudo adduser cctld bluetooth``.
 
 Setting up a Proxy User
 ^^^^^^^^^^^^^^^^^^^^^^^

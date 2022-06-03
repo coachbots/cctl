@@ -126,6 +126,11 @@ class Config:
             """Returns the codec used for transcoding."""
             return config.get('video-stream', 'codec')
 
+        @property
+        def enabled(self) -> bool:
+            """Returns a string testing whether the netstream is enabled."""
+            return config.get('video-stream', 'enabled').lower() == 'yes'
+
     class Camera:
         @property
         def lens_k1(self) -> float:

@@ -23,10 +23,10 @@ class ProcessingStream:
         self.netstream_conf = configuration.video_stream
         self.input_stream = configuration.camera.raw_stream
         self.output_stream = configuration.camera.processed_stream
-        self.processes: Dict[str, Optional[Process]] = {
-            'ffmpeg': None,
-            'netstream': None
-        }
+        self.processes: Dict[str, Optional[Process]] = \
+            {'ffmpeg': None, 'netstream': None} \
+            if self.netstream_conf.enabled \
+            else {'ffmpeg': None}
         self.hw_accel = configuration.camera.hardware_accel
         if self.hw_accel is None:
             logging.getLogger('camera').warning(
@@ -45,6 +45,9 @@ class ProcessingStream:
 
     async def start_net_stream(self) -> None:
         """Starts the video processing and RTSP stream."""
+        enabled = self.netstream_conf.enabled
+        if not enabled:
+            return
         bitrate = self.netstream_conf.bitrate
         rtsp_host = self.netstream_conf.rtsp_host
         codec = self.netstream_conf.codec

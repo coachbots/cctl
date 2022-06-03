@@ -10,6 +10,7 @@ Type=simple
 Restart=always
 RestartSec=1
 User=cctld
+Group=cctld
 ExecStart=/usr/local/bin/cctld
 
 [Install]
