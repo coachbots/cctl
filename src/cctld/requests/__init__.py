@@ -7,14 +7,16 @@ is buit upon the import of this module."""
 import asyncio
 import json
 import logging
-from typing import Any, Tuple, Union
+from typing import Any, Iterable, List, Tuple, Union
 from cctl.models import Coachbot
+from cctl.models.coachbot import CoachbotState
 from cctl.protocols import ipc
-from cctld import ble
+from cctld.ble.errors import BLENotReachableError
 from cctld.coach_commands import CoachCommand, CoachCommandError
 from cctld.daughters import arduino
 from cctld.models.app_state import AppState
 from cctld.requests.handler import handler
+from cctld.utils.reactive import wait_until
 
 
 @handler(r'^/bots/state/?$', 'read')
@@ -35,14 +37,18 @@ async def create_bots_is_on(app_state: AppState, _: ipc.Request, __):
                 in enumerate(app_state.coachbot_states.value)
                 if not state.is_on]
 
-    errs = []
-    async for err in ble.boot_bots(off_bots, True):
+    errs: List[BLENotReachableError] = []
+    async for err in app_state.ble_manager.boot_bots(off_bots, True):
         errs.append(err)
+
+    waiting_for = [bot for bot in off_bots
+                   if bot not in [err.offender for err in errs]]
+    await wait_until(app_state.coachbot_states,
+                     lambda sts: all(sts[b].is_on for b in waiting_for))
 
     if len(errs) > 0:
         return ipc.Response(ipc.ResultCode.STATE_CONFLICT,
                             ' '.join([str(err) for err in errs]))
-
     return ipc.Response(ipc.ResultCode.OK)
 
 
@@ -52,14 +58,18 @@ async def delete_bots_is_on(app_state: AppState, _: ipc.Request, __):
     on_bots = [Coachbot(i, state) for i, state
                in enumerate(app_state.coachbot_states.value) if state.is_on]
 
-    errs = []
-    async for err in ble.boot_bots(on_bots, False):
+    errs: List[BLENotReachableError] = []
+    async for err in app_state.ble_manager.boot_bots(on_bots, False):
         errs.append(err)
+
+    waiting_for = [bot for bot in on_bots
+                   if bot not in [err.offender for err in errs]]
+    await wait_until(app_state.coachbot_states,
+                     lambda sts: all(not sts[b].is_on for b in waiting_for))
 
     if len(errs) > 0:
         return ipc.Response(ipc.ResultCode.STATE_CONFLICT,
                             ' '.join([str(err) for err in errs]))
-
     return ipc.Response(ipc.ResultCode.OK)
 
 
@@ -74,14 +84,16 @@ async def create_bot_is_on(
                    app_state.coachbot_states.value[ident])
 
     errors = []
-    async for error in ble.boot_bots([bot], True):
-        errors.append(error)
+    async for err in app_state.ble_manager.boot_bots([bot], True):
+        errors.append(err)
 
     if len(errors) != 0:
         logging.getLogger('bluetooth').error('Could not turn bot %s on.',
                                              bot)
         return ipc.Response(ipc.ResultCode.STATE_CONFLICT, str(errors[0]))
 
+    await wait_until(app_state.coachbot_states,
+                     lambda states: states[bot.identifier].is_on)
     return ipc.Response(ipc.ResultCode.OK)
 
 
@@ -96,14 +108,16 @@ async def delete_bot_is_on(
                    app_state.coachbot_states.value[ident])
 
     errors = []
-    async for error in ble.boot_bots([bot], False):
-        errors.append(error)
+    async for err in app_state.ble_manager.boot_bots([bot], False):
+        errors.append(err)
 
     if len(errors) != 0:
         logging.getLogger('bluetooth').error('Could not turn bot %s on.',
                                              bot)
         return ipc.Response(ipc.ResultCode.STATE_CONFLICT, str(errors[0]))
 
+    await wait_until(app_state.coachbot_states,
+                     lambda states: not states[bot.identifier].is_on)
     return ipc.Response(ipc.ResultCode.OK)
 
 

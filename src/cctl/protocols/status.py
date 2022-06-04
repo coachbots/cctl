@@ -18,6 +18,7 @@ __maintainer__ = 'Marko Vejnovic'
 __email__ = 'contact@markovejnovic.com'
 __status__ = 'Development'
 
+
 @dataclass
 class Request:
     """Represents a Request from the ``Coachbot`` to ``cctld```. This request
@@ -49,6 +50,7 @@ class Request:
     @staticmethod
     def deserialize(data: str) -> 'Request':
         return Request.from_dict(json.loads(data))
+
 
 class StatusCode(IntEnum):
     """Represents a status code."""

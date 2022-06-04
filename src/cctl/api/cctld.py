@@ -15,7 +15,7 @@ __status__ = 'Development'
 
 import asyncio
 import json
-from typing import Dict, Iterable, Optional, Tuple, Union
+from typing import Dict, Tuple, Union
 from typing_extensions import Literal
 import reactivex as rx
 import zmq
@@ -272,7 +272,8 @@ async def CCTLDCoachbotStateObservable(
 
 
 async def CCTLDSignalObservable(
-    signal_feed: str) -> Tuple[rx.Subject, asyncio.Task]:
+    signal_feed: str
+) -> Tuple[rx.Subject, asyncio.Task]:
     """The ``CCTLDSignalObservable`` is an ``rx.Observable`` that will
     call the ``on_next`` function of your observer as new signals are fired by
     the coachbots.

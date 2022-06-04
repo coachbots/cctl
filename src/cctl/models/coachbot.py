@@ -101,7 +101,7 @@ class CoachbotState:
                 **as_dict,
                 'user_code_state':
                     UserCodeState.from_dict(as_dict['user_code_state']),
-                'position': Vec2(as_dict['position']) \
+                'position': Vec2(as_dict['position'])
                     if as_dict['position'] is not None else None
             }
         )

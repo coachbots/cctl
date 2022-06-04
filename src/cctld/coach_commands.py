@@ -136,7 +136,8 @@ class CoachCommand:
 
         async def worker(sock: zmq.asyncio.Socket):
             await sock.send_json(msg)
-        response = await self._execute_socket(worker)
+        # TODO: Use response
+        response = await self._execute_socket(worker)  # noqa: F841
 
     async def set_led_color(self, value: Tuple[int, int, int]):
         """Sends a command to the coachbot to set the LED on or off."""
@@ -145,4 +146,5 @@ class CoachCommand:
 
         async def worker(sock: zmq.asyncio.Socket):
             await sock.send_json(msg)
-        response = await self._execute_socket(worker)
+        # TODO: Use response
+        response = await self._execute_socket(worker)  # noqa: F841

@@ -151,13 +151,15 @@ class CommandAction:
                          ','.join([str(bot.identifier) for bot in bots]),
                          target_str)
 
+            async def request(bot):
+                async with CCTLDClient(configuration.get_request_feed()) as cl:
+                    await cl.set_is_on(Coachbot(bot.identifier,
+                                                CoachbotState(None)),
+                                       target_on)
+
             async def helper():
-                for bot in bots:
-                    async with CCTLDClient(configuration.get_request_feed()) \
-                            as client:
-                        await client.set_is_on(Coachbot(bot.identifier,
-                                                        CoachbotState(None)),
-                                               target_on)
+                await asyncio.gather(*(request(bot) for bot in bots))
+
             asyncio.run(helper())
             return 0
 
