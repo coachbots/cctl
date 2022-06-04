@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
-import argparse
 import logging
+import asyncio
 
-from .res import RES_STR
-from .actions import CommandAction
+from cctl.conf import Configuration
+
+from cctl import cli
 
 
 def main():
@@ -12,28 +13,23 @@ def main():
     logging.basicConfig(level=logging.DEBUG,
                         format='[%(levelname)s]: %(message)s')
 
-    parser = argparse.ArgumentParser(prog=RES_STR['app_name'],
-                                     description=RES_STR['app_desc'])
+    conf = Configuration()
 
-    command_parser = parser.add_subparsers(title=RES_STR['cmd_command'],
-                                           help=RES_STR['cmd_command_help'],
-                                           dest='command')
-    on_parser = command_parser.add_parser(RES_STR['cmd_on'],
-                                          help=RES_STR['cmd_on_help'])
-    off_parser = command_parser.add_parser(RES_STR['cmd_off'],
-                                           help=RES_STR['cmd_off_help'])
+    parser = cli.create_parser()
+    args = parser.parse_args()
+    if args.command is None:
+        parser.print_help()
+        return 0
+
+    return asyncio.run(cli.exec_command(args, conf))
+
+    """
     blink_parser = command_parser.add_parser(RES_STR['cmd_blink'],
                                              help=RES_STR['cmd_blink_desc'])
-    camera_parser = command_parser.add_parser(RES_STR['cmd_cam'],
-                                              help=RES_STR['cmd_cam_desc'])
-    command_parser.add_parser(RES_STR['cmd_start'],
-                              help=RES_STR['cmd_start_desc'])
-    command_parser.add_parser(RES_STR['cmd_pause'],
-                              help=RES_STR['cmd_pause_desc'])
+    camera_parser = command_parser.add_parser(
+        'cam', help='Overhead Camera Control')
     update_parser = command_parser.add_parser(RES_STR['cmd_update'],
                                               help=RES_STR['cmd_update_desc'])
-    command_parser.add_parser(RES_STR['cmd_manage'],
-                              help=RES_STR['cmd_manage_desc'])
 
     fetch_logs_parser = command_parser.add_parser(
         RES_STR['cmd_fetch_logs'], help=RES_STR['cmd_fetch_logs_desc'])
@@ -45,63 +41,14 @@ def main():
                                    dest='fetch_logs_directory',
                                    help=RES_STR['cmd_fetch_logs_directory'])
 
-    for pars in (on_parser, off_parser, blink_parser, fetch_logs_parser):
-        pars.add_argument(RES_STR['cmd_id'], metavar='N', type=str, nargs='+',
-                          help=RES_STR['cmd_arg_id_help'])
-
-    update_parser.add_argument('--operating-system', '-o',
-                               help=RES_STR['cmd_update_os_desc'],
-                               action='store_true', dest='os_update',
-                               default=False)
-    update_parser.add_argument('usr_path', metavar='PATH', type=str,
-                               nargs=1, help=RES_STR['usr_code_path_desc'])
-
     cam_subparser = camera_parser.add_subparsers(
-        title=RES_STR['cmd_cam_cmd_title'],
-        help=RES_STR['cmd_cam_cmd_help'],
+        title='camera-command',
+        help='Camera Command',
         dest='cam_command'
     )
-    cam_subparser.add_parser(RES_STR['cmd_cam_setup'],
-                             help=RES_STR['cmd_cam_setup_desc'])
-    cam_subparser.add_parser(RES_STR['cmd_cam_preview'],
-                             help=RES_STR['cmd_cam_preview_desc'])
-
-    exec_parser = command_parser.add_parser(
-        RES_STR['cli']['exec']['name'], help=RES_STR['cli']['exec']['help'])
-    exec_parser.add_argument(
-        RES_STR['cli']['exec']['bots']['name'],
-        help=RES_STR['cli']['exec']['bots']['help'],
-        metavar=RES_STR['cli']['exec']['bots']['metavar'],
-        nargs=1
-    )
-    exec_parser.add_argument(
-        RES_STR['cli']['exec']['command']['name'],
-        help=RES_STR['cli']['exec']['command']['help'],
-        metavar=RES_STR['cli']['exec']['command']['metavar'],
-        nargs='+'
-    )
-    exec_parser.add_argument(
-        RES_STR['cli']['exec']['proxy']['name'],
-        help=RES_STR['cli']['exec']['proxy']['help'],
-        action='store_true'
-    )
-
-    install_parser = command_parser.add_parser(
-        RES_STR['cli']['install']['name'],
-        help=RES_STR['cli']['install']['help']
-    )
-    install_parser.add_argument(
-        RES_STR['cli']['install']['bots']['name'],
-        help=RES_STR['cli']['install']['bots']['help'],
-        metavar=RES_STR['cli']['install']['bots']['metavar'],
-        nargs=1
-    )
-    install_parser.add_argument(
-        RES_STR['cli']['install']['packages']['name'],
-        help=RES_STR['cli']['install']['packages']['help'],
-        metavar=RES_STR['cli']['install']['packages']['metavar'],
-        nargs='+'
-    )
+    cam_subparser.add_parser(
+        'info', help='Displays information about the camera stream.')
+    cam_subparser.add_parser('preview', help='Previews the overhead camera.')
 
     charger_parser = command_parser.add_parser(
         RES_STR['cli']['charger']['name'],
@@ -120,6 +67,7 @@ def main():
         return 0
 
     return CommandAction(args).exec()
+    """
 
 
 if __name__ == '__main__':

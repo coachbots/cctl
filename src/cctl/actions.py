@@ -167,13 +167,15 @@ class CommandAction:
                          ','.join([str(bot.identifier) for bot in bots]),
                          target_str)
 
+            async def request(bot):
+                async with CCTLDClient(configuration.get_request_feed()) as cl:
+                    await cl.set_is_on(Coachbot(bot.identifier,
+                                                CoachbotState(None)),
+                                       target_on)
+
             async def helper():
-                for bot in bots:
-                    async with CCTLDClient(configuration.get_request_feed()) \
-                            as client:
-                        await client.set_is_on(Coachbot(bot.identifier,
-                                                        CoachbotState(None)),
-                                               target_on)
+                await asyncio.gather(*(request(bot) for bot in bots))
+
             asyncio.run(helper())
             return 0
 
@@ -344,12 +346,12 @@ class CommandAction:
 
         handlers = {
             RES_STR['cmd_cam']: self._camera_command_handler,
-            RES_STR['cmd_on']: self._on_off_handler,
-            RES_STR['cmd_off']: self._on_off_handler,
+            'on': self._on_off_handler,
+            'off': self._on_off_handler,
             RES_STR['cmd_blink']: self._blink_handler,
             RES_STR['cmd_fetch_logs']: self._fetch_logs_handler,
-            RES_STR['cmd_start']: self._start_pause_handler,
-            RES_STR['cmd_pause']: self._start_pause_handler,
+            'start': self._start_pause_handler,
+            'pause': self._start_pause_handler,
             RES_STR['cmd_update']: self._uploader,
             RES_STR['cli']['exec']['name']: self.run_command_handler,
             RES_STR['cli']['install']['name']: self.install_packages_handler,

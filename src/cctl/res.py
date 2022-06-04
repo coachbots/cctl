@@ -46,8 +46,6 @@ RES_STR = {
                                        'make sure you have root permissions ' +
                                        'for this and ensure v4l2loopback is ' +
                                        'not loaded in the kernel (lsmod).',
-    'cmd_cam': 'cam',
-    'cmd_cam_desc': 'Coachswarm overhead camera control.',
     'cmd_cam_cmd_title': 'camera-command',
     'cmd_cam_cmd_help': 'Camera subcommands',
     'cmd_cam_setup': 'setup',
