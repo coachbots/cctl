@@ -121,15 +121,19 @@ async def update_handler(args: Namespace, conf: Configuration) -> int:
     raise NotImplementedError()
 
 
-@cctl_command_group('cam')
-async def cam_handler(args: Namespace, conf: Configuration) -> int:
-    """Overhead Camera Control."""
-    @cctl_command_group_element('preview')
-    async def preview_handler(args: Namespace, conf: Configuration) -> int:
-        """View the overhead video."""
-        return 0
+@cctl_command('cam.preview')
+async def cam_preview_handler(args: Namespace, conf: Configuration) -> int:
+    pass
 
-    @cctl_command_group_element('info')
-    async def info_handler(args: Namespace, conf: Configuration) -> int:
-        """Get Camera information."""
+
+@cctl_command('cam.info')
+async def cam_info_handler(args: Namespace, conf: Configuration) -> int:
+    async with CCTLDClient(conf.cctld.request_host) as client:
+        cam_info = (await client.get_video_info())['overhead-camera']
+
+    if self._args.cam_command == 'info':
+        print(f"Enabled\t\t{cam_info['enabled']}\n"
+              f"Stream\t\t{cam_info['endpoint']}\n"
+              f"Codec\t\t{cam_info['codec']}\n"
+              f"Description\t{cam_info['description']}")
         return 0
