@@ -9,7 +9,7 @@ Dependencies
 ------------
 
 Before installing **cctl** ensure you have ``ffmpeg``, ``v4l2loopback``,
-``python3.8``, ``pandoc`` and the appropriate ``pip`` version.
+``vlc``, ``python3.8``, ``pandoc`` and the appropriate ``pip`` version.
 
 You also need to have ``arduino-cli`` installed.
 
@@ -30,7 +30,7 @@ On Ubuntu, you can install all of the system dependencies with:
 .. code-block:: bash
 
    sudo apt-get install -y ffmpeg python3.8 v4l2loopback-dkms pandoc \
-       libglib2.0-dev
+       libglib2.0-dev, vlc
    sudo curl -fsSL \
        https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh \
        | BINDIR=/usr/local/bin sh

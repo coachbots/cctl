@@ -20,11 +20,11 @@ def UserInfo(user_info: UserCodeState):
 
     run_str, run_color = \
         ('❔ Unknown', ColorPairs.WARNING_INVERTED) \
-        if (r := user_info.is_running) is None \
-        else (
-            ('🦾 Running', ColorPairs.OK_INVERTED) if r
-            else ('💀 Stopped', ColorPairs.ERROR_INVERTED))
-    version_str = v if (v := user_info.version) is not None else '?.?.?'
+        if (run := user_info.is_running) is None \
+        else (('🦾 Running ', ColorPairs.OK_INVERTED)
+              if run
+              else ('🛑 Stopped', ColorPairs.ERROR_INVERTED))
+    version_str = str(v if (v := user_info.version) is not None else '?.?.?')
     name_str = (n[:MAX_NAME_LEN - 3] + '...' if len(n) > MAX_NAME_LEN
                 else n) \
         if (n := user_info.name) is not None else 'Unknown Name'

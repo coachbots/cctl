@@ -4,6 +4,7 @@
 
 import argparse
 from argparse import ArgumentParser, Namespace
+import asyncio
 from cctl.conf import Configuration
 from cctl.cli import commands
 
@@ -27,14 +28,33 @@ def create_parser() -> ArgumentParser:
     command_parser = parser.add_subparsers(title='command',
                                            help='Command A Robot',
                                            dest='command')
-    for cmd in DECLARED_COMMANDS.values():
-        mp = command_parser.add_parser(cmd.command_name, help=cmd.command_help)
-        for arg in cmd.arguments:
-            mp.add_argument(*arg[0], **arg[1])
+
+    def parser_create(parent_parser: argparse._SubParsersAction,
+                      command_dict: dict):
+        for name, cmd in command_dict.items():
+            if isinstance(cmd, dict):
+                new_parser = parent_parser.add_parser(name)
+                # TODO: This prevents the subcommands being arbitrarily nested.
+                new_parser.add_argument('subcommand')
+                subcommand_parser = new_parser.add_subparsers(title=name)
+                parser_create(subcommand_parser, cmd)
+                continue
+
+            my_parser = parent_parser.add_parser(cmd.command_name,
+                                                 help=cmd.command_help)
+            for arg in cmd.arguments:
+                my_parser.add_argument(*arg[0], **arg[1])
+
+    parser_create(command_parser, DECLARED_COMMANDS)
+
     return parser
 
 
 def exec_command(args: Namespace, conf: Configuration):
     """Executes the CLI command after it has been parsed. Returns the error
     code. Raises KeyError if the command does not exist."""
-    return DECLARED_COMMANDS[args.command].handler(args, conf)
+    command = DECLARED_COMMANDS[args.command]
+    if isinstance(command, dict):
+        # TODO: Does not support nested subcommands.
+        return command[args.subcommand].handler(args, conf)
+    return command.handler(args, conf)

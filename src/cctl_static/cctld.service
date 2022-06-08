@@ -9,7 +9,8 @@ StartLimitIntervalSec=0
 Type=simple
 Restart=always
 RestartSec=1
-User=root
+User=cctld
+Group=cctld
 ExecStart=/usr/local/bin/cctld
 
 [Install]

@@ -8,9 +8,8 @@ from typing import Callable, Dict, Iterable, List, Optional, Any, Tuple
 from argparse import Namespace
 import functools
 from cctl.conf import Configuration
-from cctl.utils.datastructures import Tree
 
-DECLARED_COMMANDS: Dict[str, 'CCTLCommandHandler'] = {}
+DECLARED_COMMANDS: Dict[str, Any] = {}
 
 ArgT = Iterable[Tuple[List[str], Dict[str, Any]]]
 
@@ -26,7 +25,7 @@ class CCTLCommandHandler:
 
 def cctl_command(name: str,
                  helps: Optional[str] = None,
-                 arguments: ArgT = []):
+                 arguments: ArgT = tuple()):
     """A decorator that creates the appropriate argparse subparsers and
     handlers.
 
@@ -43,8 +42,18 @@ def cctl_command(name: str,
         @functools.wraps(function)
         async def wrapper(*args, **kwargs):
             return await function(*args, **kwargs)
-        DECLARED_COMMANDS[name] = CCTLCommandHandler(
-            name,
+
+        subparsers = name.split('.')
+        pointer = DECLARED_COMMANDS
+        while len(subparsers) > 1:
+            parser = subparsers[0]
+            if pointer.get(parser) is None:
+                pointer[parser] = {}
+            subparsers = subparsers[1:]
+            pointer = DECLARED_COMMANDS[parser]
+
+        pointer[subparsers[0]] = CCTLCommandHandler(
+            subparsers[0],
             helps if helps is not None else function.__doc__,
             function,
             arguments

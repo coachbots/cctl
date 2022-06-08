@@ -4,6 +4,49 @@ Configuration
 **cctl** requires some minor manual configuration to be done before you can
 fully use it.
 
+Setting Up The CCTLD User
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**cctld** should not be run as root. Besides being insecure, it will not work.
+We are best off creating a **cctld** user. It will need the **video** and
+**dialout** group permissions so we can do the following:
+
+.. code-block:: bash
+
+   sudo useradd -r -s /bin/false cctld  # Ban it from logging in.
+   sudo adduser cctld video  # Required to communicate with the video stream
+   sudo adduser cctld dialout  # Required to communicate with the arduino
+   sudo adduser cctld bluetooth  # Required to communicate with the bluetooth
+                                 # interfaces.
+
+
+.. warning::
+
+   This assumes that there exists a ``bluetooth`` group with permissions to
+   access the bluetooth interface (default on Ubuntu). If this group does not
+   exist, you must create it and add the D-Bus permissions:
+
+   .. code-block:: bash
+
+      groupadd bluetooth
+      sudo nano /etc/dbus-1/system.d/bluetooth.conf
+
+   Then, in that file, you are to add the following policy:
+
+   .. code-block:: xml
+
+      <policy group="bluetooth">
+        <allow send_destination="org.bluez"/>
+        <allow send_interface="org.bluez.Agent1"/>
+        <allow send_interface="org.bluez.GattCharacteristic1"/>
+        <allow send_interface="org.bluez.GattDescriptor1"/>
+        <allow send_interface="org.freedesktop.DBus.ObjectManager"/>
+        <allow send_interface="org.freedesktop.DBus.Properties"/>
+        <allow send_interface="org.freedesktop.DBus.Properties"/>
+      </policy>
+
+   After you do this, then you can do ``sudo adduser cctld bluetooth``.
+
 Setting up a Proxy User
 ^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -101,21 +144,31 @@ Udev Rules
 
 We must create some new udev rules in order for the daughterboards to create
 correct Linux devices. To do this, you can simply edit
-``/etc/udev/rules.d/72-cctl-daughters.rules`` (create if it doesn't exist) to
+``/etc/udev/rules.d/72-cctl.rules`` (create if it doesn't exist) to
 look like:
 
 .. code-block:: text
 
+   # Create a symlink from the rail arduino to /dev/tty-cctl-arduino
    SUBSYSTEM=="tty" ATTRS{manufacturer}=="Arduino*" \
-   ATTRS{serial}=="<YOUR_SERIAL>" SYMLINK+="cctl-arduino"
+   ATTRS{serial}=="<YOUR_SERIAL>" SYMLINK+="tty-cctl-arduino"
+
+   # Create a symlink from the Piwebcam to /dev/video-cctl-overhead-raw
+   SUBSYSTEM=="video4linux" ENV{ID_MODEL_ENC}=="Piwebcam" \
+   ENV{ID_MODEL}=="Piwebcam" ENV{ID_MODEL_ID}=="0104" \
+   ENV{ID_SERIAL_SHORT}=="00000000be3e8505" ENV{ID_TYPE}=="video" \
+   SYMLINK+="video71" \
+   RUN{program}+="/sbin/modprobe v4l2loopback video_nr=72"
+
+   # Create a processed stream whenever the arduino is connected.
 
 To find the serial number, you can run ``udevadm info -a -n /dev/ttyACM<X>``
 where ``<X>`` is the number that you are certain the Arduino is on.
 
 You can plug out and then plug back in the Arduino daughterboard.
 
-Now that you've done this, you are guaranteed to have ``/dev/cctl-arduino`` as
-a file (as a symlink to  ``/dev/ttyACM*``).
+Now that you've done this, you are guaranteed to have ``/dev/tty-cctl-arduino``
+as a file (as a symlink to  ``/dev/ttyACM*``).
 
 Configuration Files
 ^^^^^^^^^^^^^^^^^^^
