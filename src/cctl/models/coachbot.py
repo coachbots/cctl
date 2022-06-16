@@ -36,6 +36,11 @@ class Coachbot:
         """Returns the mac address of this coachbot's bluetooth module."""
         return COACHBOT_MAC_ADDRESSES[self.identifier]
 
+    @staticmethod
+    def stateless(identifier: int) -> 'Coachbot':
+        """Creates a Coachbot of which the State is not known."""
+        return Coachbot(identifier, CoachbotState(None))
+
 
 @dataclass
 class UserCodeState:

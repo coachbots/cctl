@@ -8,7 +8,8 @@ from reactivex.subject import BehaviorSubject
 
 
 async def wait_until(subject: BehaviorSubject,
-                     predicate: Callable[[Any], bool]) -> None:
+                     predicate: Callable[[Any], bool],
+                     timeout: float = float('inf')) -> None:
     """This function blocks execution until ``predicate`` returns ``True`` on
     the given ``Observable``.
     """
