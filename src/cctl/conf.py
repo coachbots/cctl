@@ -18,6 +18,7 @@ if len(config.read(CONF_PATH)) == 0:
 
 # TODO: Should check for validity of the file before using it.
 
+
 class Configuration:
     class CCTLD:
         @property
