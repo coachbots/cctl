@@ -7,9 +7,8 @@ is buit upon the import of this module."""
 import asyncio
 import json
 import logging
-from typing import Any, Iterable, List, Tuple, Union
+from typing import Any, List, Tuple, Union
 from cctl.models import Coachbot
-from cctl.models.coachbot import CoachbotState
 from cctl.protocols import ipc
 from cctld.ble.errors import BLENotReachableError
 from cctld.coach_commands import CoachCommand, CoachCommandError
