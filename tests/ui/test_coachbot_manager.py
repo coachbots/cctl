@@ -4,12 +4,11 @@ import os
 import sys
 import random
 import math
-from compot.widgets import MainWindow, Column
+from compot.widgets import MainWindow
 
 sys.path.insert(0, os.path.abspath('./src'))
 
 from cctl.models import Coachbot, CoachbotState, UserCodeState
-from cctl.ui.coachbot_line import CoachbotLine
 from cctl.utils.math import Vec2
 from cctl.ui.manager import Manager
 
