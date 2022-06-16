@@ -1,10 +1,17 @@
 PYTHON=python3
+VERSION=$(shell cat src/cctl/__init__.py | grep __version__ \
+		| sed 's/__version__[[:space:]]\+=[[:space:]]\+//g' \
+		| sed "s/'//g")
 
 .PHONY: build manpage docs install uninstall install-docs uninstall-docs \
 	test-feature test-unit test
 
 build:
 	$(PYTHON) -m build
+
+prepare-deb:
+	$(PYTHON) setup.py --command-packages=stdeb.command bdist_deb
+	@echo "Please tweak the values in deb_dist/"
 
 manpage:
 	mkdir -p build
@@ -18,7 +25,8 @@ docs: manpage
 	cd docs && $(MAKE) html
 
 install:
-	$(PYTHON) -m pip install dist/cctl-*.whl --force-reinstall
+	$(PYTHON) -m pip install dist/cctl-$(VERSION)-py3-none-any.whl \
+		--force-reinstall
 
 uninstall:
 	$(PYTHON) -m pip uninstall cctl

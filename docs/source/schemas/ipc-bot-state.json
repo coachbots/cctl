@@ -1,0 +1,49 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "ipc-bot-state.json",
+    "title": "Coachbot State",
+    "description": "Describes the state of the coachbot.",
+    "type": "object",
+    "properties": {
+        "is_on": {
+            "type": "bool",
+            "description": "Whether the coachbot is turned on"
+        },
+        "os_version": {
+            "type": "string",
+            "description": "The coach-os version.",
+            "pattern": "^v([0-9])+\\.[0-9]+\\.[0-9]+$"
+        },
+        "bat_voltage": {
+            "type": "float",
+            "description": "The current voltage of the battery."
+        },
+        "position": {
+            "type": "array",
+            "description": "The current position of the coachbot in meters",
+            "items": {
+                "type": "float"
+            },
+            "minItems": 2,
+            "maxItems": 2
+        },
+        "theta": {
+            "type": "float",
+            "description": "The current angle of the coachbot.",
+            "minimum": "-PI",
+            "maximum": "PI"
+        },
+        "user_code_state": {
+            "type": "object",
+            "description": "The current state of the user code."
+        }
+    },
+    "required": [
+        "is_on",
+        "os_version",
+        "bat_voltage",
+        "position",
+        "theta",
+        "user_code_state"
+    ]
+}

@@ -20,6 +20,14 @@ cctl.api.camera\_ctl module
    :undoc-members:
    :show-inheritance:
 
+cctl.api.cctld module
+---------------------
+
+.. automodule:: cctl.api.cctld
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 cctl.api.configuration module
 -----------------------------
 
@@ -32,14 +40,6 @@ cctl.api.logs module
 --------------------
 
 .. automodule:: cctl.api.logs
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-cctl.api.network module
------------------------
-
-.. automodule:: cctl.api.network
    :members:
    :undoc-members:
    :show-inheritance:

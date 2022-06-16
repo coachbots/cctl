@@ -1,6 +1,22 @@
 API Modules
 -----------
 
+cctl.api.cctld module
+^^^^^^^^^^^^^^^^^^^^^
+
+.. automodule:: cctl.api.cctld
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+cctl.protocols.ipc module
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automodule:: cctl.protocols.ipc
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 cctl.api.bot_ctl module
 ^^^^^^^^^^^^^^^^^^^^^^^
 

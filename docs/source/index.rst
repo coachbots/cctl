@@ -1,22 +1,20 @@
-.. cctl documentation master file, created by
-   sphinx-quickstart on Fri Feb 11 20:37:59 2022.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 **cctl** documentation
 ================================
 
+Welcome to **cctl**'s documentation. **cctl** is a system for interfacing with
+and controlling Coachbots at Northwestern University.
 
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
+   quickstart
    installation
-   configuration
-   usage
+   cli
    api
-   networking
+   cctld-control
+   dev-docs
    modules
 
 

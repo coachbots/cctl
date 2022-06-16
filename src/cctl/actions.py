@@ -2,6 +2,7 @@
 
 """Defines the main class that handles all commands."""
 
+from asyncio.subprocess import create_subprocess_exec
 import sys
 import asyncio
 from typing import Callable, Iterable, Union, List
@@ -9,15 +10,16 @@ import re
 from os import path
 import os
 import logging
+from compot.widgets import ObserverMainWindow
 from argparse import Namespace
-from subprocess import call
-from multiprocessing import Process
-import serial
-import time
-from cctl.netutils import sftp_client
+from reactivex import operators as rxops
+from cctl.api.cctld import CCTLDClient, CCTLDCoachbotStateObservable
+from cctl.models.coachbot import Coachbot, CoachbotState
+from cctl.ui.manager import Manager
+from cctl.utils.net import sftp_client
 
 from cctl.res import ERROR_CODES, RES_STR
-from cctl.api import camera_ctl, bot_ctl, charge_ctl, configuration
+from cctl.api import bot_ctl, configuration
 
 
 def _parse_id(coach_id: str) -> Union[List[int], bool]:
@@ -54,29 +56,29 @@ class CommandAction:
 
     @staticmethod
     def manage_system() -> None:
-        """Boots up the coachbot driver system.
+        """Starts the UI that displays the management information of the
+        coachbots.
 
         Todo:
-            Shouldn't be implemented the way it is. Should be calling a
-            module function.
+            A hack implementation since ``cctl`` isn't fully asyncio ready yet.
         """
-        def _start_ftp_server():
-            call(['./cloud.py', configuration.get_server_interface()],
-                 cwd=configuration.get_server_dir())
 
-        def _start_manager():
-            call(['./manager.py'], cwd=configuration.get_server_dir())
+        async def __helper():
+            data_stream, task = await CCTLDCoachbotStateObservable(
+                configuration.get_state_feed())
 
-        ftp_server = Process(target=_start_ftp_server)
-        coach_manager = Process(target=_start_manager)
-        procs = [ftp_server, coach_manager]
+            try:
+                ObserverMainWindow(
+                    Manager, data_stream.pipe(rxops.map(
+                        lambda sts: [Coachbot(i, st) for i, st
+                                     in enumerate(sts)]))
+                )
+                await task
+            except KeyboardInterrupt as key_int:
+                data_stream.on_error(key_int)
+                task.cancel()
 
-        for proc in procs:
-            proc.start()
-            time.sleep(5)  # FIXME: Really bad
-
-        for proc in procs:
-            proc.join()
+        asyncio.run(__helper())
 
     def __init__(self, args: Namespace):
         self._args = args
@@ -84,47 +86,30 @@ class CommandAction:
     def _camera_command_handler(self) -> int:
         """Handles camera commands.
 
-        Note:
-            This function may exit prematurely using sys.exit if something
-            fails. This is expected behavior.
-
         Returns:
             0 for a successful invokation, -1 otherwise.
         """
-        if self._args.cam_command == RES_STR['cmd_cam_setup']:
-            try:
-                camera_ctl.start_processing_stream()
-            except camera_ctl.CameraError as v_err:
-                if v_err.identifier == camera_ctl.CameraEnum.CAMERA_RAW.value:
-                    logging.error(RES_STR['camera_raw_error'])
-                    return ERROR_CODES['camera_raw_error']
+        # TODO: Unnecessary helper.
+        async def helper():
+            async with CCTLDClient(configuration.get_request_feed()) as client:
+                cam_info = (await client.get_video_info())['overhead-camera']
 
-                if v_err.identifier == \
-                        camera_ctl.CameraEnum.CAMERA_CORRECTED.value:
-                    logging.info(RES_STR['camera_stream_does_not_exist'])
-                    try:
-                        camera_ctl.make_processed_stream()
-                    except camera_ctl.CameraError:
-                        return ERROR_CODES['processed_stream_creating_error']
+            if self._args.cam_command == 'info':
+                print(f"Enabled\t\t{cam_info['enabled']}\n"
+                      f"Stream\t\t{cam_info['endpoint']}\n"
+                      f"Codec\t\t{cam_info['codec']}\n"
+                      f"Description\t{cam_info['description']}")
+                return 0
 
-                    try:
-                        camera_ctl.start_processing_stream()
-                    except camera_ctl.CameraError:
-                        logging.error(RES_STR['unknown_camera_error'])
-                        return ERROR_CODES['unknown_camera_error']
-            except FileExistsError:
-                pass
+            if self._args.cam_command == 'preview':
+                proc = await create_subprocess_exec(
+                    *['ffplay', cam_info['endpoint']])
+                await proc.communicate()
+                return 0
 
-            return 0
-        if self._args.cam_command == RES_STR['cmd_cam_preview']:
-            try:
-                camera_ctl.start_processed_preview()
-            except camera_ctl.CameraError:
-                logging.error(RES_STR['unknown_camera_error'])
-                return ERROR_CODES['unknown_camera_error']
-            return 0
+            return -1
 
-        return -1
+        return asyncio.run(helper())
 
     def _bot_id_handler(
             self,
@@ -153,14 +138,29 @@ class CommandAction:
         def _all_handler() -> int:
             logging.info(RES_STR['bot_all_booting_msg'],
                          target_str)
-            bot_ctl.boot_bots('all', target_on)
+
+            async def helper():
+                async with CCTLDClient(configuration.get_request_feed()) \
+                        as client:
+                    await client.set_is_on('all', target_on)
+            asyncio.run(helper())
             return 0
 
         def _some_handler(bots: Iterable[bot_ctl.Coachbot]) -> int:
             logging.info(RES_STR['bot_booting_many_msg'],
                          ','.join([str(bot.identifier) for bot in bots]),
                          target_str)
-            bot_ctl.boot_bots(bots, target_on)
+
+            async def request(bot):
+                async with CCTLDClient(configuration.get_request_feed()) as cl:
+                    await cl.set_is_on(Coachbot(bot.identifier,
+                                                CoachbotState(None)),
+                                       target_on)
+
+            async def helper():
+                await asyncio.gather(*(request(bot) for bot in bots))
+
+            asyncio.run(helper())
             return 0
 
         return self._bot_id_handler(_all_handler, _some_handler)
@@ -245,11 +245,16 @@ class CommandAction:
 
     def _start_pause_handler(self) -> int:
         target_on = self._args.command == RES_STR['cmd_start']
+
+        async def helper():
+            async with CCTLDClient(configuration.get_request_feed()) as client:
+                print(await client.set_user_code_running('all', target_on))
+
         target_str = RES_STR['cmd_start'] if target_on \
             else RES_STR['cmd_pause']
 
         logging.info(RES_STR['bot_operating_msg'], target_str)
-        bot_ctl.set_user_code_running(target_on)
+        asyncio.run(helper())
         return 0
 
     def _fetch_logs_handler(self):
@@ -292,39 +297,52 @@ class CommandAction:
 
     def charger_on_off_handler(self) -> int:
         """Controls whether the charger should be turned on or off."""
-        state = bool(self._args.state == 'on')
-        try:
-            asyncio.get_event_loop().run_until_complete(
-                charge_ctl.charge_rail_set(state))
-        except serial.SerialException as sex:
-            logging.error(RES_STR['arduino_comm_err'], sex)
-            return ERROR_CODES['daughterboard_comm_issue']
-        except RuntimeError as rex:
-            logging.error(rex)
-            return ERROR_CODES['daughterboard_comm_issue']
+        async def __helper():
+            async with CCTLDClient(configuration.get_request_feed()) as client:
+                await client.set_power_rail_on(self._args.state[0] == 'on')
+
+        asyncio.get_event_loop().run_until_complete(__helper())
         return 0
 
-    def exec(self) -> int:
-        """Parses arguments automatically and handles booting."""
-        def _uploader():
+    def _uploader(self):
+        if self._args.os_update:
+            # TODO: Remove this. Only here due to being useful to do an OS
+            # update. Let cctld manage OS-updates too.
             bot_ctl.upload_code(self._args.usr_path[0],
                                 self._args.os_update)
 
+        with open(self._args.usr_path[0], 'r') as source_f:
+            source = source_f.read()
+
+        async def worker():
+            async with CCTLDClient(configuration.get_request_feed()) as client:
+                res = await asyncio.gather(*(
+                    client.update_user_code(
+                        Coachbot(bot, CoachbotState(None)), source)
+                    for bot in range(100)),
+                    return_exceptions=True)
+            print(res)
+
+        asyncio.run(worker())
+
+    def exec(self) -> int:
+        """Parses arguments automatically and handles booting."""
+
         handlers = {
-            RES_STR['cmd_cam']: self._camera_command_handler,
+            'cam': self._camera_command_handler,
             RES_STR['cmd_on']: self._on_off_handler,
             RES_STR['cmd_off']: self._on_off_handler,
             RES_STR['cmd_blink']: self._blink_handler,
             RES_STR['cmd_fetch_logs']: self._fetch_logs_handler,
             RES_STR['cmd_start']: self._start_pause_handler,
             RES_STR['cmd_pause']: self._start_pause_handler,
-            RES_STR['cmd_update']: _uploader,
+            RES_STR['cmd_update']: self._uploader,
             RES_STR['cli']['exec']['name']: self.run_command_handler,
             RES_STR['cli']['install']['name']: self.install_packages_handler,
             RES_STR['cli']['charger']['name']: self.charger_on_off_handler,
 
             # TODO: make this a member method
-            RES_STR['cmd_manage']: CommandAction.manage_system,
+            'manage': CommandAction.manage_system,
         }
 
         try:

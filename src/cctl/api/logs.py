@@ -9,7 +9,7 @@ from enum import Enum, IntEnum
 from typing import Generator, Iterable, Optional
 from cctl.api import configuration
 from cctl.api.bot_ctl import Coachbot
-from cctl.netutils import read_remote_file
+from cctl.utils.net import read_remote_file
 
 
 class LogLevel(IntEnum):

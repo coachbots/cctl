@@ -1,73 +1,84 @@
 API
 ===
 
-Besides having a command-line interface, **cctl** is also a regular python
-package that you can import like any other. In this document you'll find some
-example usages you might have with **cctl**'s package.
+The API architecture is twofold. In order to facilitate simple data streams as
+well as request-based commands, **cctld** can be interacted with on two fronts
+-- through a request-response HTTP-like system and a ``PUBLISH`` model
+where any API consumer can ``SUBSCRIBE`` to receive state data as soon as
+**cctld** provides it.
+
+Bindings
+--------
+
+The API for **cctl** comes in two levels -- a high-level python package called
+`cctl.api <cctl.api.html>`__ and a low-level request-response based
+language-agnostic API.
+
+The recommended usage is through the high-level package, but, if for whatever
+reason you do decide you need to make a custom binding for the API in your own
+language, it is documented in the `Low-Level API <api_low_level.html>`__
+section.
 
 Quickstart
 ----------
 
-You can simply get started with **cctl**'s API by importing it and using
-functions from it:
-
 .. code-block:: python
    :linenos:
+   :name: Reading Coachbot State
+   :caption: Reading Coachbot State
 
-   import cctl.api.configuration as cctl_conf
-   print(cctl_conf.get_server_dir())  # Returns the server directory.
-   print(cctl_conf.get_server_interface())  # Returns the netinterface
+   #!/usr/bin/env python3.8
 
-   import cctl.api.bot_ctl as cctl_bots
+   import asyncio
+   from cctl.api.bot_ctl import Coachbot
+   from cctl.api.cctld import CCTLDClient
 
-   # Note the implementation has changed mildly for the following operations.
-   # There is a nice class you can now use:
-   my_bot = cctl_bots.Coachbot(1)
+   # This should match the value in /etc/coachswarm/cctld.conf
+   CCTLD_HOST = 'ipc:///var/run/cctld/request_pipe'
 
-   # Blinks the bot!
-   my_bot.blink()
+   async def main():
+       with CCTLDClient(CCTLD_HOST) as client:
+           # Let us read the state of the coachbot.
+           state = await client.read_bot_state(Coachbot(90))
+           print(f'The bot state is currently {state}')
 
-   # Boots up coachbot 1 and blocks execution until it fully boots.
-   my_bot.boot(True)
+           # A None bat_voltage indicates that cctld does not know the bat
+           # voltage (probably because the bot is off).
+           # This goes for all other properties of state.
+           print(f'The bat_voltage is {v}'
+                 if (v := state.bat_voltage) is not None
+                 else 'cctld doesn\'t know the battery voltage of the bot.')
 
-   # Checks if my_bot is alive (although, that is guaranteed after a boot_bot
-   # call)
-   my_bot.is_alive()  # Definitely True!
+    if __name__ == '__main__':
+        asyncio.run(main())
 
-   # This will block forever.
-   my_bot.wait_until_state(False)
+Deep Dive
+---------
 
-   # Pretending we didn't make that bad call,
-   my_bot.boot(False)
+If you would like to take a deeper dive into the operation of the **cctl** API
+interface, please take a look at the following documentation.
 
-   # Redundant because boot(False) guarantees this.
-   my_bot.wait_until_state(False)
+I would recommend starting out with the `high-level API
+<api_high_level.html>`__ as that is what is primarily intended to be used.
 
-   # Also, you can build a Coachbot from an IP address:
-   my_other_bot = cctl_bots.Coachbot.from_ip_address('192.168.1.24')
+For exact information on the protocols and standards used, please take a look
+at the `API Protocol <api_protocol.html>`__ section.
 
-   # Let's get its address
-   my_other_bot.address  # -> 192.168.1.24
+The `Low-Level API <api_low_level.html>`__ section will attempt to introduce
+you to a method through which you can interact with **cctld** in any language
+you like.
 
-   # Let's boot two bots:
-   cctl_bots.boot_bots([my_bot, my_other_bot], True)
+.. toctree::
 
-   # Both are guaranteed to be booted and network-reachable.
-   cctl_bots.get_alives()  # Returns [Coachbot(1), Coachbot(21)]
+   api_high_level
+   api_protocol
+   api_low_level
 
-   # Uploads the user code without replacing the operating system.
-   cctl_bots.upload_code('/home/me/my_usr_code.py', False)
-   cctl_bots.set_user_code_running(True)  # Starts user code
-
-   # Let's let that user code play for a while.
-   sleep(5)
-
-   cctl_bots.set_user_code_running(False)  # Pauses user code
 
 API Modules
 -----------
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 6
 
    api_modules

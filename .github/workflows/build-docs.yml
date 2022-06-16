@@ -1,0 +1,49 @@
+name: Build Dev Docs
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  build:
+    name: Build Docs
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Git Repo
+        uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+          cache: 'pip'
+
+      - name: Install System Deps
+        run: sudo apt-get -y install pandoc graphviz
+
+      - name: Install Deps
+        run: pip install -r requirements.txt
+
+      - name: Build docs
+        run: make docs
+
+      - name: Copy docs to server
+        shell: bash
+        env:
+          HOST: ${{ secrets.HOST }}
+          USER: ${{ secrets.USERNAME }}
+          KEY: ${{ secrets.KEY }}
+        run: |
+          tmpfile=$(mktemp)
+          chmod 600 $tmpfile
+          echo "$KEY" > $tmpfile
+
+          ssh -i ${tmpfile} -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null "$USER@$HOST" \
+            'rm -rf /var/data/static/coach-os-docs-dev/*'
+          scp -i ${tmpfile} -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null -r docs/build/html/* \
+            $USER@$HOST:/var/data/static/cctl-docs-dev
+
