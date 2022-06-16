@@ -4,9 +4,7 @@
 
 import argparse
 from argparse import ArgumentParser, Namespace
-import asyncio
 from cctl.conf import Configuration
-from cctl.cli import commands
 
 __author__ = 'Marko Vejnovic <contact@markovejnovic.com>'
 __copyright__ = 'Copyright 2022, Northwestern University'
