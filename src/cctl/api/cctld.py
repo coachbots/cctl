@@ -15,7 +15,7 @@ __status__ = 'Development'
 
 import asyncio
 import json
-from typing import Dict, Tuple, Union
+from typing import Dict, Iterable, Tuple, Union
 from typing_extensions import Literal
 import reactivex as rx
 import zmq
@@ -24,6 +24,7 @@ import zmq.asyncio
 from cctl.models import Coachbot
 from cctl.models.coachbot import CoachbotState, Signal
 from cctl.protocols import ipc
+from cctl.utils.color import rgb_to_hex
 
 CoachbotSelectorT = Union[Coachbot, Literal['all']]
 
@@ -121,6 +122,36 @@ class CCTLDClient:
                 endpoint=endpoint(bot)
             ))
             return return_builder(response.body)
+
+    async def set_led_color(
+        self,
+        bot: CoachbotSelectorT,
+        color: Union[str, Tuple[int, int, int]]
+    ) -> None:
+        """Sets the color of the LED on the target coachbot.
+
+        Parameters:
+            bot (Coachbot|str): The target coachbot. If "all", then selects all
+            coachbots.
+            color (3-element | str): The RGB value (0-255) of the robot. If
+            string, then interpreted as a hex value
+        """
+        selector_map = {
+            Coachbot: {
+                'endpoint': lambda bot: f'/bots/{bot.identifier}/led/color'
+            },
+            str: {'endpoint': lambda _: '/bots/led/color'}
+        }
+        endpoint = selector_map[type(bot)]['endpoint'](bot)
+        with _CCTLDClientRequest(self._ctx, self._path) as req:
+            response = await req.request(ipc.Request(
+                method='update',
+                endpoint=endpoint,
+                body=(color if isinstance(color, str)
+                      else rgb_to_hex(color))
+            ))
+            if response.result_code != ipc.ResultCode.OK:
+                raise CCTLDRespInvalidState(response.body)
 
     async def set_is_on(self, bot: CoachbotSelectorT, state: bool) -> None:
         """This function attempts to turn on a coachbot.

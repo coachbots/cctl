@@ -7,9 +7,8 @@ is buit upon the import of this module."""
 import asyncio
 import json
 import logging
-from typing import Any, Iterable, List, Tuple, Union
+from typing import Any, List, Tuple, Union
 from cctl.models import Coachbot
-from cctl.models.coachbot import CoachbotState
 from cctl.protocols import ipc
 from cctld.ble.errors import BLENotReachableError
 from cctld.coach_commands import CoachCommand, CoachCommandError
@@ -17,6 +16,7 @@ from cctld.daughters import arduino
 from cctld.models.app_state import AppState
 from cctld.requests.handler import handler
 from cctld.utils import asyncio as uasyncio
+from cctl.utils.color import hex_to_rgb
 from cctld.utils.reactive import wait_until
 
 
@@ -271,6 +271,45 @@ async def update_bot_user_code(app_state: AppState, request: ipc.Request,
     except CoachCommandError as c_err:
         return ipc.Response(ipc.ResultCode.INTERNAL_SERVER_ERROR,
                             str(c_err))
+    return ipc.Response(ipc.ResultCode.OK)
+
+
+@handler(r'^/bots/([0-9]+)/led/color/?$', 'update')
+async def update_bot_led_color(app_state: AppState, request: ipc.Request,
+                               endpoint_groups) -> ipc.Response:
+    """Updates the BOT LED color."""
+    ident = int(endpoint_groups[0])
+    color = request.body  # TODO: Convert to RGB tuple.
+    current_state = app_state.coachbot_states.value[ident]
+
+    if not current_state.is_on:
+        return ipc.Response(ipc.ResultCode.STATE_CONFLICT)
+
+    async with CoachCommand(
+        Coachbot(ident, current_state).ip_address,
+            app_state.config.coach_client.command_port) as command:
+        await command.set_led_color(hex_to_rgb(color))
+
+    return ipc.Response(ipc.ResultCode.OK)
+
+
+@handler(r'^/bots/led/color/?$', 'update')
+async def update_bots_led_color(app_state: AppState, request: ipc.Request,
+                                _) -> ipc.Response:
+    """Updates the bots LED color on all turned on bots."""
+    on_bots = [Coachbot(i, state) for i, state
+               in enumerate(app_state.coachbot_states.value) if state.is_on]
+
+    color = request.body  # TODO: Convert to RGB tuple.
+
+    async def set_bot_color(address: str):
+        async with CoachCommand(
+                address,
+                app_state.config.coach_client.command_port) as command:
+            await command.set_led_color(hex_to_rgb(color))
+
+    await asyncio.gather(*[set_bot_color(bot.ip_address) for bot in on_bots])
+
     return ipc.Response(ipc.ResultCode.OK)
 
 

@@ -187,3 +187,30 @@ async def charger_off_handler(args: Namespace, conf: Configuration) -> int:
             print(f'Could not change the charger state. The error is {ex}',
                   file=sys.stderr)
             return -1
+
+
+@cctl_command(
+    'led',
+    arguments=[
+        ARGUMENT_ID,
+        (['--color', '-c'], {
+            'dest': 'color',
+            'help': 'Customize the color. Must be a HEX string (#ff0000)',
+            'action': 'store', 'default': '#ff0000'
+        })
+    ]
+)
+async def led_handler(args: Namespace, conf: Configuration) -> int:
+    """Sets the color of the LED."""
+    targets = _parse_arg_id(args.id)
+    color_str = str(args.color)
+
+    async with CCTLDClient(conf.cctld.request_host) as client:
+        if targets == 'all':
+            await client.set_led_color('all', color_str)
+            return 0
+        await asyncio.gather(*(
+            client.set_led_color(Coachbot.stateless(bot), color_str)
+            for bot in targets
+        ))
+        return 0
