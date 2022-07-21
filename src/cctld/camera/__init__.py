@@ -3,7 +3,8 @@
 import asyncio
 from ctypes import ArgumentError
 import logging
-from asyncio.subprocess import create_subprocess_exec, Process, DEVNULL, create_subprocess_shell
+from asyncio.subprocess import create_subprocess_exec, Process, DEVNULL, \
+    create_subprocess_shell
 from subprocess import PIPE
 from typing import Dict, Optional
 from cctld.utils.asyncio import process_running
