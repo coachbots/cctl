@@ -2,8 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """This module exposes programming and control of the Arduino daughterboard.
-Upon importing this module, it will check whether the Arduino needs any
-updates, and automatically as required.
+Upon importing this module, it will check whether the Arduino needs any updates, and automatically as required.
 """
 
 import asyncio
@@ -24,7 +23,7 @@ __author__ = 'Marko Vejnovic <contact@markovejnovic.com>'
 __copyright__ = 'Copyright 2022, Northwestern University'
 __credits__ = ['Marko Vejnovic', 'Lin Liu', 'Billie Strong']
 __license__ = 'Proprietary'
-__version__ = '1.0.0'
+__version__ = '1.1.1'
 __maintainer__ = 'Marko Vejnovic'
 __email__ = 'contact@markovejnovic.com'
 __status__ = 'Development'
@@ -69,10 +68,12 @@ async def __upload_arduino_script(arduino: ArduinoInfo) -> None:
             stdout, stderr = await proc.communicate()
 
             if proc.returncode != 0:
-                raise RuntimeError(
+                error = RuntimeError(
                     'Could not upload the Arduino script. '
                     'The error-code was %d and stderr: %r' %
                     (proc.returncode or 0, stderr))
+                logging.getLogger('daughters.arduino').exception(error)
+                raise error
 
             logging.debug('Successfully uploaded the Arduino script: %r.',
                           stdout.decode())
@@ -98,6 +99,7 @@ async def query_version(arduino: ArduinoInfo) -> str:
                 # Last characters are \r\n. Trim those.
                 return ser.readline()[:-2].decode('ascii')
         except SerialException as serr:
+            logging.getLogger('daughters.arduino').exception(serr)
             raise ArduinoError from serr
 
     return await __helper()
@@ -129,5 +131,6 @@ async def charge_rail_set(arduino: ArduinoInfo, power: bool) -> None:
                 ser.write(b'A' if power else b'D')
             await asyncio.sleep(10e-3)  # Relay delay is 10ms
         except SerialException as serr:
+            logging.getLogger('daughters.arduino').exception(serr)
             raise ArduinoError from serr
     await __helper()
