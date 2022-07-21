@@ -17,6 +17,7 @@ from cctld.requests.handler import handler
 from cctl.utils.color import hex_to_rgb
 from cctld.utils.reactive import wait_until
 
+
 @handler(r'^/bots/?$', 'read')
 async def read_bots(app_state: AppState, _, __) -> ipc.Response:
     """Returns very basic information about the coachbots."""

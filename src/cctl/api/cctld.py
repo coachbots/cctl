@@ -116,15 +116,12 @@ class CCTLDClient:
         with _CCTLDClientRequest(self._ctx, self._path) as req:
             response = await req.request(ipc.Request(
                 method='read',
-                endpoint=f'/bots'
+                endpoint='/bots',
             ))
             if response.result_code != ipc.ResultCode.OK:
                 raise CCTLDRespInvalidState('Invalid result code from cctld.')
-            return [
-                CoachbotState.from_dict(state) for state in
-                    json.loads(response.body)
-            ]
-
+            return [CoachbotState.from_dict(state) for state in
+                    json.loads(response.body)]
 
     async def read_state(self, bot: Coachbot) -> CoachbotState:
         """This function returns the latest bot state according to ``cctld``.
