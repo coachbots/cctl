@@ -250,7 +250,7 @@ async def start_ipc_signal_forward_server(app_state: AppState) -> None:
         sock.send_json(signal.to_dict())
 
     def close():
-        logging.getLogger('serverssignalforward').info(
+        logging.getLogger('servers.signalforward').info(
             'Closing IPC Signal Forward Server.')
         sock.close()
 

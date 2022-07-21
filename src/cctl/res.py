@@ -46,6 +46,25 @@ RES_STR = {
                                        'make sure you have root permissions ' +
                                        'for this and ensure v4l2loopback is ' +
                                        'not loaded in the kernel (lsmod).',
+    'cmd_cam_cmd_title': 'camera-command',
+    'cmd_cam_cmd_help': 'Camera subcommands',
+    'cmd_cam_setup': 'setup',
+    'cmd_cam_setup_desc': 'Setup the coachbot overhead video stream. This ' +
+                          'will setup a loopback device (requires root) as ' +
+                          'well as lens correction.',
+    'cmd_cam_preview': 'preview',
+    'cmd_cam_preview_desc': 'Opens a preview window of the corrected video.',
+    'camera_raw_error': 'Could not open the raw video. Make sure the camera ' +
+                        'plugged in.',
+    'camera_stream_does_not_exist': 'Camera stream does not exist. ' +
+                                    'Creating.',
+    'cam_modprobe_permission': 'Insufficient permissions. You are now asked ' +
+                               'to run the\n%s\ncommand as root.',
+    'v4l2loopback_already_loaded': 'v4l2loopback is already loaded. Please ' +
+                                   'rmmod v4l2loopback (will remove all ' +
+                                   'loopback video streams).',
+    'running_ffmpeg': 'Running ffmpeg as:\n%s\nYou can now view the stream ' +
+                      'at %s.',
     'invalid_bot_id_exception': 'Invalid Bot ID. Valid ids are integers or ' +
                                 'the string \'all\'.',
     'invalid_interface_exception': 'Invalid Interface Provided.',
