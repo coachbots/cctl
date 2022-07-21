@@ -35,17 +35,14 @@ async def on_handle(args: Namespace, config: Configuration) -> int:
     targets = _parse_arg_id(args.id)
 
     async with CCTLDClient(config.cctld.request_host) as client:
-        if targets == 'all':
-            for bot in (Coachbot(i, state) for i, state in
-                    enumerate(await client.read_all_states())):
-                if not bot.state.is_on:
-                    await client.set_is_on(bot, True)
-            return 0
+        target_bots = [bot for bot in (Coachbot(i, state) for i, state in
+                       enumerate(await client.read_all_states()))
+                       if not bot.state.is_on] \
+                if targets == 'all' \
+                else [Coachbot.stateless(bot) for bot in targets]
 
         await asyncio.gather(*(
-            client.set_is_on(Coachbot.stateless(bot), True)
-            for bot in targets
-        ))
+            client.set_is_on(bot, True) for bot in target_bots))
         return 0
 
 
@@ -55,17 +52,14 @@ async def off_handle(args: Namespace, config: Configuration) -> int:
     targets = _parse_arg_id(args.id)
 
     async with CCTLDClient(config.cctld.request_host) as client:
-        if targets == 'all':
-            for bot in (Coachbot(i, state) for i, state in
-                    enumerate(await client.read_all_states())):
-                if not bot.state.is_on:
-                    await client.set_is_on(bot, False)
-            return 0
+        target_bots = [bot for bot in (Coachbot(i, state) for i, state in
+                       enumerate(await client.read_all_states()))
+                       if bot.state.is_on] \
+                if targets == 'all' \
+                else [Coachbot.stateless(bot) for bot in targets]
 
         await asyncio.gather(*(
-            client.set_is_on(Coachbot.stateless(bot), False)
-            for bot in targets
-        ))
+            client.set_is_on(bot, False) for bot in target_bots))
         return 0
 
 
@@ -75,16 +69,13 @@ async def start_handle(args: Namespace, config: Configuration) -> int:
     targets = _parse_arg_id(args.id)
 
     async with CCTLDClient(config.cctld.request_host) as client:
-        if targets == 'all':
-            for bot in (Coachbot(i, state) for i, state in
-                    enumerate(await client.read_all_states())):
-                await client.set_user_code_running(bot, True)
-            return 0
+        target_bots = [bot for bot in (Coachbot(i, state) for i, state in
+                       enumerate(await client.read_all_states()))] \
+                if targets == 'all' \
+                else [Coachbot.stateless(bot) for bot in targets]
 
         await asyncio.gather(*(
-            client.set_user_code_running(Coachbot.stateless(bot), True)
-            for bot in targets
-        ))
+            client.set_user_code_running(bot, True) for bot in target_bots))
         return 0
 
 
@@ -94,16 +85,13 @@ async def pause_handle(args: Namespace, config: Configuration) -> int:
     targets = _parse_arg_id(args.id)
 
     async with CCTLDClient(config.cctld.request_host) as client:
-        if targets == 'all':
-            for bot in (Coachbot(i, state) for i, state in
-                    enumerate(await client.read_all_states())):
-                await client.set_user_code_running(bot, True)
-            return 0
+        target_bots = [bot for bot in (Coachbot(i, state) for i, state in
+                       enumerate(await client.read_all_states()))] \
+                if targets == 'all' \
+                else [Coachbot.stateless(bot) for bot in targets]
 
         await asyncio.gather(*(
-            client.set_user_code_running(Coachbot.stateless(bot), False)
-            for bot in targets
-        ))
+            client.set_user_code_running(bot, False) for bot in target_bots))
         return 0
 
 
@@ -221,16 +209,13 @@ async def led_handler(args: Namespace, conf: Configuration) -> int:
 
     try:
         async with CCTLDClient(conf.cctld.request_host) as client:
-            if targets == 'all':
-                for bot in (Coachbot(i, state) for i, state in
-                        enumerate(await client.read_all_states())):
-                    await client.set_led_color(bot, color_str)
-                return 0
+            target_bots = [bot for bot in (Coachbot(i, state) for i, state in
+                           enumerate(await client.read_all_states()))] \
+                    if targets == 'all' \
+                    else [Coachbot.stateless(bot) for bot in targets]
 
             await asyncio.gather(*(
-                client.set_led_color(Coachbot.stateless(bot), color_str)
-                for bot in targets
-            ))
+                client.set_led_color(bot, color_str) for bot in target_bots))
             return 0
     except CCTLDRespInvalidState as err_state:
         print(f'Error setting LED: {err_state}', file=sys.stderr)
