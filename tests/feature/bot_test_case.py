@@ -4,7 +4,7 @@
 This module holds the base class used for Bot feature testing.
 """
 
-from typing import Generator, Iterable, List
+from typing import Generator
 import unittest
 import random
 import os
