@@ -1,4 +1,6 @@
-PYTHON=python3
+PYTHON_VER=$(shell cat setup.py | grep python_requires | tr -d ", '" \
+		   | cut -f2- -d '=' | tr -d '>=')
+PYTHON=$(shell ./scripts/find-python-version.sh $(PYTHON_VER))
 VERSION=$(shell cat src/cctl/__init__.py | grep __version__ \
 		| sed 's/__version__[[:space:]]\+=[[:space:]]\+//g' \
 		| sed "s/'//g")
