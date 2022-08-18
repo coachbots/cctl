@@ -13,7 +13,7 @@ install it.
 To get started, make sure you have
 
 ```bash
-sudo apt-get install python3.6 python ffmpeg pandoc v4l2loopback-dkms
+sudo apt-get install python3.8 python ffmpeg pandoc v4l2loopback-dkms
 ```
 
 ### Installation
