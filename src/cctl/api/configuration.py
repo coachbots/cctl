@@ -6,7 +6,6 @@ Singleton module containing configuration values.
 
 import sys
 from os import makedirs, path
-from typing import Tuple
 import logging
 from configparser import ConfigParser
 
@@ -38,10 +37,6 @@ mandatory_keys = {
         'socks5_proxy_user',
         'pi_password'
     ],
-    'camera': [
-        'raw_dev_name',
-        'processed_dev_name'
-    ],
     'logs': [
         'syslog_path',
         'legacy_log_file_path'
@@ -52,6 +47,7 @@ mandatory_keys = {
     ]
 }
 
+# TODO: These should be replaced with a copy from cctl_static/cctl.conf
 default_values = {
     'server': {
         'interface': 'enp60s0',
@@ -72,14 +68,6 @@ default_values = {
         'pi_password': 'pi'  # TODO: This is so insecure. Problem is, there is
                              # no dedicated linux user running on the
                              # coachbots.
-    },
-    'camera': {
-        'raw_dev_name': 'Piwebcam: UVC Camera',
-        'processed_dev_name': 'Coachcam: Stream_Processed',
-        'k1': -0.22,
-        'k2': -0.022,
-        'cx': 0.52,
-        'cy': 0.5
     },
     'logs': {
         'syslog_path': '/var/log/syslog',
@@ -152,36 +140,6 @@ def get_coachswarm_conf_path():
         The coachswarm.conf filepath
     """
     return config['coachswarm']['conf_path']
-
-
-def get_camera_device_name() -> str:
-    """
-    Returns:
-        The camera device name. This name is the name of the raw video stream
-        recording the coachbots.
-    """
-    return config['camera']['raw_dev_name']
-
-
-def get_processed_video_device_name() -> str:
-    """
-    Returns:
-        The processed (ie. lens-corrected) video device name.
-    """
-    return config['camera']['processed_dev_name']
-
-
-def get_camera_lens_correction_factors() -> Tuple[float, float, float, float]:
-    """
-    Returns:
-        The camera correction factors in the format (k1, k2, cx, cy)
-    """
-    return (
-        config.getfloat('camera', 'k1'),
-        config.getfloat('camera', 'k2'),
-        config.getfloat('camera', 'cx'),
-        config.getfloat('camera', 'cy')
-    )
 
 
 def get_syslog_path() -> str:
