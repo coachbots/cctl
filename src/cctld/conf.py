@@ -13,6 +13,7 @@ __status__ = 'Development'
 
 from configparser import ConfigParser, NoOptionError
 import logging
+import os
 import sys
 from typing import List, Optional
 
@@ -38,7 +39,7 @@ class Config:
         @property
         def workdir(self) -> str:
             """Returns the working directory of cctld."""
-            return config.get('general', 'workdir')
+            return os.path.abspath(config.get('general', 'workdir'))
 
     class CoachClient:
         """Returns the configurations under the ``coach_client`` header."""
