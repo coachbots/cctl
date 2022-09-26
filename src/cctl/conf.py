@@ -7,9 +7,12 @@ import logging
 import sys
 from configparser import ConfigParser
 
+
 CONF_PATH = os.path.expanduser('~/.config/coachswarm/cctl.conf')
 
+
 config = ConfigParser()
+
 
 if len(config.read(CONF_PATH)) == 0:
     logging.error('Could not read %s. Please ensure it exists.', CONF_PATH)
@@ -17,6 +20,7 @@ if len(config.read(CONF_PATH)) == 0:
     sys.exit(-4)
 
 # TODO: Should check for validity of the file before using it.
+
 
 class Configuration:
     class CCTLD:
