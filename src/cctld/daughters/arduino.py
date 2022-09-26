@@ -26,7 +26,7 @@ __author__ = 'Marko Vejnovic <contact@markovejnovic.com>'
 __copyright__ = 'Copyright 2022, Northwestern University'
 __credits__ = ['Marko Vejnovic', 'Lin Liu', 'Billie Strong']
 __license__ = 'Proprietary'
-__version__ = '1.0.0'
+__version__ = '1.1.2'
 __maintainer__ = 'Marko Vejnovic'
 __email__ = 'contact@markovejnovic.com'
 __status__ = 'Development'
@@ -98,8 +98,9 @@ class ArduinoInfo:
         Raises:
             SerialException: Upon a serial communication error.
             OSError: If the specified path to the Arduino could not be opened.
+            RuntimeError: All other exceptions.
         """
-        if force or self.query_version() != cctl.__version__:
+        if force or await self.query_version() != cctl.__version__:
             await self.__upload_arduino_script()
 
     async def query_version(self) -> str:

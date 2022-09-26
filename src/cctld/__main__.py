@@ -68,17 +68,18 @@ async def __main(config: Config):
 
     try:
         await app_state.arduino_daughter.update(force=False)
-    except (SerialException, OSError) as ex:
+    except (SerialException, OSError, RuntimeError) as ex:
         logging.getLogger('arduino').error(
             'Could not communicate with the Arduino. Continuing without the '
-            'Arduino. The error was:')
-        logging.getLogger('arduino').exception(ex)
+            'Arduino.')
 
     try:
         await app_state.camera_stream.start_stream()
     except RuntimeError:
         logging.getLogger('camera').error(
             'Could not start camera stream. No camera support is available.')
+
+    logging.info('Initialization Done.')
 
     running_servers = asyncio.gather(
         servers.start_status_server(app_state),
