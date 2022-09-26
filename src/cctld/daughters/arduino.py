@@ -10,6 +10,8 @@ import asyncio
 import logging
 
 from dataclasses import dataclass
+import os
+from typing import Dict
 
 try:
     import importlib.resources as pkg_resources
@@ -40,6 +42,14 @@ class ArduinoInfo:
     conf_dir: str
     lock: asyncio.Lock = asyncio.Lock()
 
+    def __mk_env(self) -> Dict[str, str]:
+        return {
+            'ARDUINO_DIRECTORIES_DATA': self.conf_dir,
+            'ARDUINO_DIRECTORIES_DOWNLOADS': os.path.join(self.conf_dir,
+                                                          'staging'),
+            'ARDUINO_DIRECTORIES_USER': os.path.join(self.conf_dir, 'user')
+        }
+
     async def __upload_arduino_script(self) -> None:
         """Uploads the static/arduino-daughter.ino script. Internal use only.
         This function automatically compiles it as required.
@@ -60,7 +70,8 @@ class ArduinoInfo:
                     self.program_executable, operation, *flags,
                     str(script_path),
                     stdout=asyncio.subprocess.PIPE,
-                    stderr=asyncio.subprocess.PIPE)
+                    stderr=asyncio.subprocess.PIPE,
+                    env=self.__mk_env())
 
                 stdout, stderr = await proc.communicate()
 
@@ -87,10 +98,8 @@ class ArduinoInfo:
         Raises:
             SerialException: Upon a serial communication error.
         """
-        if not force and await self.query_version() == cctl.__version__:
-            return
-
-        await self.__upload_arduino_script()
+        if force or self.query_version() != cctl.__version__:
+            await self.__upload_arduino_script()
 
     async def query_version(self) -> str:
         """Queries the current version loaded on the arduino daughterboard.
