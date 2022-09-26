@@ -68,11 +68,11 @@ async def __main(config: Config):
 
     try:
         await app_state.arduino_daughter.update(force=False)
-    except SerialException as s_ex:
+    except (SerialException, OSError) as ex:
         logging.getLogger('arduino').error(
             'Could not communicate with the Arduino. Continuing without the '
             'Arduino. The error was:')
-        logging.getLogger('arduino').exception(s_ex)
+        logging.getLogger('arduino').exception(ex)
 
     try:
         await app_state.camera_stream.start_stream()

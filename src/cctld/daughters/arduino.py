@@ -97,6 +97,7 @@ class ArduinoInfo:
 
         Raises:
             SerialException: Upon a serial communication error.
+            OSError: If the specified path to the Arduino could not be opened.
         """
         if force or self.query_version() != cctl.__version__:
             await self.__upload_arduino_script()
