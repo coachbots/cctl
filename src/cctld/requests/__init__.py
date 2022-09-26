@@ -8,11 +8,12 @@ import asyncio
 import json
 import logging
 from typing import Any, List, Tuple, Union
+
+from serial import SerialException
 from cctl.models import Coachbot
 from cctl.protocols import ipc
 from cctld.ble.errors import BLENotReachableError
 from cctld.coach_commands import CoachCommand, CoachCommandError
-from cctld.daughters import arduino
 from cctld.models.app_state import AppState
 from cctld.requests.handler import handler
 from cctld.utils.reactive import wait_until
@@ -282,20 +283,20 @@ async def i_am_a_teapot(*args, **kwargs):
 async def create_power_rail(app_state: AppState, *args, **kwargs):
     """Starts the power rail on."""
     try:
-        await arduino.charge_rail_set(app_state.arduino_daughter, True)
+        await app_state.arduino_daughter.charge_rail_set(True)
         return ipc.Response(ipc.ResultCode.OK)
-    except arduino.ArduinoError as aerr:
-        return ipc.Response(ipc.ResultCode.INTERNAL_SERVER_ERROR, str(aerr))
+    except SerialException as s_ex:
+        return ipc.Response(ipc.ResultCode.INTERNAL_SERVER_ERROR, str(s_ex))
 
 
 @handler(r'^/rail/is-on/?$', 'delete')
 async def delete_power_rail(app_state: AppState, *args, **kwargs):
     """Starts the power rail on."""
     try:
-        await arduino.charge_rail_set(app_state.arduino_daughter, False)
+        await app_state.arduino_daughter.charge_rail_set(False)
         return ipc.Response(ipc.ResultCode.OK)
-    except arduino.ArduinoError as aerr:
-        return ipc.Response(ipc.ResultCode.INTERNAL_SERVER_ERROR, str(aerr))
+    except SerialException as s_ex:
+        return ipc.Response(ipc.ResultCode.INTERNAL_SERVER_ERROR, str(s_ex))
 
 
 @handler(r'^/config/?$', 'read')

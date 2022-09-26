@@ -7,11 +7,11 @@ import logging
 import sys
 import os
 from reactivex.subject.subject import Subject
+from serial import SerialException
 
 from cctl.models.coachbot import Coachbot, CoachbotState
 from cctld import camera, daemon, servers
 from cctld.ble import BleManager
-from cctld.daughters import arduino
 from cctld.daughters.arduino import ArduinoInfo
 from cctld.conf import Config
 from cctld.models import AppState
@@ -59,19 +59,19 @@ async def __main(config: Config):
             config.arduino.executable,
             config.arduino.serial,
             config.arduino.baud_rate,
-            config.arduino.board_type,
-            asyncio.Lock()
+            config.arduino.board_type
         ),
         camera_stream=camera.ProcessingStream(config),
         ble_manager=BleManager(config.bluetooth.interfaces)
     )
 
     try:
-        await arduino.update(app_state.arduino_daughter, force=False)
-    except RuntimeError:
+        await app_state.arduino_daughter.update(force=False)
+    except SerialException as s_ex:
         logging.getLogger('arduino').error(
-            'Could not reprogram the Arduino. Continuing with a version '
-            'mismatch.')
+            'Could not communicate with the Arduino. Continuing without the '
+            'Arduino. The error was:')
+        logging.getLogger('arduino').exception(s_ex)
 
     try:
         await app_state.camera_stream.start_stream()
