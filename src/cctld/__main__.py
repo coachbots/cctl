@@ -68,7 +68,7 @@ async def __main(config: Config):
 
     try:
         await app_state.arduino_daughter.update(force=False)
-    except (SerialException, OSError, RuntimeError) as ex:
+    except (SerialException, OSError, RuntimeError):
         logging.getLogger('arduino').error(
             'Could not communicate with the Arduino. Continuing without the '
             'Arduino.')
