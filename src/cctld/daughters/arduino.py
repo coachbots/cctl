@@ -37,6 +37,7 @@ class ArduinoInfo:
     device_file: str
     baud_rate: int
     board_type: str
+    conf_dir: str
     lock: asyncio.Lock = asyncio.Lock()
 
     async def __upload_arduino_script(self) -> None:
@@ -108,7 +109,7 @@ class ArduinoInfo:
                 ser.reset_input_buffer()
                 await asyncio.sleep(1e-1)
                 # Last characters are \r\n. Trim those.
-                return ser.readline()[:-2].decode('ascii')
+                return ser.readline().decode('ascii').rstrip()
 
         return await __helper()
 

@@ -59,7 +59,8 @@ async def __main(config: Config):
             config.arduino.executable,
             config.arduino.serial,
             config.arduino.baud_rate,
-            config.arduino.board_type
+            config.arduino.board_type,
+            os.path.join(config.general.workdir, 'arduino')
         ),
         camera_stream=camera.ProcessingStream(config),
         ble_manager=BleManager(config.bluetooth.interfaces)
