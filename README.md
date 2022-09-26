@@ -13,7 +13,7 @@ install it.
 To get started, make sure you have
 
 ```bash
-sudo apt-get install python3.6 python ffmpeg pandoc v4l2loopback-dkms
+sudo apt-get install python3.8 python ffmpeg pandoc v4l2loopback-dkms
 ```
 
 ### Installation
@@ -88,3 +88,12 @@ sudo make install-docs
 
 Then you can open the docs with your browser in
 [/usr/share/doc/cctl/index.html](file:///usr/share/doc/cctl/index.html).
+
+Prebuilt documentation is available here:
+
+[coach-os-docs](https://st.iris.markovejnovic.com/coach-os-docs/index.html)
+
+[cctl-docs](https://st.iris.markovejnovic.com/cctl-docs/index.html)
+
+[Coachbot Handbook](https://docs.google.com/document/d/1Kd5gWVj3HDt77QHQix5gH5CfSBZLwaTMpmtrRFf8U_U/edit)
+
