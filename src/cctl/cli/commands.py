@@ -45,7 +45,7 @@ async def on_handle(args: Namespace, config: Configuration) -> int:
         return 0
 
 
-@cctl_command('off')
+@cctl_command('off', arguments=[ARGUMENT_ID])
 async def off_handle(args: Namespace, config: Configuration) -> int:
     """Boot a range of robots down."""
     targets = _parse_arg_id(args.id)
@@ -61,7 +61,7 @@ async def off_handle(args: Namespace, config: Configuration) -> int:
         return 0
 
 
-@cctl_command('start')
+@cctl_command('start', arguments=[ARGUMENT_ID])
 async def start_handle(args: Namespace, config: Configuration) -> int:
     """Starts the user code on the specified coachbots."""
     targets = _parse_arg_id(args.id)
@@ -77,7 +77,7 @@ async def start_handle(args: Namespace, config: Configuration) -> int:
         return 0
 
 
-@cctl_command('pause')
+@cctl_command('pause', arguments=[ARGUMENT_ID])
 async def pause_handle(args: Namespace, config: Configuration) -> int:
     """Stops the user code on the specified coachbots."""
     targets = _parse_arg_id(args.id)
