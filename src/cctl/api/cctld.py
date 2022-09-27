@@ -69,6 +69,11 @@ class CCTLDRespInvalidState(CCTLDRespEx):
     pass
 
 
+class CCTLDRespNotFound(CCTLDRespEx):
+    """Returned by CCTLD when an endpoint is not found."""
+    pass
+
+
 class CCTLDClient:
     """The ``CCTLDClient`` object is a ``ContextManager`` that manages requests
     automatically for you. Use it as any other ``ContextManager``. All other
@@ -87,6 +92,13 @@ class CCTLDClient:
     def __init__(self, cctl_ipc_path: str) -> None:
         self._path = cctl_ipc_path
         self._ctx = zmq.asyncio.Context()
+
+    @staticmethod
+    def _raise_error_code(response: ipc.Response) -> None:
+        if response.result_code == ipc.ResultCode.NOT_FOUND:
+            raise CCTLDRespNotFound(response.body)
+        if response.result_code != ipc.ResultCode.OK:
+            raise CCTLDRespInvalidState(response.body)
 
     async def __aenter__(self) -> 'CCTLDClient':
         return self
@@ -150,8 +162,7 @@ class CCTLDClient:
                 body=(color if isinstance(color, str)
                       else rgb_to_hex(color))
             ))
-            if response.result_code != ipc.ResultCode.OK:
-                raise CCTLDRespInvalidState(response.body)
+            self.__class__._raise_error_code(response)
 
     async def set_is_on(self, bot: CoachbotSelectorT, state: bool) -> None:
         """This function attempts to turn on a coachbot.
@@ -174,8 +185,7 @@ class CCTLDClient:
                 method='create' if state else 'delete',
                 endpoint=endpoint
             ))
-            if response.result_code != ipc.ResultCode.OK:
-                raise CCTLDRespInvalidState(response.body)
+            self.__class__._raise_error_code(response)
 
     async def set_user_code_running(self, bot: CoachbotSelectorT,
                                     state: bool) -> None:
@@ -207,8 +217,7 @@ class CCTLDClient:
                 method=method,
                 endpoint=endpoint
             ))
-            if response.result_code == ipc.ResultCode.STATE_CONFLICT:
-                raise CCTLDRespInvalidState(response.body)
+            self.__class__._raise_error_code(response)
 
     async def update_user_code(self, bot: Coachbot, user_code: str) -> None:
         """Attempts to update the user code on the specified bot.
@@ -223,8 +232,7 @@ class CCTLDClient:
                 endpoint=f'/bots/{bot.identifier}/user-code/code',
                 body=user_code
             ))
-            if response.result_code == ipc.ResultCode.STATE_CONFLICT:
-                raise CCTLDRespInvalidState(response.body)
+            self.__class__._raise_error_code(response)
 
     async def set_power_rail_on(self, state: bool) -> None:
         """Attempts to set the state of the power rail to on/off.
@@ -237,9 +245,7 @@ class CCTLDClient:
                 method='create' if state else 'delete',
                 endpoint='/rail/is-on'
             ))
-            if response.result_code != ipc.ResultCode.OK:
-                raise CCTLDRespInvalidState('Could not change the rail state '
-                                            'due to %s', response.body)
+            self.__class__._raise_error_code(response)
 
     async def get_video_info(self) -> Dict[str, Dict[str, str]]:
         """Returns information about the video streams."""

@@ -12,6 +12,7 @@ def main():
     """Main entry point of cctl."""
     logging.basicConfig(level=logging.DEBUG,
                         format='[%(levelname)s]: %(message)s')
+    logging.getLogger('asyncio').setLevel(logging.ERROR)
 
     conf = Configuration()
 

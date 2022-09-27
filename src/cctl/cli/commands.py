@@ -11,7 +11,7 @@ from typing import List, Literal, Union
 from reactivex import operators as rxops
 from compot.widgets import ObserverMainWindow
 from cctl.api.cctld import CCTLDClient, CCTLDCoachbotStateObservable, \
-    CCTLDRespEx
+    CCTLDRespEx, CCTLDRespInvalidState
 from cctl.models import Coachbot, CoachbotState
 from cctl.utils import parsers
 from cctl.cli.command import cctl_command
@@ -205,12 +205,16 @@ async def led_handler(args: Namespace, conf: Configuration) -> int:
     targets = _parse_arg_id(args.id)
     color_str = str(args.color)
 
-    async with CCTLDClient(conf.cctld.request_host) as client:
-        if targets == 'all':
-            await client.set_led_color('all', color_str)
+    try:
+        async with CCTLDClient(conf.cctld.request_host) as client:
+            if targets == 'all':
+                await client.set_led_color('all', color_str)
+                return 0
+            await asyncio.gather(*(
+                client.set_led_color(Coachbot.stateless(bot), color_str)
+                for bot in targets
+            ))
             return 0
-        await asyncio.gather(*(
-            client.set_led_color(Coachbot.stateless(bot), color_str)
-            for bot in targets
-        ))
-        return 0
+    except CCTLDRespInvalidState as err_state:
+        print(f'Error setting LED: {err_state}', file=sys.stderr)
+        return 1
