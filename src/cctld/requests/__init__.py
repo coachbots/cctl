@@ -293,7 +293,7 @@ async def update_bot_led_color(app_state: AppState, request: ipc.Request,
     async with CoachCommand(
         Coachbot(ident, current_state).ip_address,
             app_state.config.coach_client.command_port) as command:
-            await command.set_led_color(color_t)
+        await command.set_led_color(color_t)
 
     return ipc.Response(ipc.ResultCode.OK)
 
