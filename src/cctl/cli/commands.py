@@ -10,7 +10,7 @@ import sys
 from typing import List, Literal, Union
 from reactivex import operators as rxops
 from compot.widgets import ObserverMainWindow
-from cctl.api.cctld import CCTLDClient, CCTLDCoachbotStateObservable, \
+from cctl.api.cctld import CCTLDClient, CCTLDCoachbotStateObservable, CCTLDRespBadRequest, \
     CCTLDRespEx, CCTLDRespInvalidState
 from cctl.models import Coachbot, CoachbotState
 from cctl.utils import parsers
@@ -218,3 +218,7 @@ async def led_handler(args: Namespace, conf: Configuration) -> int:
     except CCTLDRespInvalidState as err_state:
         print(f'Error setting LED: {err_state}', file=sys.stderr)
         return 1
+    except CCTLDRespBadRequest:
+        print(f'{color_str} does not appear to be a valid color.',
+                file=sys.stderr)
+        return 2

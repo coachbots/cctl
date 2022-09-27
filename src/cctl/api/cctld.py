@@ -74,6 +74,11 @@ class CCTLDRespNotFound(CCTLDRespEx):
     pass
 
 
+class CCTLDRespBadRequest(CCTLDRespEx):
+    """Returned by CCTLD when an invalid request is made."""
+    pass
+
+
 class CCTLDClient:
     """The ``CCTLDClient`` object is a ``ContextManager`` that manages requests
     automatically for you. Use it as any other ``ContextManager``. All other
@@ -97,6 +102,8 @@ class CCTLDClient:
     def _raise_error_code(response: ipc.Response) -> None:
         if response.result_code == ipc.ResultCode.NOT_FOUND:
             raise CCTLDRespNotFound(response.body)
+        if response.result_code == ipc.ResultCode.BAD_REQUEST:
+            raise CCTLDRespBadRequest(response.body)
         if response.result_code != ipc.ResultCode.OK:
             raise CCTLDRespInvalidState(response.body)
 

@@ -282,13 +282,18 @@ async def update_bot_led_color(app_state: AppState, request: ipc.Request,
     color = request.body  # TODO: Convert to RGB tuple.
     current_state = app_state.coachbot_states.value[ident]
 
+    try:
+        color_t = hex_to_rgb(color)
+    except RuntimeError:
+        return ipc.Response(ipc.ResultCode.BAD_REQUEST)
+
     if not current_state.is_on:
         return ipc.Response(ipc.ResultCode.STATE_CONFLICT)
 
     async with CoachCommand(
         Coachbot(ident, current_state).ip_address,
             app_state.config.coach_client.command_port) as command:
-        await command.set_led_color(hex_to_rgb(color))
+            await command.set_led_color(color_t)
 
     return ipc.Response(ipc.ResultCode.OK)
 
