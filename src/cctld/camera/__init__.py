@@ -134,4 +134,4 @@ class ProcessingStream:
                 self.processes[key] = None
 
     def __del__(self):
-        asyncio.get_event_loop().run_until_complete(self.kill_streams())
+        asyncio.run(self.kill_streams())
