@@ -105,6 +105,7 @@ def main():
                         level=(logging.DEBUG if __debug__ else logging.INFO))
     logging.getLogger('bleak').setLevel(logging.INFO)
     logging.getLogger('asyncio').setLevel(logging.INFO)
+    logging.getLogger('servers.request').setLevel(logging.INFO)
 
     # Attempt to create the required directory for the IPC feeds. This may
     # fail. The admin is responsible for this anyways -- this simply minimizes
