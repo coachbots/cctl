@@ -60,11 +60,8 @@ You can start and pause user code as:
 
 .. code-block:: bash
 
-   cctl start
-   cctl pause
-
-.. note:: Unlike ``on`` and ``off`` these commands do not support robot ids.
-   Rather, these commands start and pause user code on all powered robots.
+   cctl start 50-51
+   cctl pause 50 51
 
 Uploading
 ^^^^^^^^^
@@ -120,12 +117,14 @@ which will reinstall the operating system with the latest one available in your
 Blinking
 --------
 
-The ``blink`` subcommand enables you to turn on the LEDs on the coachbots in
+The ``led`` subcommand enables you to turn on the LEDs on the coachbots in
 order to identify them. It operates similarly to ``on`` and ``off``:
 
 .. code-block:: bash
    
-   cctl blink 1 4 8-9
+   cctl led 1 4 8-9
+
+You may pass a color via the ``-c "#rrggbb"`` argument.
 
 Camera Control
 --------------
