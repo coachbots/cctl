@@ -32,8 +32,7 @@ def _parse_arg_id(arg_ids: List[str]) -> Union[List[int], Literal['all']]:
 @cctl_command('on', arguments=[
     ARGUMENT_ID,
     (['-f', '--force'], {
-        'metavar': 'FORCE',
-        'type': bool,
+        'help': 'Force sending BT commands regardless of bot state.',
         'action': 'store_true',
         'required': False
     })
@@ -57,8 +56,7 @@ async def on_handle(args: Namespace, config: Configuration) -> int:
 @cctl_command('off', arguments=[
     ARGUMENT_ID,
     (['-f', '--force'], {
-        'metavar': 'FORCE',
-        'type': bool,
+        'help': 'Force sending BT commands regardless of bot state.',
         'action': 'store_true',
         'required': False
     })
