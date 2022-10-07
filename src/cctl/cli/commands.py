@@ -50,7 +50,8 @@ async def on_handle(args: Namespace, config: Configuration) -> int:
 
         await asyncio.gather(*(
             client.set_is_on(bot, True, force=args.force)
-                             for bot in target_bots))
+            for bot in target_bots
+        ))
         return 0
 
 
@@ -75,7 +76,8 @@ async def off_handle(args: Namespace, config: Configuration) -> int:
 
         await asyncio.gather(*(
             client.set_is_on(bot, False, force=args.force)
-                             for bot in target_bots))
+            for bot in target_bots
+        ))
         return 0
 
 
