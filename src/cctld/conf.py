@@ -41,6 +41,36 @@ class Config:
             """Returns the working directory of cctld."""
             return os.path.abspath(config.get('general', 'workdir'))
 
+    class Log:
+        """Returns configuration values under the ``log`` header."""
+        _LOGGING_VERBOSITY = {
+                'DEBUG': logging.DEBUG,
+                'INFO': logging.INFO,
+                'WARNING': logging.WARNING,
+                'ERROR': logging.ERROR
+        }
+
+        @staticmethod
+        def _get_logging_verbosity(key: str) -> int:
+            return __class__._LOGGING_VERBOSITY[config.get('log', key)]
+
+        @property
+        def base(self) -> int:
+            """Returns the base logger verbosity as a
+            ``logging.{INFO,DEBUG,...}`` value.
+            """
+            return self.__class__._get_logging_verbosity('base')
+
+        @property
+        def servers_status(self) -> int:
+            """Returns the logging verbosity of servers.status"""
+            return self.__class__._get_logging_verbosity('servers_status')
+
+        @property
+        def servers_request(self) -> int:
+            """Returns the logging verbosity of servers.request"""
+            return self.__class__._get_logging_verbosity('servers_request')
+
     class CoachClient:
         """Returns the configurations under the ``coach_client`` header."""
 
@@ -179,6 +209,10 @@ class Config:
     @property
     def bluetooth(self) -> 'Config.Bluetooth':
         return Config.Bluetooth()
+
+    @property
+    def log(self) -> 'Config.Log':
+        return Config.Log()
 
     @property
     def servers(self) -> 'Config.CoachServers':
