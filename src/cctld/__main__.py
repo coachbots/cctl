@@ -101,11 +101,12 @@ def main():
     if not os.path.exists(config.general.workdir):
         os.makedirs(config.general.workdir)
 
-    logging.basicConfig(stream=sys.stderr,
-                        level=(logging.DEBUG if __debug__ else logging.INFO))
-    logging.getLogger('bleak').setLevel(logging.INFO)
-    logging.getLogger('asyncio').setLevel(logging.INFO)
-    logging.getLogger('servers.request').setLevel(logging.INFO)
+    # Set up the logging.
+    logging.basicConfig(stream=sys.stderr, level=config.log.base)
+    logging.getLogger('bleak').setLevel(logging.ERROR)
+    logging.getLogger('asyncio').setLevel(logging.ERROR)
+    logging.getLogger('servers.request').setLevel(config.log.servers_request)
+    logging.getLogger('servers.status').setLevel(config.log.servers_status)
 
     # Attempt to create the required directory for the IPC feeds. This may
     # fail. The admin is responsible for this anyways -- this simply minimizes
