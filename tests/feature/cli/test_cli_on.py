@@ -14,13 +14,17 @@ class TestOnCommands(BotTestCase):
     """Tests whether `cctl on` commands behave as expected."""
     async def test_on_singular(self):
         """Tests `cctl on 9` returns a successful code. """
-        result = sproc.run(['cctl', 'on', '9'])
+        result = sproc.run(['cctl',
+                            'on',
+                            str(self.random_testing_bot.identifier)])
         self.assertEqual(0, result.returncode)
         await self.assert_bot_power(Coachbot.stateless(9), True)
 
     async def test_on_range(self):
         """Tests `cctl on 30-34` returns a success code."""
-        result = sproc.run(['cctl', 'on', '30-34'])
+        result = sproc.run([
+            'cctl', 'on',
+            str(' '.join([str(b.identifier) for b in self.test_bots]))])
         self.assertEqual(0, result.returncode)
         for i in range(30, 35):
             await self.assert_bot_power(Coachbot.stateless(i), True)
