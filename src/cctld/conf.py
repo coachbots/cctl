@@ -71,7 +71,6 @@ class Config:
             """Returns the logging verbosity of servers.request"""
             return self.__class__._get_logging_verbosity('servers_request')
 
-
     class CoachClient:
         """Returns the configurations under the ``coach_client`` header."""
 
