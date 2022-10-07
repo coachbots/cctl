@@ -175,7 +175,7 @@ class CCTLDClient:
             response = await req.request(ipc.Request(
                 method='create' if state else 'delete',
                 endpoint=f'/bots/{bot.identifier}/state/is-on',
-                body=json.dumps({ 'force': force })
+                body=json.dumps({'force': force})
             ))
             self.__class__._raise_error_code(response)
 
