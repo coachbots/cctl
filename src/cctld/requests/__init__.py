@@ -31,12 +31,19 @@ async def read_bots(app_state: AppState, _, __) -> ipc.Response:
 @handler(r'^/bots/([0-9]+)/state/is-on/?$', 'create')
 async def create_bot_is_on(
     app_state: AppState,
-    _: ipc.Request,
+    req: ipc.Request,
     endpoint_groups: Tuple[Union[str, Any], ...],
 ):
     """Turns a bot on."""
     bot = Coachbot((ident := int(endpoint_groups[0])),
                    app_state.coachbot_states.value[ident])
+
+    body = json.loads(req.body)
+    if body.get('force') is None:
+        return ipc.Response(ipc.ResultCode.BAD_REQUEST)
+
+    if not body.get('force') and bot.state.is_on:
+        return ipc.Response(ipc.ResultCode.OK)
 
     errors = []
     async for err in app_state.ble_manager.boot_bots([bot], True):
@@ -54,12 +61,19 @@ async def create_bot_is_on(
 @handler(r'^/bots/([0-9]+)/state/is-on/?$', 'delete')
 async def delete_bot_is_on(
     app_state: AppState,
-    _: ipc.Request,
+    req: ipc.Request,
     endpoint_groups: Tuple[Union[str, Any], ...]
 ):
     """Turns a bot off."""
     bot = Coachbot((ident := int(endpoint_groups[0])),
                    app_state.coachbot_states.value[ident])
+
+    body = json.loads(req.body)
+    if body.get('force') is None:
+        return ipc.Response(ipc.ResultCode.BAD_REQUEST)
+
+    if not body.get('force') and not bot.state.is_on:
+        return ipc.Response(ipc.ResultCode.OK)
 
     errors = []
     async for err in app_state.ble_manager.boot_bots([bot], False):

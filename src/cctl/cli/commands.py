@@ -29,7 +29,15 @@ def _parse_arg_id(arg_ids: List[str]) -> Union[List[int], Literal['all']]:
     return parsers.iter_string(arg_ids[0])
 
 
-@cctl_command('on', arguments=[ARGUMENT_ID])
+@cctl_command('on', arguments=[
+    ARGUMENT_ID,
+    (['-f', '--force'], {
+        'metavar': 'FORCE',
+        'type': bool,
+        'action': 'store_true',
+        'required': False
+    })
+])
 async def on_handle(args: Namespace, config: Configuration) -> int:
     """Boot a range of robots up."""
     targets = _parse_arg_id(args.id)
@@ -46,7 +54,15 @@ async def on_handle(args: Namespace, config: Configuration) -> int:
         return 0
 
 
-@cctl_command('off', arguments=[ARGUMENT_ID])
+@cctl_command('off', arguments=[
+    ARGUMENT_ID,
+    (['-f', '--force'], {
+        'metavar': 'FORCE',
+        'type': bool,
+        'action': 'store_true',
+        'required': False
+    })
+])
 async def off_handle(args: Namespace, config: Configuration) -> int:
     """Boot a range of robots down."""
     targets = _parse_arg_id(args.id)

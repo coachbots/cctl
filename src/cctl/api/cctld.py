@@ -160,17 +160,22 @@ class CCTLDClient:
             ))
             self.__class__._raise_error_code(response)
 
-    async def set_is_on(self, bot: Coachbot, state: bool) -> None:
+    async def set_is_on(self,
+                        bot: Coachbot,
+                        state: bool,
+                        force: bool = False) -> None:
         """This function attempts to turn on a coachbot.
 
         Parameters:
             bot (Coachbot): The target coachbot.
             state (bool): Whether the coachbot should be on or not.
+            force (bool): Whether to force the booting procedure.
         """
         with _CCTLDClientRequest(self._ctx, self._path) as req:
             response = await req.request(ipc.Request(
                 method='create' if state else 'delete',
-                endpoint=f'/bots/{bot.identifier}/state/is-on'
+                endpoint=f'/bots/{bot.identifier}/state/is-on',
+                body=json.dumps({ 'force': force })
             ))
             self.__class__._raise_error_code(response)
 
