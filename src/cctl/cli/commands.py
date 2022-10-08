@@ -131,7 +131,7 @@ async def on_handle(args: Namespace, config: Configuration) -> int:
 ])
 async def off_handle(args: Namespace, config: Configuration) -> int:
     """Boot a range of robots down."""
-    return await _boot_bot(args, config, True)
+    return await _boot_bot(args, config, False)
 
 
 @cctl_command('start', arguments=[ARGUMENT_ID])
