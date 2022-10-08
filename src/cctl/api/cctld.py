@@ -139,6 +139,16 @@ class CCTLDClient:
             ))
             return CoachbotState.deserialize(response.body)
 
+    async def read_config(self) -> Dict[str, Any]:
+        """Returns the configuration of ``cctld`` as it reports it."""
+        with _CCTLDClientRequest(self._ctx, self._path) as req:
+            response = await req.request(ipc.Request(
+                method='read',
+                endpoint='/config'
+            ))
+            return json.loads(response.body)
+
+
     async def set_led_color(
         self,
         bot: Coachbot,

@@ -56,10 +56,15 @@ def _output_errors_for_bots(
 
 
 async def _boot_bot(args: Namespace, config: Configuration, on: bool) -> int:
+    async with CCTLDClient(config.cctld.request_host) as client:
+        cctld_config = await client.read_config()
+    n_dongles = cctld_config['bluetooth']['n_dongles']
+
     target_bots = ([Coachbot.stateless(id) for id in range(100)]
                    if (t_arg := _parse_arg_id(args.id)) == 'all'
                    else [Coachbot.stateless(bot) for bot in t_arg])
-    progress_queue_size = min(len(target_bots), 4)
+
+    progress_queue_size = min(len(target_bots), n_dongles)
 
     boot_queue = deque(target_bots)
     in_progress_queue = asyncio.Queue(progress_queue_size)
