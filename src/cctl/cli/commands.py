@@ -54,16 +54,7 @@ def _output_errors_for_bots(
 
     return 1
 
-@cctl_command('on', arguments=[
-    ARGUMENT_ID,
-    (['-f', '--force'], {
-        'help': 'Force sending BT commands regardless of bot state.',
-        'action': 'store_true',
-        'required': False
-    })
-])
-async def on_handle(args: Namespace, config: Configuration) -> int:
-    """Boot a range of robots up."""
+async def _boot_bot(args: Namespace, config: Configuration, on: bool) -> int:
     target_bots = [Coachbot.stateless(id) for id in range(100)] \
             if (t_arg := _parse_arg_id(args.id)) == 'all' \
             else [Coachbot.stateless(bot) for bot in t_arg]
@@ -101,6 +92,19 @@ async def on_handle(args: Namespace, config: Configuration) -> int:
                                   'turning on')
 
 
+@cctl_command('on', arguments=[
+    ARGUMENT_ID,
+    (['-f', '--force'], {
+        'help': 'Force sending BT commands regardless of bot state.',
+        'action': 'store_true',
+        'required': False
+    })
+])
+async def on_handle(args: Namespace, config: Configuration) -> int:
+    """Boot a range of robots up."""
+    return await _boot_bot(args, config, True)
+
+
 @cctl_command('off', arguments=[
     ARGUMENT_ID,
     (['-f', '--force'], {
@@ -111,18 +115,7 @@ async def on_handle(args: Namespace, config: Configuration) -> int:
 ])
 async def off_handle(args: Namespace, config: Configuration) -> int:
     """Boot a range of robots down."""
-    targets = _parse_arg_id(args.id)
-
-    async with CCTLDClient(config.cctld.request_host) as client:
-        target_bots = [Coachbot.stateless(id) for id in range(100)] \
-                if targets == 'all' \
-                else [Coachbot.stateless(bot) for bot in targets]
-
-        await asyncio.gather(*(
-            client.set_is_on(bot, False, force=args.force)
-            for bot in target_bots
-        ))
-        return 0
+    return await _boot_bot(args, config, True)
 
 
 @cctl_command('start', arguments=[ARGUMENT_ID])
