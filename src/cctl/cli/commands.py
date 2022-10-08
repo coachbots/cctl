@@ -92,7 +92,6 @@ async def on_handle(args: Namespace, config: Configuration) -> int:
             sorted(results, key=lambda x: x[1] or 0), lambda x: x[1])
     _output_errors_for_bots([(k, list(v)) for k, v in grouped_by_err],
                             'turn on')
-    print(grouped_by_err)
 
     return 0
 
