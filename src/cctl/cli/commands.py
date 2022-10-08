@@ -54,7 +54,9 @@ def _output_errors_for_bots(
 
     for error, bots in grouped_bots:
         n_fail = len(bots)
-        print(f'Failed {op_msg} {n_fail}/{total_cnt} bots due to {error}.',
+        bot_str = ''.join(str(bot.identifier) for bot in bots)
+        print(f'Failed {op_msg} {n_fail}/{total_cnt} bots '
+              f'{bot_str} due to {error}.',
               file=sys.stderr)
 
     return 1
