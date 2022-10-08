@@ -148,7 +148,6 @@ class CCTLDClient:
             ))
             return json.loads(response.body)
 
-
     async def set_led_color(
         self,
         bot: Coachbot,
