@@ -10,6 +10,7 @@ import sys
 from typing import List, Literal, Optional, Tuple, Union
 from collections import deque
 import itertools
+from cctl.utils.algos import group_els
 from reactivex import operators as rxops
 from compot.widgets import ObserverMainWindow
 from cctl.api.cctld import CCTLDClient, CCTLDCoachbotStateObservable, \
@@ -93,7 +94,7 @@ async def _boot_bot(args: Namespace, config: Configuration, on: bool) -> int:
         ))
 
     grouped_by_err = itertools.groupby(
-            sorted(results, key=lambda x: x[1] or 0), lambda x: x[1])
+            group_els(results, key=lambda x: x[1]), lambda x: x[1])
     return _output_errors_for_bots([(k, list(v)) for k, v in grouped_by_err],
                                    'turning on')
 
