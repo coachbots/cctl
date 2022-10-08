@@ -1,5 +1,6 @@
 from typing import Callable, Iterable, List
 
+
 def key_idx(xs: Iterable, callable: Callable) -> int:
     """Finds the index of the given callable. Raises ValueError if not found.
     """

@@ -59,7 +59,8 @@ class _CCTLDClientRequest:
 
 
 class CCTLDRespEx(Exception):
-    pass
+    def __eq__(self, __o: object) -> bool:
+        return self.__class__ == __o.__class__ and str(self) == str(__o)
 
 
 class CCTLDRespInvalidState(CCTLDRespEx):
