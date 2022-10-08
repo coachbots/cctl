@@ -65,7 +65,6 @@ async def on_handle(args: Namespace, config: Configuration) -> int:
     target_bots = [Coachbot.stateless(id) for id in range(100)] \
             if (t_arg := _parse_arg_id(args.id)) == 'all' \
             else [Coachbot.stateless(bot) for bot in t_arg]
-    breakpoint()
     progress_queue_size = min(len(target_bots), 4)
 
     boot_queue = deque(target_bots)
