@@ -15,7 +15,7 @@ __status__ = 'Development'
 
 import asyncio
 import json
-from typing import Dict, List, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
 import reactivex as rx
 import zmq
 import zmq.asyncio
@@ -59,7 +59,8 @@ class _CCTLDClientRequest:
 
 
 class CCTLDRespEx(Exception):
-    pass
+    def __eq__(self, __o: object) -> bool:
+        return self.__class__ == __o.__class__ and str(self) == str(__o)
 
 
 class CCTLDRespInvalidState(CCTLDRespEx):
@@ -138,6 +139,15 @@ class CCTLDClient:
                 endpoint=f'/bots/{bot.identifier}/state'
             ))
             return CoachbotState.deserialize(response.body)
+
+    async def read_config(self) -> Dict[str, Any]:
+        """Returns the configuration of ``cctld`` as it reports it."""
+        with _CCTLDClientRequest(self._ctx, self._path) as req:
+            response = await req.request(ipc.Request(
+                method='read',
+                endpoint='/config'
+            ))
+            return json.loads(response.body)
 
     async def set_led_color(
         self,

@@ -53,8 +53,13 @@ async def create_bot_is_on(
         logging.getLogger('bluetooth').error('Could not turn bot %s on.', bot)
         return ipc.Response(ipc.ResultCode.STATE_CONFLICT, str(errors[0]))
 
-    await wait_until(app_state.coachbot_states,
-                     lambda states: states[bot.identifier].is_on)
+    try:
+        await wait_until(app_state.coachbot_states,
+                         lambda states: states[bot.identifier].is_on,
+                         app_state.config.constants.boot_timeout)
+    except asyncio.TimeoutError:
+        return ipc.Response(ipc.ResultCode.STATE_CONFLICT,
+                            'Network Layer Error')
     return ipc.Response(ipc.ResultCode.OK)
 
 
@@ -84,8 +89,13 @@ async def delete_bot_is_on(
                                              bot)
         return ipc.Response(ipc.ResultCode.STATE_CONFLICT, str(errors[0]))
 
-    await wait_until(app_state.coachbot_states,
-                     lambda states: not states[bot.identifier].is_on)
+    try:
+        await wait_until(app_state.coachbot_states,
+                         lambda states: not states[bot.identifier].is_on,
+                         app_state.config.constants.boot_timeout)
+    except TimeoutError:
+        return ipc.Response(ipc.ResultCode.STATE_CONFLICT,
+                            'Network Layer Error')
     return ipc.Response(ipc.ResultCode.OK)
 
 
@@ -265,6 +275,9 @@ async def read_config(app_state: AppState, *args, **kwargs):
             'stream': app_state.config.video_stream.rtsp_host,
             'codec': app_state.config.video_stream.codec,
             'bitrate': app_state.config.video_stream.bitrate
+        },
+        'bluetooth': {
+            'n_dongles': len(app_state.config.bluetooth.interfaces)
         }
     }))
 

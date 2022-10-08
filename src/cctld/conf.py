@@ -202,6 +202,18 @@ class Config:
             except NoOptionError:
                 return None
 
+    class Constants:
+        @property
+        def boot_timeout(self):
+            """The max amount of time (in seconds) to wait until a bot is
+            reachable when booting it.
+            """
+            return 45
+
+    @property
+    def constants(self) -> 'Config.Constants':
+        return Config.Constants()
+
     @property
     def general(self) -> 'Config.General':
         return Config.General()

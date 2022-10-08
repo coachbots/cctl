@@ -7,7 +7,10 @@ import asyncio
 from asyncio.subprocess import create_subprocess_exec
 from argparse import Namespace
 import sys
-from typing import List, Literal, Union
+from typing import List, Literal, Optional, Tuple, Union
+from collections import deque
+import itertools
+from cctl.utils.algos import group_els
 from reactivex import operators as rxops
 from compot.widgets import ObserverMainWindow
 from cctl.api.cctld import CCTLDClient, CCTLDCoachbotStateObservable, \
@@ -29,6 +32,82 @@ def _parse_arg_id(arg_ids: List[str]) -> Union[List[int], Literal['all']]:
     return parsers.iter_string(arg_ids[0])
 
 
+def _output_errors_for_bots(
+    grouped_bots: List[Tuple[Optional[CCTLDRespEx],
+                       List[Tuple[Coachbot, Optional[CCTLDRespEx]]]]],
+    op_msg: str
+) -> int:
+    total_cnt = sum((len(bots)
+                    for bots in (group[1] for group in grouped_bots)))
+    if len(grouped_bots) == 1 and grouped_bots[0][0] is None:
+        print(f'Succeeded {op_msg} {total_cnt}/{total_cnt} bots.',
+              file=sys.stderr)
+        return 0
+
+    try:
+        success_row = next(row for row in grouped_bots if row[0] is None)
+        n_success = len(success_row[1])
+        grouped_bots.pop(grouped_bots.index(success_row))
+        print(f'Succeeded {op_msg} {n_success}/{total_cnt} bots.',
+              file=sys.stderr)
+    except StopIteration:
+        pass  # No success cases.
+
+    for error, bots in grouped_bots:
+        n_fail = len(bots)
+        bot_str = ', '.join(str(bot[0].identifier) for bot in bots)
+        print(f'Failed {op_msg} {n_fail}/{total_cnt} bots '
+              f'[{bot_str}] due to {error}.',
+              file=sys.stderr)
+
+    return 1
+
+
+async def _boot_bot(args: Namespace, config: Configuration, on: bool) -> int:
+    # Let us query the number of bluetooth dongles. This will be the batch size
+    # we will use. Using a batch size of about 2*BT_DONGLES seems to work well.
+    async with CCTLDClient(config.cctld.request_host) as client:
+        cctld_config = await client.read_config()
+    n_dongles = cctld_config['bluetooth']['n_dongles']
+
+    target_bots = ([Coachbot.stateless(id) for id in range(100)]
+                   if (t_arg := _parse_arg_id(args.id)) == 'all'
+                   else [Coachbot.stateless(bot) for bot in t_arg])
+
+    progress_queue_size = min(len(target_bots), 2 * n_dongles)
+
+    boot_queue = deque(target_bots)
+    in_progress_queue = asyncio.Queue(progress_queue_size)
+
+    for _ in range(progress_queue_size):
+        in_progress_queue.put_nowait(boot_queue.pop())
+
+    async def boot_bot(
+        client: CCTLDClient,
+    ) -> Tuple[Coachbot, Optional[CCTLDRespEx]]:
+        bot = await in_progress_queue.get()
+        try:
+            await client.set_is_on(bot, on, force=args.force)
+
+            if len(boot_queue) > 0:
+                await in_progress_queue.put(boot_queue.pop())
+
+            return (bot, None)
+        except CCTLDRespEx as error:
+            return (bot, error)
+
+    async with CCTLDClient(config.cctld.request_host) as client:
+        results = await asyncio.gather(*(
+            boot_bot(client)
+            for _ in range(len(target_bots))
+        ))
+
+    grouped_by_err = itertools.groupby(
+            group_els(results, key=lambda x: x[1]), lambda x: x[1])
+    return _output_errors_for_bots([(k, list(v)) for k, v in grouped_by_err],
+                                   'turning on')
+
+
 @cctl_command('on', arguments=[
     ARGUMENT_ID,
     (['-f', '--force'], {
@@ -39,20 +118,7 @@ def _parse_arg_id(arg_ids: List[str]) -> Union[List[int], Literal['all']]:
 ])
 async def on_handle(args: Namespace, config: Configuration) -> int:
     """Boot a range of robots up."""
-    targets = _parse_arg_id(args.id)
-
-    async with CCTLDClient(config.cctld.request_host) as client:
-        target_bots = [bot for bot in (Coachbot(i, state) for i, state in
-                       enumerate(await client.read_all_states()))
-                       if not bot.state.is_on] \
-                if targets == 'all' \
-                else [Coachbot.stateless(bot) for bot in targets]
-
-        await asyncio.gather(*(
-            client.set_is_on(bot, True, force=args.force)
-            for bot in target_bots
-        ))
-        return 0
+    return await _boot_bot(args, config, True)
 
 
 @cctl_command('off', arguments=[
@@ -65,20 +131,7 @@ async def on_handle(args: Namespace, config: Configuration) -> int:
 ])
 async def off_handle(args: Namespace, config: Configuration) -> int:
     """Boot a range of robots down."""
-    targets = _parse_arg_id(args.id)
-
-    async with CCTLDClient(config.cctld.request_host) as client:
-        target_bots = [bot for bot in (Coachbot(i, state) for i, state in
-                       enumerate(await client.read_all_states()))
-                       if bot.state.is_on] \
-                if targets == 'all' \
-                else [Coachbot.stateless(bot) for bot in targets]
-
-        await asyncio.gather(*(
-            client.set_is_on(bot, False, force=args.force)
-            for bot in target_bots
-        ))
-        return 0
+    return await _boot_bot(args, config, True)
 
 
 @cctl_command('start', arguments=[ARGUMENT_ID])
