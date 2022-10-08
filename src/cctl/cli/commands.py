@@ -37,27 +37,28 @@ def _output_errors_for_bots(
 ) -> int:
     total_cnt = sum((len(bots)
                     for bots in (group[1] for group in grouped_bots)))
-    if len(grouped_bots) == 1 and grouped_bots[0][0] == None:
+    if len(grouped_bots) == 1 and grouped_bots[0][0] is None:
         print(f'Succeeded {op_msg} {total_cnt}/{total_cnt} bots.',
               file=sys.stderr)
         return 0
 
     n_success = len(grouped_bots[0][1])
-    if grouped_bots[0][0] == None:
+    if grouped_bots[0][0] is None:
         print(f'Succeeded {op_msg} {n_success}/{total_cnt} bots.',
               file=sys.stderr)
 
-    for error, bots in grouped_bots[1 if grouped_bots[0][0] == None else 0:]:
+    for error, bots in grouped_bots[1 if grouped_bots[0][0] is None else 0:]:
         n_fail = len(bots)
         print(f'Failed {op_msg} {n_fail}/{total_cnt} bots due to {error}.',
               file=sys.stderr)
 
     return 1
 
+
 async def _boot_bot(args: Namespace, config: Configuration, on: bool) -> int:
-    target_bots = [Coachbot.stateless(id) for id in range(100)] \
-            if (t_arg := _parse_arg_id(args.id)) == 'all' \
-            else [Coachbot.stateless(bot) for bot in t_arg]
+    target_bots = ([Coachbot.stateless(id) for id in range(100)]
+                   if (t_arg := _parse_arg_id(args.id)) == 'all'
+                   else [Coachbot.stateless(bot) for bot in t_arg])
     progress_queue_size = min(len(target_bots), 4)
 
     boot_queue = deque(target_bots)
@@ -71,7 +72,7 @@ async def _boot_bot(args: Namespace, config: Configuration, on: bool) -> int:
     ) -> Tuple[Coachbot, Optional[CCTLDRespEx]]:
         bot = await in_progress_queue.get()
         try:
-            await client.set_is_on(bot, True, force=args.force)
+            await client.set_is_on(bot, on, force=args.force)
 
             if len(boot_queue) > 0:
                 await in_progress_queue.put(boot_queue.pop())
@@ -89,7 +90,7 @@ async def _boot_bot(args: Namespace, config: Configuration, on: bool) -> int:
     grouped_by_err = itertools.groupby(
             sorted(results, key=lambda x: x[1] or 0), lambda x: x[1])
     return _output_errors_for_bots([(k, list(v)) for k, v in grouped_by_err],
-                                  'turning on')
+                                   'turning on')
 
 
 @cctl_command('on', arguments=[
