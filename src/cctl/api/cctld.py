@@ -15,7 +15,7 @@ __status__ = 'Development'
 
 import asyncio
 import json
-from typing import Dict, List, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
 import reactivex as rx
 import zmq
 import zmq.asyncio

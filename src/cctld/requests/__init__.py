@@ -57,7 +57,7 @@ async def create_bot_is_on(
         await wait_until(app_state.coachbot_states,
                          lambda states: states[bot.identifier].is_on,
                          app_state.config.constants.boot_timeout)
-    except TimeoutError:
+    except asyncio.TimeoutError:
         return ipc.Response(ipc.ResultCode.STATE_CONFLICT,
                             'Network Layer Error')
     return ipc.Response(ipc.ResultCode.OK)
