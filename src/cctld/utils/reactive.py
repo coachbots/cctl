@@ -23,5 +23,9 @@ async def wait_until(subject: BehaviorSubject,
             event.set()
 
     subscription = subject.subscribe(on_next=wrapper)
-    await event.wait()
-    subscription.dispose()
+    try:
+        await asyncio.wait_for(
+            event.wait(),
+            None if timeout in (float('inf'), None) else timeout)
+    finally:
+        subscription.dispose()
