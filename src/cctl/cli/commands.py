@@ -33,7 +33,8 @@ def _parse_arg_id(arg_ids: List[str]) -> Union[List[int], Literal['all']]:
 
 
 def _output_errors_for_bots(
-    grouped_bots: List[Tuple[Optional[CCTLDRespEx], List[Coachbot]]],
+    grouped_bots: List[Tuple[Optional[CCTLDRespEx],
+                       List[Tuple[Coachbot, Optional[CCTLDRespEx]]]]],
     op_msg: str
 ) -> int:
     total_cnt = sum((len(bots)
@@ -54,9 +55,9 @@ def _output_errors_for_bots(
 
     for error, bots in grouped_bots:
         n_fail = len(bots)
-        bot_str = ''.join(str(bot.identifier) for bot in bots)
+        bot_str = ', '.join(str(bot[0].identifier) for bot in bots)
         print(f'Failed {op_msg} {n_fail}/{total_cnt} bots '
-              f'{bot_str} due to {error}.',
+              f'[{bot_str}] due to {error}.',
               file=sys.stderr)
 
     return 1
