@@ -8,6 +8,7 @@ def key_idx(xs: Iterable, callable: Callable) -> int:
     for x in xs:
         if callable(x):
             return i
+        i += 1
     raise ValueError
 
 
