@@ -208,7 +208,7 @@ class Config:
             """The max amount of time (in seconds) to wait until a bot is
             reachable when booting it.
             """
-            return 20
+            return 45
 
     @property
     def constants(self) -> 'Config.Constants':

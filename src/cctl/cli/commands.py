@@ -64,6 +64,8 @@ def _output_errors_for_bots(
 
 
 async def _boot_bot(args: Namespace, config: Configuration, on: bool) -> int:
+    # Let us query the number of bluetooth dongles. This will be the batch size
+    # we will use. Using a batch size of about 2*BT_DONGLES seems to work well.
     async with CCTLDClient(config.cctld.request_host) as client:
         cctld_config = await client.read_config()
     n_dongles = cctld_config['bluetooth']['n_dongles']
@@ -72,7 +74,7 @@ async def _boot_bot(args: Namespace, config: Configuration, on: bool) -> int:
                    if (t_arg := _parse_arg_id(args.id)) == 'all'
                    else [Coachbot.stateless(bot) for bot in t_arg])
 
-    progress_queue_size = min(len(target_bots), n_dongles)
+    progress_queue_size = min(len(target_bots), 2 * n_dongles)
 
     boot_queue = deque(target_bots)
     in_progress_queue = asyncio.Queue(progress_queue_size)
