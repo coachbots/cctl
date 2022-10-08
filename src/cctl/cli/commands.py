@@ -52,21 +52,25 @@ async def on_handle(args: Namespace, config: Configuration) -> int:
     for _ in range(progress_queue_size):
         in_progress_queue.put_nowait(boot_queue.pop())
 
-    async def boot_bot_and_queue_next(
+    async def boot_bot(
         client: CCTLDClient,
+        queue_next: bool,
     ) -> Tuple[Coachbot, Optional[CCTLDRespEx]]:
         bot = await in_progress_queue.get()
         try:
             await client.set_is_on(bot, True, force=args.force)
-            await in_progress_queue.put(boot_queue.pop())
+
+            if queue_next:
+                await in_progress_queue.put(boot_queue.pop())
+
             return (bot, None)
         except CCTLDRespEx as error:
             return (bot, error)
 
     async with CCTLDClient(config.cctld.request_host) as client:
         await asyncio.gather(*(
-            boot_bot_and_queue_next(client)
-            for _ in range(len(target_bots))
+            boot_bot(client, i != len(target_bots) - 1)
+            for i in range(len(target_bots))
         ))
 
     return 0
