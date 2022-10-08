@@ -31,6 +31,21 @@ def _parse_arg_id(arg_ids: List[str]) -> Union[List[int], Literal['all']]:
     return parsers.iter_string(arg_ids[0])
 
 
+def _output_errors_for_bots(
+    grouped_bots: List[Tuple[Optional[CCTLDRespEx], List[Coachbot]]],
+    op_msg: str):
+    if len(grouped_bots) == 1 and grouped_bots[0][0] == None:
+        print(f'Succeeded to {op_msg} all bots.')
+        return
+
+    n_success = len(grouped_bots[0][1])
+    if grouped_bots[0][0] == None:
+        print(f'Succeeded to {op_msg} {n_success} bots.')
+
+    for error, bots in grouped_bots[1 if grouped_bots[0][0] == None else 0:]:
+        n_fail = len(bots)
+        print(f'Failed to {op_msg} {n_fail} bots due to {error}.')
+
 @cctl_command('on', arguments=[
     ARGUMENT_ID,
     (['-f', '--force'], {
@@ -74,7 +89,9 @@ async def on_handle(args: Namespace, config: Configuration) -> int:
         ))
 
     grouped_by_err = itertools.groupby(
-            sorted(results, key=lambda x: x[1]), lambda x: x[1])
+            sorted(results, key=lambda x: x[1] or 0), lambda x: x[1])
+    _output_errors_for_bots([(k, list(v)) for k, v in grouped_by_err],
+                            'turn on')
     print(grouped_by_err)
 
     return 0
