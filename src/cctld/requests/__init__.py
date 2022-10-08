@@ -89,8 +89,13 @@ async def delete_bot_is_on(
                                              bot)
         return ipc.Response(ipc.ResultCode.STATE_CONFLICT, str(errors[0]))
 
-    await wait_until(app_state.coachbot_states,
-                     lambda states: not states[bot.identifier].is_on)
+    try:
+        await wait_until(app_state.coachbot_states,
+                         lambda states: not states[bot.identifier].is_on,
+                         app_state.config.constants.boot_timeout)
+    except TimeoutError:
+        return ipc.Response(ipc.ResultCode.STATE_CONFLICT,
+                            'Network Layer Error')
     return ipc.Response(ipc.ResultCode.OK)
 
 
