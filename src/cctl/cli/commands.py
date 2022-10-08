@@ -66,7 +66,7 @@ async def on_handle(args: Namespace, config: Configuration) -> int:
     async with CCTLDClient(config.cctld.request_host) as client:
         await asyncio.gather(*(
             boot_bot_and_queue_next(client)
-            for _ in boot_queue
+            for _ in range(len(target_bots))
         ))
 
     return 0
