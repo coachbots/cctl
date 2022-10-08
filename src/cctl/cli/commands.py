@@ -9,6 +9,7 @@ from argparse import Namespace
 import sys
 from typing import List, Literal, Optional, Tuple, Union
 from collections import deque
+import itertools
 from reactivex import operators as rxops
 from compot.widgets import ObserverMainWindow
 from cctl.api.cctld import CCTLDClient, CCTLDCoachbotStateObservable, \
@@ -54,13 +55,12 @@ async def on_handle(args: Namespace, config: Configuration) -> int:
 
     async def boot_bot(
         client: CCTLDClient,
-        queue_next: bool,
     ) -> Tuple[Coachbot, Optional[CCTLDRespEx]]:
         bot = await in_progress_queue.get()
         try:
             await client.set_is_on(bot, True, force=args.force)
 
-            if queue_next:
+            if len(boot_queue) > 0:
                 await in_progress_queue.put(boot_queue.pop())
 
             return (bot, None)
@@ -68,10 +68,14 @@ async def on_handle(args: Namespace, config: Configuration) -> int:
             return (bot, error)
 
     async with CCTLDClient(config.cctld.request_host) as client:
-        result = await asyncio.gather(*(
-            boot_bot(client, i != len(target_bots) - 1)
+        results = await asyncio.gather(*(
+            boot_bot(client)
             for i in range(len(target_bots))
         ))
+
+    grouped_by_err = itertools.groupby(
+            sorted(results, key=lambda x: x[1]), lambda x: x[1])
+    print(grouped_by_err)
 
     return 0
 
