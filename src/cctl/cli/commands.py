@@ -50,7 +50,7 @@ def _output_errors_for_bots(
         print(f'Succeeded {op_msg} {n_success}/{total_cnt} bots.',
               file=sys.stderr)
     except StopIteration:
-        pass # No success cases.
+        pass  # No success cases.
 
     for error, bots in grouped_bots:
         n_fail = len(bots)
