@@ -44,9 +44,12 @@ async def on_handle(args: Namespace, config: Configuration) -> int:
             if (t_arg := _parse_arg_id(args.id)) == 'all' \
             else [Coachbot.stateless(bot) for bot in t_arg]
     breakpoint()
+    progress_queue_size = min(len(target_bots), 4)
+
     boot_queue = deque(target_bots)
-    in_progress_queue = asyncio.Queue(4)
-    for _ in range(4):
+    in_progress_queue = asyncio.Queue(progress_queue_size)
+
+    for _ in range(progress_queue_size):
         in_progress_queue.put_nowait(boot_queue.pop())
 
     async def boot_bot_and_queue_next(
