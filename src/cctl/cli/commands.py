@@ -43,12 +43,16 @@ def _output_errors_for_bots(
               file=sys.stderr)
         return 0
 
-    n_success = len(grouped_bots[0][1])
-    if grouped_bots[0][0] is None:
+    try:
+        success_row = next(row for row in grouped_bots if row[0] is None)
+        n_success = len(success_row[1])
+        grouped_bots.pop(grouped_bots.index(success_row))
         print(f'Succeeded {op_msg} {n_success}/{total_cnt} bots.',
               file=sys.stderr)
+    except StopIteration:
+        pass # No success cases.
 
-    for error, bots in grouped_bots[1 if grouped_bots[0][0] is None else 0:]:
+    for error, bots in grouped_bots:
         n_fail = len(bots)
         print(f'Failed {op_msg} {n_fail}/{total_cnt} bots due to {error}.',
               file=sys.stderr)
