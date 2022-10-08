@@ -34,23 +34,25 @@ def _parse_arg_id(arg_ids: List[str]) -> Union[List[int], Literal['all']]:
 def _output_errors_for_bots(
     grouped_bots: List[Tuple[Optional[CCTLDRespEx], List[Coachbot]]],
     op_msg: str
-) -> None:
+) -> int:
     total_cnt = sum((len(bots)
                     for bots in (group[1] for group in grouped_bots)))
     if len(grouped_bots) == 1 and grouped_bots[0][0] == None:
-        print(f'Succeeded to {op_msg} {total_cnt}/{total_cnt} bots.',
+        print(f'Succeeded {op_msg} {total_cnt}/{total_cnt} bots.',
               file=sys.stderr)
-        return
+        return 0
 
     n_success = len(grouped_bots[0][1])
     if grouped_bots[0][0] == None:
-        print(f'Succeeded to {op_msg} {n_success}/{total_cnt} bots.',
+        print(f'Succeeded {op_msg} {n_success}/{total_cnt} bots.',
               file=sys.stderr)
 
     for error, bots in grouped_bots[1 if grouped_bots[0][0] == None else 0:]:
         n_fail = len(bots)
-        print(f'Failed to {op_msg} {n_fail}/{total_cnt} bots due to {error}.',
+        print(f'Failed {op_msg} {n_fail}/{total_cnt} bots due to {error}.',
               file=sys.stderr)
+
+    return 1
 
 @cctl_command('on', arguments=[
     ARGUMENT_ID,
@@ -95,10 +97,8 @@ async def on_handle(args: Namespace, config: Configuration) -> int:
 
     grouped_by_err = itertools.groupby(
             sorted(results, key=lambda x: x[1] or 0), lambda x: x[1])
-    _output_errors_for_bots([(k, list(v)) for k, v in grouped_by_err],
-                            'turn on')
-
-    return 0
+    return _output_errors_for_bots([(k, list(v)) for k, v in grouped_by_err],
+                                  'turning on')
 
 
 @cctl_command('off', arguments=[
