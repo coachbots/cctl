@@ -7,7 +7,8 @@ import asyncio
 from asyncio.subprocess import create_subprocess_exec
 from argparse import Namespace
 import sys
-from typing import List, Literal, Union
+from typing import List, Literal, Optional, Tuple, Union
+from collections import deque
 from reactivex import operators as rxops
 from compot.widgets import ObserverMainWindow
 from cctl.api.cctld import CCTLDClient, CCTLDCoachbotStateObservable, \
@@ -39,20 +40,33 @@ def _parse_arg_id(arg_ids: List[str]) -> Union[List[int], Literal['all']]:
 ])
 async def on_handle(args: Namespace, config: Configuration) -> int:
     """Boot a range of robots up."""
-    targets = _parse_arg_id(args.id)
+    target_bots = [Coachbot.stateless(id) for id in range(100)] \
+            if (t_arg := _parse_arg_id(args.id)) == 'all' \
+            else [Coachbot.stateless(bot) for bot in t_arg]
+    breakpoint()
+    boot_queue = deque(target_bots)
+    in_progress_queue = asyncio.Queue(4)
+    for _ in range(4):
+        in_progress_queue.put_nowait(boot_queue.pop())
+
+    async def boot_bot_and_queue_next(
+        client: CCTLDClient,
+    ) -> Tuple[Coachbot, Optional[CCTLDRespEx]]:
+        bot = await in_progress_queue.get()
+        try:
+            await client.set_is_on(bot, True, force=args.force)
+            await in_progress_queue.put(boot_queue.pop())
+            return (bot, None)
+        except CCTLDRespEx as error:
+            return (bot, error)
 
     async with CCTLDClient(config.cctld.request_host) as client:
-        target_bots = [bot for bot in (Coachbot(i, state) for i, state in
-                       enumerate(await client.read_all_states()))
-                       if not bot.state.is_on] \
-                if targets == 'all' \
-                else [Coachbot.stateless(bot) for bot in targets]
-
         await asyncio.gather(*(
-            client.set_is_on(bot, True, force=args.force)
-            for bot in target_bots
+            boot_bot_and_queue_next(client)
+            for _ in boot_queue
         ))
-        return 0
+
+    return 0
 
 
 @cctl_command('off', arguments=[
@@ -68,9 +82,7 @@ async def off_handle(args: Namespace, config: Configuration) -> int:
     targets = _parse_arg_id(args.id)
 
     async with CCTLDClient(config.cctld.request_host) as client:
-        target_bots = [bot for bot in (Coachbot(i, state) for i, state in
-                       enumerate(await client.read_all_states()))
-                       if bot.state.is_on] \
+        target_bots = [Coachbot.stateless(id) for id in range(100)] \
                 if targets == 'all' \
                 else [Coachbot.stateless(bot) for bot in targets]
 
