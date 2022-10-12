@@ -9,7 +9,7 @@ from typing import List, Literal, Union
 def iter_string(iter_str: str) -> Union[List[int], Literal['all']]:
     """Parses the id parameter ensuring that it fits the format:
         ^(\\d+)$ or ^(\\d+)-(\\d+)$. If 'all' is given, then the function
-        returns true, otherwise returns a list of targets to be turned on.
+        returns "all", otherwise returns a list of targets to be turned on.
     """
     single_id_regex = r'^(\d+)$'
     range_regex = r'^(\d+)-(\d+)$'
