@@ -141,7 +141,8 @@ async def start_handle(args: Namespace, config: Configuration) -> int:
 
     async with CCTLDClient(config.cctld.request_host) as client:
         target_bots = [bot for bot in (Coachbot(i, state) for i, state in
-                       enumerate(await client.read_all_states()))] \
+                       enumerate(await client.read_all_states())
+                       if state.is_on)] \
                 if targets == 'all' \
                 else [Coachbot.stateless(bot) for bot in targets]
 
@@ -157,7 +158,8 @@ async def pause_handle(args: Namespace, config: Configuration) -> int:
 
     async with CCTLDClient(config.cctld.request_host) as client:
         target_bots = [bot for bot in (Coachbot(i, state) for i, state in
-                       enumerate(await client.read_all_states()))] \
+                       enumerate(await client.read_all_states())
+                       if state.is_on)] \
                 if targets == 'all' \
                 else [Coachbot.stateless(bot) for bot in targets]
 
