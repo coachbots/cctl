@@ -23,6 +23,7 @@ from cctl.ui.manager import Manager
 
 ARGUMENT_ID = (['id'],
                {'metavar': 'N', 'type': str, 'nargs': '+',
+                'required': False,
                 'help': 'Target Robots. Format must be %%d, %%d-%%d or "all"'})
 
 
@@ -118,6 +119,10 @@ async def _boot_bot(args: Namespace, config: Configuration, on: bool) -> int:
 ])
 async def on_handle(args: Namespace, config: Configuration) -> int:
     """Boot a range of robots up."""
+    if args.id is None:
+        args.print_help()
+        return 0
+
     return await _boot_bot(args, config, True)
 
 
@@ -131,13 +136,17 @@ async def on_handle(args: Namespace, config: Configuration) -> int:
 ])
 async def off_handle(args: Namespace, config: Configuration) -> int:
     """Boot a range of robots down."""
+    if args.id is None:
+        args.print_help()
+        return 0
+
     return await _boot_bot(args, config, False)
 
 
 @cctl_command('start', arguments=[ARGUMENT_ID])
 async def start_handle(args: Namespace, config: Configuration) -> int:
     """Starts the user code on the specified coachbots."""
-    targets = _parse_arg_id(args.id)
+    targets = _parse_arg_id(args.id) if args.id is not None else 'all'
 
     async with CCTLDClient(config.cctld.request_host) as client:
         target_bots = [bot for bot in (Coachbot(i, state) for i, state in
@@ -153,7 +162,7 @@ async def start_handle(args: Namespace, config: Configuration) -> int:
 @cctl_command('pause', arguments=[ARGUMENT_ID])
 async def pause_handle(args: Namespace, config: Configuration) -> int:
     """Stops the user code on the specified coachbots."""
-    targets = _parse_arg_id(args.id)
+    targets = _parse_arg_id(args.id) if args.id is not None else 'all'
 
     async with CCTLDClient(config.cctld.request_host) as client:
         target_bots = [bot for bot in (Coachbot(i, state) for i, state in
