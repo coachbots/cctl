@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-SUPPORTED_COMMANDS=('on' 'off' 'blink' 'start' 'pause' 'upload' 'manage' \
+SUPPORTED_COMMANDS=('on' 'off' 'blink' 'start' 'pause' 'update' 'manage' \
                     'cam' 'fetch-logs')
 ID_ARG_COMMANDS=('on' 'off' 'blink' 'fetch-logs')
 
@@ -48,7 +48,7 @@ function _cctl_completions()
     elif [ "${COMP_WORDS[1]}" == "blink" ]; then
         COMPREPLY+=($(compgen -W "all" -- "${COMP_WORDS[COMP_CWORD]}"))
 
-    elif [ "${COMP_WORDS[1]}" == "upload" ]; then
+    elif [ "${COMP_WORDS[1]}" == "update" ]; then
         COMPREPLY+=($(compgen -W "--operating-system" -- \
             "${COMP_WORDS[COMP_CWORD]}"))
         COMPREPLY=($(compgen -o plusdirs -f -X '!*.py' \
