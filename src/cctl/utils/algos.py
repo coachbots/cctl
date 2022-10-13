@@ -1,4 +1,4 @@
-from typing import Callable, Iterable, List
+from typing import Any, Callable, Iterable, List
 
 
 def key_idx(xs: Iterable, callable: Callable) -> int:
@@ -28,3 +28,20 @@ def group_els(xs: Iterable, key: Callable = lambda x: x) -> List:
         except ValueError:
             outl.append(x)
     return outl
+
+
+def iterable_flatten(xss: Iterable[Iterable[Any]]) -> Iterable[Any]:
+    """Flattens an iterable.
+
+    Parameters:
+        xss (Iterable[Iterable[Any]]) The input iterable.
+
+    Returns:
+        The flattened iterable.
+
+    Example:
+        .. code-block:: python
+
+           list(iterable_flatten([[1, 2], [3]])) == [1, 2, 3]
+    """
+    return (x for xs in xss for x in xs)

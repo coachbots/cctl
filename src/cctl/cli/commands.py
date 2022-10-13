@@ -10,7 +10,7 @@ import sys
 from typing import List, Literal, Optional, Tuple, Union
 from collections import deque
 import itertools
-from cctl.utils.algos import group_els
+from cctl.utils.algos import group_els, iterable_flatten
 from reactivex import operators as rxops
 from compot.widgets import ObserverMainWindow
 from cctl.api.cctld import CCTLDClient, CCTLDCoachbotStateObservable, \
@@ -27,9 +27,9 @@ ARGUMENT_ID = (['id'],
 
 
 def _parse_arg_id(arg_ids: List[str]) -> Union[List[int], Literal['all']]:
-    if len(arg_ids) > 1:
-        return [int(arg) for arg in arg_ids]
-    return parsers.iter_string(arg_ids[0])
+    return 'all' \
+        if 'all' in (parsed := [parsers.iter_string(arg) for arg in arg_ids]) \
+        else list(iterable_flatten(parsed))
 
 
 def _output_errors_for_bots(
