@@ -42,7 +42,7 @@ jobs:
 
           ssh -i ${tmpfile} -o StrictHostKeyChecking=no \
             -o UserKnownHostsFile=/dev/null "$USER@$HOST" \
-            'rm -rf /var/data/static/coach-os-docs/*'
+            'rm -rf /var/data/static/cctl-os-docs/*'
           scp -i ${tmpfile} -o StrictHostKeyChecking=no \
             -o UserKnownHostsFile=/dev/null -r docs/build/html/* \
             $USER@$HOST:/var/data/static/cctl-docs
