@@ -105,7 +105,7 @@ async def _boot_bot(args: Namespace, config: Configuration, on: bool) -> int:
     grouped_by_err = itertools.groupby(
             group_els(results, key=lambda x: x[1]), lambda x: x[1])
     return _output_errors_for_bots([(k, list(v)) for k, v in grouped_by_err],
-                                   'turning on')
+                                   f'turning {"on" if on else "off"}')
 
 
 @cctl_command('on', arguments=[

@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 
-"""This package exposes the CLI interface for cctl."""
+"""This package exposes the CLI interface for cctl.
+
+If you are attempting to modify the commands and/or add/delete a new command,
+please see the ``cctl.cli.commands`` module.
+"""
 
 import argparse
 from argparse import ArgumentParser, Namespace
