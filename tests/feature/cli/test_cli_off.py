@@ -10,7 +10,7 @@ from tests.feature.bot_test_case import BotTestCase
 sys.path.insert(0, os.path.abspath('./src'))
 
 
-class TestOnCommands(BotTestCase):
+class TestOffCommands(BotTestCase):
     """Tests whether `cctl off` commands behave as expected."""
     async def test_off_singular(self):
         """Tests `cctl off 9` returns a successful code. """
@@ -20,13 +20,13 @@ class TestOnCommands(BotTestCase):
         self.assertEqual(0, result.returncode)
         await self.assert_bot_power(Coachbot.stateless(9), False)
 
-    async def test_off_range(self):
+    async def test_off_range_90_99(self):
         """Tests `cctl off x-y` returns a success code."""
         result = sproc.run([
             'cctl', 'on',
             str(' '.join([str(b.identifier) for b in self.test_bots]))])
         self.assertEqual(0, result.returncode)
-        for i in range(30, 35):
+        for i in range(90, 99):
             await self.assert_bot_power(Coachbot.stateless(i), False)
 
     async def test_off_overflow(self):

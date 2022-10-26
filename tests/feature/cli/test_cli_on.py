@@ -20,13 +20,13 @@ class TestOnCommands(BotTestCase):
         self.assertEqual(0, result.returncode)
         await self.assert_bot_power(Coachbot.stateless(9), True)
 
-    async def test_on_range(self):
+    async def test_on_range_90_99(self):
         """Tests `cctl on 30-34` returns a success code."""
         result = sproc.run([
             'cctl', 'on',
             str(' '.join([str(b.identifier) for b in self.test_bots]))])
         self.assertEqual(0, result.returncode)
-        for i in range(30, 35):
+        for i in range(90, 99):
             await self.assert_bot_power(Coachbot.stateless(i), True)
 
     async def test_on_overflow(self):
