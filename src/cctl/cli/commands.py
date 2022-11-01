@@ -15,7 +15,7 @@ from reactivex import operators as rxops
 from compot.widgets import ObserverMainWindow
 from cctl.api.cctld import CCTLDClient, CCTLDCoachbotStateObservable, \
     CCTLDRespBadRequest, CCTLDRespEx, CCTLDRespInvalidState
-from cctl.models import Coachbot, CoachbotState
+from cctl.models import Coachbot
 from cctl.utils import parsers
 from cctl.cli.command import cctl_command
 from cctl.conf import Configuration
@@ -235,6 +235,7 @@ async def update_handler(args: Namespace, conf: Configuration) -> int:
         group_els(results, key=lambda x: x[1]), lambda x: x[1])
     return _output_errors_for_bots([(k, list(v)) for k, v in grouped_by_err],
                                    'updating')
+
 
 @cctl_command('cam.preview')
 async def cam_preview_handler(args: Namespace, conf: Configuration) -> int:
