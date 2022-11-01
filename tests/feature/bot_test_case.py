@@ -4,7 +4,7 @@
 This module holds the base class used for Bot feature testing.
 """
 
-from typing import Iterable, List
+from typing import Generator
 import unittest
 import random
 import os
@@ -12,31 +12,36 @@ import sys
 
 sys.path.insert(0, os.path.abspath('./src'))
 
-from cctl.api.bot_ctl import Coachbot, boot_bots, wait_until_bots_state
+from cctl.models.coachbot import Coachbot, CoachbotState
+from cctl.api.cctld import CCTLDClient
 
 
-class BotTestCase(unittest.TestCase):
+class BotTestCase(unittest.IsolatedAsyncioTestCase):
     """Represents a base Bot-related integration test case.
 
     You can inherit from this test case in order to receive useful methods as
     well ensure that all bots start and end in a booted-down state.
     """
 
-    def setUp(self) -> None:
-        super().setUp()
-        boot_bots('all', False)
+    @property
+    def cctld_req_serv(self) -> str:
+        return 'tcp://localhost:16790'
 
-    def tearDown(self) -> None:
-        super().tearDown()
-        boot_bots('all', False)
+    async def asyncSetUp(self) -> None:
+        async with CCTLDClient(self.cctld_req_serv) as client:
+            await client.set_is_on('all', False)
+
+    async def asyncTearDown(self) -> None:
+        async with CCTLDClient(self.cctld_req_serv) as client:
+            await client.set_is_on('all', False)
 
     @property
-    def test_bots(self) -> List[Coachbot]:
+    def test_bots(self) -> Generator[Coachbot, None, None]:
         """
         Returns:
             Generator[Coachbot, None, None]: The testing bots.
         """
-        return [Coachbot(90 + x) for x in range(0, 10)]
+        return (Coachbot(90 + x, CoachbotState(None)) for x in range(0, 10))
 
     @property
     def random_testing_bot(self) -> Coachbot:
@@ -46,36 +51,25 @@ class BotTestCase(unittest.TestCase):
         """
         return random.choice(list(self.test_bots))
 
-    def assert_bot_power(self, bot: Coachbot, expected: bool):
+    async def assert_bot_power(self, bot: Coachbot, expected: bool):
         """
         Asserts that a bot is turned on or off.
 
         Parameters:
-            bot_id: The id of the bot.
+            bot: The target Coachbot
             expected: The expected state of the bot.
         """
-        self.assertEqual(expected, bot.is_alive())
+        async with CCTLDClient(self.cctld_req_serv) as client:
+            bot_state = await client.read_state(bot)
+            self.assertEqual(expected, bot_state.is_on)
 
-    def assert_bot_powers(self, bots: Iterable[Coachbot],
-                          expecteds: Iterable[bool]):
-        """
-        Asserts that multiple bots are turned on or off.
-
-        Parameters:
-            bots (Iterable[Coachbot]): An iterable of Coachbots.
-            expecteds (Iterable[Bool]): An iterable of expected states for each
-                of the bots.
-        """
-        for bot, expected in zip(bots, expecteds):
-            self.assert_bot_power(bot, expected)
-
-    def wait_until_bots_state(self, bots: Iterable[Coachbot],
-                              states: Iterable[bool]) -> None:
-        """Pauses execution until all specified bots are reachable.
+    async def assert_bot_state(self, bot: Coachbot, expected: CoachbotState):
+        """Asserts that a bot state is as expected.
 
         Parameters:
-            bots (Iterable[Coachbot]): The target bots.
-            states (Iterable[bool]): The expected states of the bots.
-            timeout (float): The maximum allowable timeout.
+            bot: The target bot.
+            expected (CoachbotState): The expected coachbot state.
         """
-        wait_until_bots_state(bots, states)
+        async with CCTLDClient(self.cctld_req_serv) as client:
+            bot_state = await client.read_state(bot)
+            self.assertEqual(expected, bot_state)
