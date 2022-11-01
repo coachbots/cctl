@@ -211,15 +211,30 @@ async def update_handler(args: Namespace, conf: Configuration) -> int:
     with open(os.path.abspath(args.usr_path[0]), 'r') as source_f:
         source = source_f.read()
 
-    async with CCTLDClient(conf.cctld.request_host) as client:
-        res = await asyncio.gather(*(
-            client.update_user_code(
-                Coachbot(bot, CoachbotState(None)), source)
-            for bot in range(100)),
-            return_exceptions=True)
-        print(res, file=sys.stderr)
-        return 0
+    async def update_bot(client: CCTLDClient,
+                         bot: Coachbot) -> Tuple[Coachbot,
+                                                 Optional[CCTLDRespEx]]:
+        try:
+            await client.update_user_code(bot, source)
+            return (bot, None)
+        except CCTLDRespEx as error:
+            return (bot, error)
 
+    async with CCTLDClient(conf.cctld.request_host) as client:
+        target_bots = [
+            Coachbot(id, state)
+            for id, state in enumerate(await client.read_all_states())
+            if state.is_on
+        ]
+        results = await asyncio.gather(*(
+            update_bot(client, bot)
+            for bot in target_bots
+        ))
+
+    grouped_by_err = itertools.groupby(
+        group_els(results, key=lambda x: x[1]), lambda x: x[1])
+    return _output_errors_for_bots([(k, list(v)) for k, v in grouped_by_err],
+                                   'updating')
 
 @cctl_command('cam.preview')
 async def cam_preview_handler(args: Namespace, conf: Configuration) -> int:
