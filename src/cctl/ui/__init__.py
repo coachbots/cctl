@@ -1,9 +1,9 @@
 from collections.abc import Iterable
-from reactivex import Observable, Subject
+from reactivex import Observable
 from textual.app import App, ComposeResult
 from textual.widgets import DataTable, Header, Footer
 
-from cctl.models.coachbot import Coachbot, CoachbotState
+from cctl.models.coachbot import Coachbot
 
 
 class CCTLManageTable(DataTable):
@@ -26,20 +26,20 @@ class CCTLManageTable(DataTable):
         self.add_row(
             str(bot.identifier),
             ('On' if on else 'Off')
-                if (on := bot.state.is_on) is not None
-                else '?',
+            if (on := bot.state.is_on) is not None
+            else '?',
             str(osv) if (osv := bot.state.os_version) is not None else '?',
             str(pos) if (pos := bot.state.position) is not None else '?',
             str(th) if (th := bot.state.theta) is not None else '?',
             str(v) if (v := bot.state.bat_voltage) is not None else '?',
             ('Yes' if v else 'No')
-                if (v := bot.state.user_code_state.is_running) is not None
-                else '?',
+            if (v := bot.state.user_code_state.is_running) is not None
+            else '?',
             s if (s := bot.state.user_code_state.name) is not None else '?',
             a if (a := bot.state.user_code_state.author) is not None else '?',
             str(v)
-                if (v := bot.state.user_code_state.version) is not None
-                else '?',
+            if (v := bot.state.user_code_state.version) is not None
+            else '?',
         )
 
 
@@ -51,7 +51,7 @@ class CCTLManageApp(App):
     ]
 
     def __init__(self, observable: Observable):
-        super().__init__() 
+        super().__init__()
         self.data_observable = observable
         self.data_observable.subscribe(lambda coachbots:
                                        self.rerender(coachbots))
