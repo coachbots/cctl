@@ -119,8 +119,8 @@ async def _boot_bot(args: Namespace, config: Configuration, on: bool) -> int:
 ])
 async def on_handle(args: Namespace, config: Configuration) -> int:
     """Boot a range of robots up."""
-    if args.id is None:
-        args.print_help()
+    if len(args.id) == 0:
+        args.id = ['all']
         return 0
 
     return await _boot_bot(args, config, True)
@@ -137,7 +137,7 @@ async def on_handle(args: Namespace, config: Configuration) -> int:
 async def off_handle(args: Namespace, config: Configuration) -> int:
     """Boot a range of robots down."""
     if len(args.id) == 0:
-        args.print_help()
+        args.id = ['all']
         return 0
 
     return await _boot_bot(args, config, False)
