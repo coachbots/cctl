@@ -23,7 +23,8 @@ from cctl.ui.manager import Manager
 
 ARGUMENT_ID = (['id'],
                {'metavar': 'N', 'type': str, 'nargs': '*',
-                'help': 'Target Robots. Format must be %%d, %%d-%%d or "all"'})
+                'help': 'Target Robots. Format must be %%d, %%d-%%d or "all". '
+                        '"all" used if not specified.'})
 
 
 def _parse_arg_id(arg_ids: List[str]) -> Union[List[int], Literal['all']]:
@@ -118,9 +119,8 @@ async def _boot_bot(args: Namespace, config: Configuration, on: bool) -> int:
 ])
 async def on_handle(args: Namespace, config: Configuration) -> int:
     """Boot a range of robots up."""
-    if args.id is None:
-        args.print_help()
-        return 0
+    if len(args.id) == 0:
+        args.id = ['all']
 
     return await _boot_bot(args, config, True)
 
@@ -136,8 +136,7 @@ async def on_handle(args: Namespace, config: Configuration) -> int:
 async def off_handle(args: Namespace, config: Configuration) -> int:
     """Boot a range of robots down."""
     if len(args.id) == 0:
-        args.print_help()
-        return 0
+        args.id = ['all']
 
     return await _boot_bot(args, config, False)
 
