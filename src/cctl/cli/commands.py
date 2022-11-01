@@ -23,7 +23,8 @@ from cctl.ui.manager import Manager
 
 ARGUMENT_ID = (['id'],
                {'metavar': 'N', 'type': str, 'nargs': '*',
-                'help': 'Target Robots. Format must be %%d, %%d-%%d or "all"'})
+                'help': 'Target Robots. Format must be %%d, %%d-%%d or "all". '
+                        '"all" used if not specified.'})
 
 
 def _parse_arg_id(arg_ids: List[str]) -> Union[List[int], Literal['all']]:
