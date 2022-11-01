@@ -55,16 +55,17 @@ class CCTLManageApp(App):
         self.data_observable = observable
         self.data_observable.subscribe(lambda coachbots:
                                        self.rerender(coachbots))
-        self.table = CCTLManageTable(name='Coachbot List')
+        self.table = None
 
-    def rerender(self, coachbots: Iterable[Coachbot]) -> None:
+    def rerender(self, coachbots) -> None:
         self.table = CCTLManageTable(name='Coachbot List')
         for bot in coachbots:
             self.table.add_coachbot_row(bot)
 
     def compose(self) -> ComposeResult:
         yield Header()
-        yield self.table
+        if self.table is not None:
+            yield self.table
         yield Footer()
 
     def action_quit(self) -> None:
