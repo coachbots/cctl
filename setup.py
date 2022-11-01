@@ -39,6 +39,7 @@ setuptools.setup(
         'pyserial',
         'reactivex',
         'bleak',
+        'textual',
         'python-daemon'
     ]
 )
