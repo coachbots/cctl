@@ -1,0 +1,30 @@
+name: Package Audit
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  run-pip-audit:
+    name: Run pip-audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Git Repo
+        uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: pip install pip-audit
+
+      - name: Run pip-audit
+        run: pip-audit
