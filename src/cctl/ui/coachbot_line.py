@@ -57,7 +57,7 @@ class _CoachbotUserName(Widget):
     def render(self) -> RenderableType:
         return '?' if self.name is None \
             else (self.name if len(self.name) <= self.__class__.MAX_LEN
-                      else f'{self.name[:self.__class__.MAX_LEN - 3]}...')
+                  else f'{self.name[:self.__class__.MAX_LEN - 3]}...')
 
 
 class _CoachbotUserAuthor(Widget):
