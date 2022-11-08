@@ -201,8 +201,10 @@ class Vec2(object):
         # type: () -> str
         return '[%.3f, %.3f]' % (self.x, self.y)
 
-    def __eq__(self, __o):
+    def __eq__(self, __o: object):
         # type: (Vec2) -> bool
+        if not isinstance(__o, self.__class__):
+            return False
         return self.x == __o.x and self.y == __o.y
 
     def __ne__(self, __o):

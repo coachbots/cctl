@@ -10,7 +10,7 @@ import sys
 from typing import List, Literal, Optional, Tuple, Union
 from collections import deque
 import itertools
-from cctl.ui import CCTLManageApp
+from cctl.ui import ManageApp
 from cctl.utils.algos import group_els, iterable_flatten
 from reactivex import operators as rxops
 from cctl.api.cctld import CCTLDClient, CCTLDCoachbotStateObservable, \
@@ -178,14 +178,17 @@ async def pause_handle(args: Namespace, config: Configuration) -> int:
 @cctl_command('manage')
 async def manage_handle(_, conf: Configuration) -> int:
     """Spawns a management TUI."""
-    data_stream, task = await CCTLDCoachbotStateObservable(
+    data_stream, _ = await CCTLDCoachbotStateObservable(
         conf.cctld.state_feed_host)
 
-    app = CCTLManageApp(data_stream.pipe(rxops.map(
-        lambda sts: [Coachbot(i, st) for i, st in enumerate(sts)]
-    )))
+    app = ManageApp(
+        data_stream.pipe(
+            rxops.map(
+                lambda sts: [Coachbot(i, st) for i, st in enumerate(sts)]
+            )
+        )
+    )
     await app.run_async()
-    await task
     return 1
 
 
