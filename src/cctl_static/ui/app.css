@@ -14,35 +14,35 @@ CoachbotStateHeaderDisplay {
 .coachbot-line__id {
     max-width: 6;
     padding: 0 1;
-    border-right: tall;
+    border-right: gold solid;
     content-align: right middle;
 }
 
 .coachbot-line__is-on {
-    max-width: 7;
+    max-width: 8;
     padding: 0 1;
-    border-right: tall;
+    border-right: gold solid;
     content-align: center middle;
 }
 
 .coachbot-line__os-ver {
     max-width: 10;
     padding: 0 1;
-    border-right: tall;
+    border-right: gold solid;
     content-align: right middle;
 }
 
 .coachbot-line__bat-voltage {
     width: 10;
     padding: 0 1;
-    border-right: tall;
+    border-right: gold solid;
     content-align: right middle;
 }
 
 .coachbot-line__position {
     width: 18;
     padding: 0 1;
-    border-right: tall;
+    border-right: gold solid;
     content-align: right middle;
 }
 
@@ -50,33 +50,33 @@ CoachbotStateHeaderDisplay {
     width: 9;
     padding: 0 1;
     content-align: right middle;
-    border-right: tall;
 }
 
 .coachbot-line__script-state {
-    width: 9;
+    width: 10;
     padding: 0 1;
     content-align: center middle;
-    border-right: tall;
+    border-left: gold double;
+    border-right: gold solid;
 }
 
 .coachbot-line__script-name {
     width: 26;
     padding: 0 1;
     content-align: left middle;
-    border-right: tall;
+    border-right: gold solid;
 }
 
 .coachbot-line__script-author {
     width: 26;
     padding: 0 1;
     content-align: left middle;
-    border-right: tall;
+    border-right: gold solid;
 }
 
 .coachbot-line__script-version {
     width: 11;
     padding: 0 1;
     content-align: right middle;
-    border-right: tall;
+    border-right: gold solid;
 }
