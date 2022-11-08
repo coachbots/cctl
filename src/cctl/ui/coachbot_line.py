@@ -56,8 +56,8 @@ class _CoachbotUserName(Widget):
     MAX_LEN = 23
 
     def render(self) -> RenderableType:
-            return '?' if self.name is None \
-                else (self.name if len(self.name) <= self.__class__.MAX_LEN
+        return '?' if self.name is None \
+            else (self.name if len(self.name) <= self.__class__.MAX_LEN
                       else f'{self.name[:self.__class__.MAX_LEN - 3]}...')
 
 
@@ -75,7 +75,7 @@ class _CoachbotUserVersion(Widget):
     version = reactive(None)
 
     def render(self) -> RenderableType:
-       return '?' if self.version is None else self.version
+        return '?' if self.version is None else self.version
 
 
 class CoachbotStateDisplay(Static):
