@@ -22,7 +22,7 @@ CoachbotStateHeaderDisplay {
     max-width: 7;
     padding: 0 1;
     border-right: tall;
-    content-align: left middle;
+    content-align: center middle;
 }
 
 .coachbot-line__os-ver {
@@ -56,7 +56,7 @@ CoachbotStateHeaderDisplay {
 .coachbot-line__script-state {
     width: 9;
     padding: 0 1;
-    content-align: left middle;
+    content-align: center middle;
     border-right: tall;
 }
 
@@ -77,6 +77,6 @@ CoachbotStateHeaderDisplay {
 .coachbot-line__script-version {
     width: 11;
     padding: 0 1;
-    content-align: left middle;
+    content-align: right middle;
     border-right: tall;
 }

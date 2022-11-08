@@ -12,7 +12,7 @@ class _CoachbotBooted(Widget):
     is_on = reactive(None)
 
     def render(self) -> RenderableType:
-        return '?' if self.is_on is None else 'On' if self.is_on else 'Off'
+        return '?' if self.is_on is None else '✅' if self.is_on else '❌'
 
 
 class _CoachbotPosition(Widget):
@@ -47,8 +47,7 @@ class _CoachbotUserOn(Widget):
     is_on = reactive(None)
 
     def render(self) -> RenderableType:
-        return '?' if self.is_on is None \
-            else ('Running' if self.is_on else 'Paused')
+        return '?' if self.is_on is None else ('⚙️' if self.is_on else '🛑')
 
 
 class _CoachbotUserName(Widget):
