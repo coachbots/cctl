@@ -10,36 +10,42 @@ from cctl.models import Coachbot
 
 class _CoachbotBooted(Widget):
     is_on = reactive(None)
+
     def render(self) -> RenderableType:
         return '?' if self.is_on is None else 'On' if self.is_on else 'Off'
 
 
 class _CoachbotPosition(Widget):
     pos = reactive(None)
+
     def render(self) -> RenderableType:
         return '?' if self.pos is None else str(self.pos)
 
 
 class _CoachbotOsVersion(Widget):
     version = reactive(None)
+
     def render(self) -> RenderableType:
-       return '?' if self.version is None else self.version
+        return '?' if self.version is None else self.version
 
 
 class _CoachbotBatVoltage(Widget):
     voltage = reactive(None)
+
     def render(self) -> RenderableType:
         return '?' if self.voltage is None else f'{self.voltage:1.02f}'
 
 
 class _CoachbotTheta(Widget):
     theta = reactive(None)
+
     def render(self) -> RenderableType:
         return '?' if self.theta is None else f'{self.theta:.2f}'
 
 
 class _CoachbotUserOn(Widget):
     is_on = reactive(None)
+
     def render(self) -> RenderableType:
         return '?' if self.is_on is None \
             else ('Running' if self.is_on else 'Paused')
@@ -48,6 +54,7 @@ class _CoachbotUserOn(Widget):
 class _CoachbotUserName(Widget):
     name = reactive(None)
     MAX_LEN = 23
+
     def render(self) -> RenderableType:
             return '?' if self.name is None \
                 else (self.name if len(self.name) <= self.__class__.MAX_LEN
@@ -57,14 +64,16 @@ class _CoachbotUserName(Widget):
 class _CoachbotUserAuthor(Widget):
     name = reactive(None)
     MAX_LEN = 23
+
     def render(self) -> RenderableType:
-            return '?' if self.name is None \
-                else (self.name if len(self.name) <= self.__class__.MAX_LEN
-                      else f'{self.name[:self.__class__.MAX_LEN - 3]}...')
+        return '?' if self.name is None \
+            else (self.name if len(self.name) <= self.__class__.MAX_LEN
+                  else f'{self.name[:self.__class__.MAX_LEN - 3]}...')
 
 
 class _CoachbotUserVersion(Widget):
     version = reactive(None)
+
     def render(self) -> RenderableType:
        return '?' if self.version is None else self.version
 

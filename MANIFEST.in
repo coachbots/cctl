@@ -1,3 +1,4 @@
 include src/cctl_static/coachbot_btle_mac_addresses
 include src/cctl_static/arduino_daughter/arduino_daughter.ino
 include src/cctl_static/cctld.conf
+include src/cctl_static/ui/app.css
