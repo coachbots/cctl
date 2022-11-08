@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-SUPPORTED_COMMANDS=('on' 'off' 'blink' 'start' 'pause' 'update' 'manage' \
+SUPPORTED_COMMANDS=('on' 'off' 'led' 'start' 'pause' 'update' 'manage' \
                     'cam' 'fetch-logs')
-ID_ARG_COMMANDS=('on' 'off' 'blink' 'fetch-logs')
+ID_ARG_COMMANDS=('on' 'off' 'led' 'fetch-logs')
 
 function _is_flag()
 {
@@ -45,7 +45,7 @@ function _cctl_completions()
     elif [ "${COMP_WORDS[1]}" == "off" ]; then
         COMPREPLY+=($(compgen -W "all" -- "${COMP_WORDS[COMP_CWORD]}"))
 
-    elif [ "${COMP_WORDS[1]}" == "blink" ]; then
+    elif [ "${COMP_WORDS[1]}" == "led" ]; then
         COMPREPLY+=($(compgen -W "all" -- "${COMP_WORDS[COMP_CWORD]}"))
 
     elif [ "${COMP_WORDS[1]}" == "update" ]; then
