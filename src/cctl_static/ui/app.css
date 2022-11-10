@@ -40,7 +40,7 @@ CoachbotStateHeaderDisplay {
 }
 
 .coachbot-line__position {
-    width: 18;
+    width: 20;
     padding: 0 1;
     border-right: gold solid;
     content-align: right middle;
