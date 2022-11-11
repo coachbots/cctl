@@ -12,7 +12,7 @@ class _CoachbotBooted(Widget):
     is_on = reactive(None)
 
     def render(self) -> RenderableType:
-        return '?' if self.is_on is None else '✅' if self.is_on else '❌'
+        return '?' if self.is_on is None else ('On' if self.is_on else 'Off')
 
 
 class _CoachbotPosition(Widget):
@@ -51,7 +51,7 @@ class _CoachbotUserOn(Widget):
 
 
 class _CoachbotUserName(Widget):
-    name = reactive(None)
+    script_name = reactive(None)
     MAX_LEN = 23
 
     def render(self) -> RenderableType:
@@ -61,7 +61,7 @@ class _CoachbotUserName(Widget):
 
 
 class _CoachbotUserAuthor(Widget):
-    name = reactive(None)
+    script_author = reactive(None)
     MAX_LEN = 23
 
     def render(self) -> RenderableType:
@@ -95,33 +95,40 @@ class CoachbotStateDisplay(Static):
         self.bot_id = bot_id
 
     def update_coachbot(self, bot: Coachbot):
-        self.query_one('.coachbot-line__is-on').is_on = bot.state.is_on
-        self.query_one('.coachbot-line__position').pos = bot.state.position
-        self.query_one('.coachbot-line__os-ver').version = bot.state.os_version
-        self.query_one('.coachbot-line__bat-voltage').voltage = \
-            bot.state.bat_voltage
-        self.query_one('.coachbot-line__theta').theta = \
-            bot.state.theta
-        self.query_one('.coachbot-line__script-state').is_on = \
-            bot.state.user_code_state.is_running
-        self.query_one('.coachbot-line__script-name').name = \
-            bot.state.user_code_state.name
-        self.query_one('.coachbot-line__script-author').name = \
-            bot.state.user_code_state.author
-        self.query_one('.coachbot-line__script-version').version = \
-            bot.state.user_code_state.version
+        self._booted_msg.is_on = bot.state.is_on
+        self._pos.pos = bot.state.position
+        self._os_version.version = bot.state.os_version
+        self._bat_v.voltage = bot.state.bat_voltage
+        self._theta.theta = bot.state.theta
+        self._user_on.is_on = bot.state.user_code_state.is_running
+        self._user_name.script_name = bot.state.user_code_state.name
+        self._user_author.script_author = bot.state.user_code_state.author
+        self._user_version.version = bot.state.user_code_state.version
 
     def compose(self):
         yield Static(f'{self.bot_id}', classes='coachbot-line__id')
-        yield _CoachbotBooted(classes='coachbot-line__is-on')
-        yield _CoachbotOsVersion(classes='coachbot-line__os-ver')
-        yield _CoachbotBatVoltage(classes='coachbot-line__bat-voltage')
-        yield _CoachbotPosition(classes='coachbot-line__position')
-        yield _CoachbotTheta(classes='coachbot-line__theta')
-        yield _CoachbotUserOn(classes='coachbot-line__script-state')
-        yield _CoachbotUserName(classes='coachbot-line__script-name')
-        yield _CoachbotUserAuthor(classes='coachbot-line__script-author')
-        yield _CoachbotUserVersion(classes='coachbot-line__script-version')
+        self._booted_msg = _CoachbotBooted(classes='coachbot-line__is-on')
+        yield self._booted_msg
+        self._os_version = _CoachbotOsVersion(classes='coachbot-line__os-ver')
+        yield self._os_version
+        self._bat_v = _CoachbotBatVoltage(
+            classes='coachbot-line__bat-voltage')
+        yield self._bat_v
+        self._pos = _CoachbotPosition(classes='coachbot-line__position')
+        yield self._pos
+        self._theta = _CoachbotTheta(classes='coachbot-line__theta')
+        yield self._theta
+        self._user_on = _CoachbotUserOn(classes='coachbot-line__script-state')
+        yield self._user_on
+        self._user_name = _CoachbotUserName(
+            classes='coachbot-line__script-name')
+        yield self._user_name
+        self._user_author = _CoachbotUserAuthor(
+            classes='coachbot-line__script-author')
+        yield self._user_author
+        self._user_version = _CoachbotUserVersion(
+            classes='coachbot-line__script-version')
+        yield self._user_version
 
 
 class CoachbotStateHeaderDisplay(Static):
