@@ -7,6 +7,7 @@ from reactivex import Observable
 from textual.app import App
 from textual.widgets import Footer, Header
 
+import reactivex.operators as rxops
 from cctl.models.coachbot import Coachbot
 from cctl.ui.coachbot_line import CoachbotStateDisplay, \
     CoachbotStateHeaderDisplay
@@ -32,7 +33,9 @@ class ManageApp(App):
         self.on_quit = on_quit_callback
         self.coachbot_lines = []
 
-        self.observable_stream.subscribe(on_next=self._update_all_models)
+        data_stream_60hz = self.observable_stream.pipe(
+            rxops.debounce(1.0 / 60.0))
+        data_stream_60hz.subscribe(on_next=self._update_all_models)
 
     def action_toggle_dark(self) -> None:
         self.dark = not self.dark
