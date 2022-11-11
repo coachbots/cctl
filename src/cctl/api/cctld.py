@@ -38,11 +38,15 @@ class _CCTLDClientRequest:
     def __enter__(self) -> '_CCTLDClientRequest':
         self._socket = self._ctx.socket(zmq.REQ)
         self._socket.connect(self._ipc)
+        print('Entering request context')
         return self
 
     def __exit__(self, exc_t, exc_v, exc_tb):
         if self._socket is not None:
             self._socket.disconnect(self._ipc)
+            self._socket.setsockopt(zmq.LINGER, 0)
+            self._socket.close()
+        print('Exiting request context')
 
         return False
 
@@ -295,6 +299,9 @@ async def CCTLDCoachbotStateObservable(
             my_subject.on_error(ex)
         finally:
             my_subject.on_completed()
+            socket.disconnect(state_feed)
+            socket.setsockopt(zmq.LINGER, 0)
+            socket.close()
 
     return my_subject, asyncio.create_task(run())
 
