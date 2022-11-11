@@ -30,6 +30,7 @@ class ManageApp(App):
 
         self.observable_stream = observable_stream
         self.on_quit = on_quit_callback
+        self.coachbot_lines = []
 
         self.observable_stream.subscribe(on_next=self._update_all_models)
 
@@ -46,16 +47,19 @@ class ManageApp(App):
             self._update_model(bot)
 
     def _update_model(self, bot: Coachbot):
-        display_widget = \
-            self.query_one(f'#coachbot-state-display__{bot.identifier}')
+        display_widget = self.coachbot_lines[bot.identifier]
         assert isinstance(display_widget, CoachbotStateDisplay)
         display_widget.update_coachbot(bot)
 
     def compose(self):
         yield Header()
         yield CoachbotStateHeaderDisplay()
+        self.coachbot_lines = []
         for i in range(100):
-            yield CoachbotStateDisplay(i, id=f'coachbot-state-display__{i}')
+            coachbot_line = CoachbotStateDisplay(
+                i, id=f'coachbot-state-display__{i}')
+            self.coachbot_lines.append(coachbot_line)
+            yield coachbot_line
         yield Footer()
 
 
