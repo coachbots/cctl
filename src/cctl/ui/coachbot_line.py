@@ -42,7 +42,7 @@ class _CoachbotBatVoltage(Widget):
                 color = Color(255, 255, 0)
             else:
                 color = Color(0, 250, 0)
-            self.styles.background = color
+            self.styles.color = color
             return f'{self.voltage:1.02f}'
         return '?'
 
