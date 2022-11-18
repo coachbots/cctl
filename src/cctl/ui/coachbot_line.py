@@ -37,11 +37,11 @@ class _CoachbotBatVoltage(Widget):
     def render(self) -> RenderableType:
         if self.voltage is not None:
             if self.voltage >= 3.8:
-                color = Color(255, 0, 0)
+                color = Color(0, 255, 0)
             elif self.voltage >= 3.6:
                 color = Color(255, 255, 0)
             else:
-                color = Color(0, 250, 0)
+                color = Color(255, 0, 0)
             self.styles.color = color
             return f'{self.voltage:1.02f}'
         return '?'
