@@ -1,112 +1,156 @@
-#!/usr/bin/env python
+"""This module exposes the CoachbotLine textualize widget."""
 
-import math
-
-from compot import ColorPairs, LayoutSpec, MeasurementSpec
-from compot.composable import Composable
-from compot.widgets import Row, RowSpacing, Text, TextStyleSpec
-
-
-from cctl.models import Coachbot, UserCodeState
-
-
-@Composable
-def UserInfo(user_info: UserCodeState):
-    """The ``UserInfo`` widget displays information about the currently running
-    user code."""
-    MAX_NAME_LEN = 24
-    MAX_AUTHOR_LEN = 16
-    VERSION_LEN = 10
-
-    run_str, run_color = \
-        ('❔ Unknown', ColorPairs.WARNING_INVERTED) \
-        if (run := user_info.is_running) is None \
-        else (('🦾 Running ', ColorPairs.OK_INVERTED)
-              if run
-              else ('🛑 Stopped', ColorPairs.ERROR_INVERTED))
-    version_str = str(v if (v := user_info.version) is not None else '?.?.?')
-    name_str = (n[:MAX_NAME_LEN - 3] + '...' if len(n) > MAX_NAME_LEN
-                else n) \
-        if (n := user_info.name) is not None else 'Unknown Name'
-    author_str = (a[:MAX_AUTHOR_LEN - 3] + '...' if len(a) > MAX_AUTHOR_LEN
-                  else a) \
-        if (a := user_info.author) is not None else 'Unknown Author'
-
-    return Row(
-        (
-            Text(f' {run_str} ', style=TextStyleSpec(color=run_color)),
-            Text(f' {name_str.ljust(MAX_NAME_LEN)}▕'),
-            Text(f' {author_str.ljust(MAX_AUTHOR_LEN)} '),
-            Text(f" {('v' + version_str).rjust(VERSION_LEN)} ",
-                 style=TextStyleSpec(color=ColorPairs.INFO_INVERTED))
-        ),
-    )
+from typing import Union
+from rich.console import RenderableType
+from textual.reactive import reactive
+from textual.color import Color
+from textual.widget import Widget
+from textual.widgets import Static
+from cctl.models import Coachbot
 
 
-@Composable
-def CoachbotLine(bot: Coachbot,
-                 measurement: MeasurementSpec = MeasurementSpec.INJECTED()):
-    """The ``CoachbotLine`` is a UI widget which displays a ``CoachbotState``.
+class _CoachbotBooted(Widget):
+    is_on = reactive(None)
 
-    Parameters:
-        bot (Coachbot): The Coachbot whose info should be displayed.
-    """
-    state = bot.state
+    def render(self) -> RenderableType:
+        return 'On' if self.is_on else 'Off'
 
-    version_str = ('v' + v).rjust(8) \
-        if (v := bot.state.os_version) is not None \
-        else 'v?.?.?'.rjust(8)
 
-    position_str = f'{round(p.x, 2): 5} {round(p.y, 2): 5}' \
-        if (p := state.position) is not None \
-        else f"{'?'.rjust(5)},{'?'.rjust(5)}"
-    theta_str = f'{round(t * 180 / math.pi, 1): 6}' \
-        if (t := state.theta) is not None else f"{'?'.rjust(6)}"
+class _CoachbotPosition(Widget):
+    pos = reactive(None)
 
-    bat_label = f'{round(v, 2):>4}' if (v := state.bat_voltage) is not None \
-        else '   ?'
-    bat_color = (ColorPairs.OK_INVERTED
-                 if v > 3.8
-                 else (ColorPairs.WARNING_INVERTED
-                       if v > 3.6
-                       else ColorPairs.ERROR_INVERTED)) \
-        if (v := state.bat_voltage) is not None \
-        else ColorPairs.INFO
+    def render(self) -> RenderableType:
+        return '?' if self.pos is None else str(self.pos)
 
-    left_widget = Row(
-        (
-            Text(f' {bot.identifier: 3}▕',
-                 style=TextStyleSpec(color=ColorPairs.INFO_INVERTED,
-                                     bold=True)),
-            Text(
-                ' ✔️  ON   ' if state.is_on else ' ✖️  OFF  ',
-                style=TextStyleSpec(
-                    color=(ColorPairs.OK_INVERTED if state.is_on else
-                           ColorPairs.ERROR_INVERTED),
-                    bold=True
-                )
-            ),
-            Text(f' {version_str} '),
-            Text(f' [{position_str}] {theta_str}°▕',
-                 style=TextStyleSpec(color=ColorPairs.INFO_INVERTED,
-                                     bold=True)),
-            Text(f' {bat_label}V ',
-                 style=TextStyleSpec(color=bat_color, bold=True)),
-        )
-    )
 
-    right_widget = Row(
-        (
-            UserInfo(bot.state.user_code_state),
-        )
-    )
+class _CoachbotOsVersion(Widget):
+    version = reactive(None)
 
-    return Row(
-        (
-            left_widget,
-            right_widget
-        ),
-        measurement=measurement,
-        layout=LayoutSpec.FILL,
-        spacing=RowSpacing.SPACE_BETWEEN
-    )
+    def render(self) -> RenderableType:
+        return '?' if self.version is None else self.version
+
+
+class _CoachbotBatVoltage(Widget):
+    voltage = reactive(None)
+
+    def render(self) -> RenderableType:
+        if self.voltage is not None:
+            if self.voltage >= 3.8:
+                color = Color(0, 255, 0)
+            elif self.voltage >= 3.6:
+                color = Color(255, 255, 0)
+            else:
+                color = Color(255, 0, 0)
+            self.styles.color = color
+            return f'{self.voltage:1.02f}'
+        return '?'
+
+
+class _CoachbotTheta(Widget):
+    theta = reactive(None)
+
+    def render(self) -> RenderableType:
+        return '?' if self.theta is None else f'{self.theta:.2f}'
+
+
+class _CoachbotUserOn(Widget):
+    is_on = reactive(None)
+
+    def render(self) -> RenderableType:
+        return '?' if self.is_on is None else ('⚙️' if self.is_on else '🛑')
+
+
+class _CoachbotUserName(Widget):
+    script_name = reactive(None)
+    MAX_LEN = 23
+
+    def render(self) -> RenderableType:
+        return '?' if self.name is None \
+            else (self.name if len(self.name) <= self.__class__.MAX_LEN
+                  else f'{self.name[:self.__class__.MAX_LEN - 3]}...')
+
+
+class _CoachbotUserAuthor(Widget):
+    script_author = reactive(None)
+    MAX_LEN = 23
+
+    def render(self) -> RenderableType:
+        return '?' if self.name is None \
+            else (self.name if len(self.name) <= self.__class__.MAX_LEN
+                  else f'{self.name[:self.__class__.MAX_LEN - 3]}...')
+
+
+class _CoachbotUserVersion(Widget):
+    version = reactive(None)
+
+    def render(self) -> RenderableType:
+        return '?' if self.version is None else self.version
+
+
+class CoachbotStateDisplay(Static):
+    """A widget to display the current coachbot state."""
+
+    def __init__(self,
+                 bot_id: int,
+                 renderable: RenderableType = "", *,
+                 expand: bool = False,
+                 shrink: bool = False,
+                 markup: bool = True,
+                 name: Union[str, None] = None,
+                 id: Union[str, None] = None,
+                 classes: Union[str, None] = None) -> None:
+        super().__init__(renderable, expand=expand, shrink=shrink,
+                         markup=markup, name=name, id=id,
+                         classes=f'{classes} coachbot-line')
+        self.bot_id = bot_id
+
+    def update_coachbot(self, bot: Coachbot):
+        self._booted_msg.is_on = bot.state.is_on
+        self._pos.pos = bot.state.position
+        self._os_version.version = bot.state.os_version
+        self._bat_v.voltage = bot.state.bat_voltage
+        self._theta.theta = bot.state.theta
+        self._user_on.is_on = bot.state.user_code_state.is_running
+        self._user_name.script_name = bot.state.user_code_state.name
+        self._user_author.script_author = bot.state.user_code_state.author
+        self._user_version.version = bot.state.user_code_state.version
+
+    def compose(self):
+        yield Static(f'{self.bot_id}', classes='coachbot-line__id')
+        self._booted_msg = _CoachbotBooted(classes='coachbot-line__is-on')
+        yield self._booted_msg
+        self._os_version = _CoachbotOsVersion(classes='coachbot-line__os-ver')
+        yield self._os_version
+        self._bat_v = _CoachbotBatVoltage(
+            classes='coachbot-line__bat-voltage')
+        yield self._bat_v
+        self._pos = _CoachbotPosition(classes='coachbot-line__position')
+        yield self._pos
+        self._theta = _CoachbotTheta(classes='coachbot-line__theta')
+        yield self._theta
+        self._user_on = _CoachbotUserOn(classes='coachbot-line__script-state')
+        yield self._user_on
+        self._user_name = _CoachbotUserName(
+            classes='coachbot-line__script-name')
+        yield self._user_name
+        self._user_author = _CoachbotUserAuthor(
+            classes='coachbot-line__script-author')
+        yield self._user_author
+        self._user_version = _CoachbotUserVersion(
+            classes='coachbot-line__script-version')
+        yield self._user_version
+
+
+class CoachbotStateHeaderDisplay(Static):
+    """The table header widget."""
+    def compose(self):
+        yield Static('ID', classes='coachbot-line__id')
+        yield Static('Boot', classes='coachbot-line__is-on')
+        yield Static('Version', classes='coachbot-line__os-ver')
+        yield Static('Voltage', classes='coachbot-line__bat-voltage')
+        yield Static('Position', classes='coachbot-line__position')
+        yield Static('Theta', classes='coachbot-line__theta')
+        yield Static('State', classes='coachbot-line__script-state')
+        yield Static('Name', classes='coachbot-line__script-name')
+        yield Static('Author', classes='coachbot-line__script-author')
+        yield Static('Version', classes='coachbot-line__script-version')

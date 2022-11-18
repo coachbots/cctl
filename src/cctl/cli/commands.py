@@ -10,16 +10,15 @@ import sys
 from typing import List, Literal, Optional, Tuple, Union
 from collections import deque
 import itertools
+from cctl.ui import ManageApp
 from cctl.utils.algos import group_els, iterable_flatten
 from reactivex import operators as rxops
-from compot.widgets import ObserverMainWindow
 from cctl.api.cctld import CCTLDClient, CCTLDCoachbotStateObservable, \
     CCTLDRespBadRequest, CCTLDRespEx, CCTLDRespInvalidState
 from cctl.models import Coachbot
 from cctl.utils import parsers
 from cctl.cli.command import cctl_command
 from cctl.conf import Configuration
-from cctl.ui.manager import Manager
 
 ARGUMENT_ID = (['id'],
                {'metavar': 'N', 'type': str, 'nargs': '*',
@@ -178,18 +177,18 @@ async def pause_handle(args: Namespace, config: Configuration) -> int:
 @cctl_command('manage')
 async def manage_handle(_, conf: Configuration) -> int:
     """Spawns a management TUI."""
-    data_stream, task = await CCTLDCoachbotStateObservable(
+    data_stream, _ = await CCTLDCoachbotStateObservable(
         conf.cctld.state_feed_host)
-    try:
-        ObserverMainWindow(
-            Manager, data_stream.pipe(rxops.map(
-                lambda sts: [Coachbot(i, st) for i, st in enumerate(sts)]))
+
+    app = ManageApp(
+        data_stream.pipe(
+            rxops.map(
+                lambda sts: [Coachbot(i, st) for i, st in enumerate(sts)]
+            )
         )
-        await task
-    except KeyboardInterrupt as key_int:
-        data_stream.on_error(key_int)
-        task.cancel()
-    return 0
+    )
+    await app.run_async()
+    return 1
 
 
 @cctl_command('update', arguments=[
