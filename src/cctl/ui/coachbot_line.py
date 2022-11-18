@@ -1,7 +1,6 @@
 """This module exposes the CoachbotLine textualize widget."""
 
 from typing import Union
-import numpy as np
 from rich.console import RenderableType
 from textual.reactive import reactive
 from textual.color import Color
