@@ -34,18 +34,14 @@ class _CoachbotOsVersion(Widget):
 class _CoachbotBatVoltage(Widget):
     voltage = reactive(None)
 
-    @staticmethod
-    def _voltage_hue_transform(voltage: float) -> float:
-        coeffs = np.array([
-            4.66722464e+02, -1.32350259e+04,  1.59968225e+05, -1.06803633e+06,
-            4.25307250e+06, -1.00992200e+07,  1.32384259e+07, -7.38898098e+06
-        ])
-        return max(min(np.poly1d(coeffs)(voltage), 120.0), 0.0)
-
     def render(self) -> RenderableType:
         if self.voltage is not None:
-            color = Color.from_hsl(
-                self.__class__._voltage_hue_transform(self.voltage), 1, 1)
+            if self.voltage >= 3.8:
+                color = Color(255, 0, 0)
+            elif self.voltage >= 3.6:
+                color = Color(255, 255, 0)
+            else:
+                color = Color(0, 250, 0)
             self.styles.background = color
             return f'{self.voltage:1.02f}'
         return '?'

@@ -301,6 +301,7 @@ async def CCTLDCoachbotStateObservable(
             socket.disconnect(state_feed)
             socket.setsockopt(zmq.LINGER, 0)
             socket.close()
+            context.destroy()
 
     return my_subject, asyncio.create_task(run())
 
