@@ -37,7 +37,7 @@ CoachbotStateHeaderDisplay {
     padding: 0 1;
     border-right: gold solid;
     content-align: right middle;
-    font-weight: bold;
+    text-style: bold;
 }
 
 .coachbot-line__position {
