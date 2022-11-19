@@ -23,6 +23,7 @@ from cctl.conf import Configuration
 
 # TODO: Remove
 from paramiko import SSHClient, WarningPolicy
+import stat
 
 ARGUMENT_ID = (['id'],
                {'metavar': 'N', 'type': str, 'nargs': '*',
@@ -211,7 +212,7 @@ async def update_handler(args: Namespace, conf: Configuration) -> int:
         def rmtree(sftp, remotepath, level=0):
             for f in sftp.listdir_attr(remotepath):
                 rpath = f'{remotepath}/{f.filename}'
-                if os.stat.S_ISDIR(f.st_mode):
+                if stat.S_ISDIR(f.st_mode):
                     rmtree(sftp, rpath, level=(level + 1))
                 else:
                     rpath = f'{remotepath}/{f.filename}'
