@@ -221,6 +221,28 @@ async def update_handler(args: Namespace, conf: Configuration) -> int:
             print('removing %s%s' % ('    ' * level, remotepath))
             sftp.rmdir(remotepath)
 
+        def put_dir(self, source, target):
+            ''' Uploads the contents of the source directory to the target
+            path. The target directory needs to exists. All subdirectories in
+            source are created under target. '''
+            for item in os.listdir(source):
+                if os.path.isfile(os.path.join(source, item)):
+                    self.put(os.path.join(source, item), '%s/%s' % (target, item))
+                else:
+                    mkdir(self, '%s/%s' % (target, item), ignore_existing=True)
+                    put_dir(self, os.path.join(source, item), '%s/%s' % (target, item))
+
+        def mkdir(self, path, mode=511, ignore_existing=False):
+            ''' Augments mkdir by adding an option to not fail if the folder
+            exists  '''
+            try:
+                mkdir(self, path, mode)
+            except IOError:
+                if ignore_existing:
+                    pass
+                else:
+                    raise
+
         warnings.warn('This API is not supported unless you are running '
                       'on the control laptop. This is subject to change.')
         async with CCTLDClient(conf.cctld.request_host) as client:
@@ -237,8 +259,8 @@ async def update_handler(args: Namespace, conf: Configuration) -> int:
                                key_filename='/home/hanlin/.ssh/id_coachbot')
                 sftp = client.open_sftp()
                 rmtree(sftp, '/home/pi/control')
-                sftp.put('/home/hanlin/coach/server_beta/temp',
-                         '/home/pi/control')
+                put_dir(sftp, '/home/hanlin/coach/server_beta/temp',
+                              '/home/pi/control')
             finally:
                 client.close()
 
