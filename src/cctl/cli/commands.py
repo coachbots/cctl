@@ -214,7 +214,7 @@ async def update_handler(args: Namespace, conf: Configuration) -> int:
                        if state.is_on]
         for bot in on_bots:
             cmd = ('scp -r /home/hanlin/coach/server_beta/temp '
-                f'pi@{bot.ip_address}:~/control')
+                   f'pi@{bot.ip_address}:~/control')
             print(cmd)
             os.system(cmd)
 
