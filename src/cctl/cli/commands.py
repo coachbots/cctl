@@ -208,6 +208,18 @@ async def manage_handle(_, conf: Configuration) -> int:
 async def update_handler(args: Namespace, conf: Configuration) -> int:
     """Updates the code on all robots."""
     if args.os_update:  # TODO: This whole handler is garbage
+        def rmtree(sftp, remotepath, level=0):
+            for f in sftp.listdir_attr(remotepath):
+                rpath = f'{remotepath}/{f.filename}'
+                if os.stat.S_ISDIR(f.st_mode):
+                    rmtree(sftp, rpath, level=(level + 1))
+                else:
+                    rpath = f'{remotepath}/{f.filename}'
+                    print('removing %s%s' % ('    ' * level, rpath))
+                    sftp.remove(rpath)
+            print('removing %s%s' % ('    ' * level, remotepath))
+            sftp.rmdir(remotepath)
+
         warnings.warn('This API is not supported unless you are running '
                       'on the control laptop. This is subject to change.')
         async with CCTLDClient(conf.cctld.request_host) as client:
@@ -223,7 +235,7 @@ async def update_handler(args: Namespace, conf: Configuration) -> int:
                 client.connect(bot.ip_address, username='pi',
                                key_filename='/home/hanlin/.ssh/id_coachbot')
                 sftp = client.open_sftp()
-                sftp.remove('/home/pi/control')
+                rmtree(sftp, '/home/pi/control')
                 sftp.put('/home/hanlin/coach/server_beta/temp',
                          '/home/pi/control')
             finally:
