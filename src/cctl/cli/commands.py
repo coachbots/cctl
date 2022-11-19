@@ -10,6 +10,7 @@ import sys
 from typing import List, Literal, Optional, Tuple, Union
 from collections import deque
 import itertools
+import warnings
 from cctl.ui import ManageApp
 from cctl.utils.algos import group_els, iterable_flatten
 from reactivex import operators as rxops
@@ -19,6 +20,7 @@ from cctl.models import Coachbot
 from cctl.utils import parsers
 from cctl.cli.command import cctl_command
 from cctl.conf import Configuration
+
 
 ARGUMENT_ID = (['id'],
                {'metavar': 'N', 'type': str, 'nargs': '*',
@@ -203,8 +205,18 @@ async def manage_handle(_, conf: Configuration) -> int:
 ])
 async def update_handler(args: Namespace, conf: Configuration) -> int:
     """Updates the code on all robots."""
-    if args.os_update:
-        raise NotImplementedError()
+    if args.os_update:  # TODO: This whole handler is garbage
+        warnings.warn('This API is not supported unless you are running '
+                      'on the control laptop. This is subject to change.')
+        async with CCTLDClient(conf.cctld.request_host) as client:
+            on_bots = [Coachbot(i, state) for i, state
+                       in enumerate(await client.read_all_states())
+                       if state.is_on]
+        for bot in on_bots:
+            cmd = ('scp -r /home/hanlin/coach/server_beta/temp '
+                   f'pi@{bot.ip_address}:~/control')
+            print(cmd)
+            os.system(cmd)
 
     with open(os.path.abspath(args.usr_path[0]), 'r') as source_f:
         source = source_f.read()
