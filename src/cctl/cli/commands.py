@@ -229,7 +229,6 @@ async def update_handler(args: Namespace, conf: Configuration) -> int:
             finally:
                 client.close()
 
-
     with open(os.path.abspath(args.usr_path[0]), 'r') as source_f:
         source = source_f.read()
 
