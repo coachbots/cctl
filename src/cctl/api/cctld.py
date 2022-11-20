@@ -7,7 +7,7 @@ __author__ = 'Marko Vejnovic <contact@markovejnovic.com>'
 __copyright__ = 'Copyright 2022, Northwestern University'
 __credits__ = ['Marko Vejnovic', 'Lin Liu', 'Billie Strong']
 __license__ = 'Proprietary'
-__version__ = '0.6.0'
+__version__ = '1.2.1'
 __maintainer__ = 'Marko Vejnovic'
 __email__ = 'contact@markovejnovic.com'
 __status__ = 'Development'
@@ -45,7 +45,6 @@ class _CCTLDClientRequest:
             self._socket.disconnect(self._ipc)
             self._socket.setsockopt(zmq.LINGER, 0)
             self._socket.close()
-        self._ctx.destroy(0)
 
         return False
 
@@ -97,7 +96,7 @@ class CCTLDClient:
     """
     def __init__(self, cctl_ipc_path: str) -> None:
         self._path = cctl_ipc_path
-        self._ctx = zmq.asyncio.Context()
+        self._ctx = None
 
     @staticmethod
     def _raise_error_code(response: ipc.Response) -> None:
@@ -108,7 +107,15 @@ class CCTLDClient:
         if response.result_code != ipc.ResultCode.OK:
             raise CCTLDRespInvalidState(response.body)
 
+    def __ensure_context(self):
+        """This function is to ensure that this object is instantiated within a
+        context manager, not to ensure a ZMQ context."""
+        if self._ctx is None:
+            raise ValueError('f{self.__class__.__name__} can only be used in '
+                             'a context.')
+
     async def __aenter__(self) -> 'CCTLDClient':
+        self._ctx = zmq.asyncio.Context()
         return self
 
     async def read_all_states(self) -> List[CoachbotState]:
@@ -117,6 +124,8 @@ class CCTLDClient:
         Returns:
             List[CoachbotState]: The list of all coachbot states.
         """
+        self.__ensure_context()
+        assert self._ctx is not None
         with _CCTLDClientRequest(self._ctx, self._path) as req:
             response = await req.request(ipc.Request(
                 method='read',
@@ -136,6 +145,8 @@ class CCTLDClient:
         Returns:
             CoachbotState: The state of the specified ``Coachbot``.
         """
+        self.__ensure_context()
+        assert self._ctx is not None
         with _CCTLDClientRequest(self._ctx, self._path) as req:
             response = await req.request(ipc.Request(
                 method='read',
@@ -145,6 +156,8 @@ class CCTLDClient:
 
     async def read_config(self) -> Dict[str, Any]:
         """Returns the configuration of ``cctld`` as it reports it."""
+        self.__ensure_context()
+        assert self._ctx is not None
         with _CCTLDClientRequest(self._ctx, self._path) as req:
             response = await req.request(ipc.Request(
                 method='read',
@@ -164,6 +177,8 @@ class CCTLDClient:
             color (3-element | str): The RGB value (0-255) of the robot. If
             string, then interpreted as a hex value
         """
+        self.__ensure_context()
+        assert self._ctx is not None
         with _CCTLDClientRequest(self._ctx, self._path) as req:
             response = await req.request(ipc.Request(
                 method='update',
@@ -184,6 +199,8 @@ class CCTLDClient:
             state (bool): Whether the coachbot should be on or not.
             force (bool): Whether to force the booting procedure.
         """
+        self.__ensure_context()
+        assert self._ctx is not None
         with _CCTLDClientRequest(self._ctx, self._path) as req:
             response = await req.request(ipc.Request(
                 method='create' if state else 'delete',
@@ -206,6 +223,8 @@ class CCTLDClient:
         """
         method = 'create' if state else 'delete'
 
+        self.__ensure_context()
+        assert self._ctx is not None
         with _CCTLDClientRequest(self._ctx, self._path) as req:
             response = await req.request(ipc.Request(
                 method=method,
@@ -220,6 +239,8 @@ class CCTLDClient:
             CCTLDRespInvalidState: If the robot is in an invalid state for
             updating. This likely means it is turned off.
         """
+        self.__ensure_context()
+        assert self._ctx is not None
         with _CCTLDClientRequest(self._ctx, self._path) as req:
             response = await req.request(ipc.Request(
                 method='update',
@@ -234,6 +255,8 @@ class CCTLDClient:
         Parameters:
             state (bool): The power rail target state.
         """
+        self.__ensure_context()
+        assert self._ctx is not None
         with _CCTLDClientRequest(self._ctx, self._path) as req:
             response = await req.request(ipc.Request(
                 method='create' if state else 'delete',
@@ -243,12 +266,16 @@ class CCTLDClient:
 
     async def get_video_info(self) -> Dict[str, Dict[str, str]]:
         """Returns information about the video streams."""
+        self.__ensure_context()
+        assert self._ctx is not None
         with _CCTLDClientRequest(self._ctx, self._path) as req:
             response = await req.request(ipc.Request(
                 method='read', endpoint='/info/video'))
             return json.loads(response.body)
 
     async def __aexit__(self, exc_t, exc_v, exc_tb):
+        if self._ctx is not None:
+            self._ctx.destroy(0)
         return False
 
 
