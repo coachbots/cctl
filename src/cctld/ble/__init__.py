@@ -5,6 +5,7 @@
 from __future__ import annotations
 from contextlib import asynccontextmanager
 from typing import Iterable, AsyncGenerator, Tuple
+from subprocess import Popen
 import asyncio
 import logging
 
@@ -73,6 +74,10 @@ class BleManager:
 
         async def boot_bot(addr: str):
             async with self.transaction() as intf:
+                # TODO: Ideally this call shouldn't be necessary, but it's
+                # difficult to get stuff to work without it.
+                Popen(['hciconfig', f'hci{intf}', 'down']).wait()
+                Popen(['hciconfig', f'hci{intf}', 'up']).wait()
                 async with CoachbotBLEClient(
                     addr, pair=True, timeout=10,
                     adapter=f'hci{intf}'

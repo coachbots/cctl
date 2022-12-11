@@ -47,6 +47,13 @@ We are best off creating a **cctld** user. It will need the **video** and
 
    After you do this, then you can do ``sudo adduser cctld bluetooth``.
 
+You will also need to add appropriate capability permissions on ``hciconfig``
+due to a hack which requires a call to ``hciconfig`` from ``cctld``:
+
+.. code-block:: bash
+
+   sudo setcap 'cap_net_raw,cap_net_admin+eip' `which hciconfig`
+
 Setting up a Proxy User
 ^^^^^^^^^^^^^^^^^^^^^^^
 
