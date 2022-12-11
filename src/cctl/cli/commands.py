@@ -372,7 +372,7 @@ async def fetch_output_handler(args: Namespace, conf: Configuration) -> int:
                 if targets == 'all'
                 else [Coachbot.stateless(bot) for bot in targets]
             )
-    except CCTLDRespEx as err:
+    except CCTLDRespEx:
         print('Could not communicate with cctld.', file=sys.stderr)
         return 1
 
