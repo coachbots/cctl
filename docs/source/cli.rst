@@ -126,6 +126,17 @@ order to identify them. It operates similarly to ``on`` and ``off``:
 
 You may pass a color via the ``-c "#rrggbb"`` argument.
 
+Getting Experiment Output
+-------------------------
+
+You can retrieve experiment outputs with the ``fetch-output`` subcommand:
+
+.. code-block:: bash
+
+   cctl fetch-output 1 2 3 8-13 -o my_output_directory
+   cctl fetch-output 3 # Automatically creates a directory here.
+   cctl fetch-output # Fetches all outputs here
+
 Camera Control
 --------------
 
