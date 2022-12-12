@@ -148,11 +148,7 @@ class BleManager:
             while not bot_queue.empty():
                 bot, attempts = await bot_queue.get()
 
-                # Parallel spawn all coachbot booting instructions using up as
-                # many interfaces as available.
-                running_tasks.append(
-                    asyncio.create_task(boot_from_q(bot, attempts, bot_queue,
-                                                    bots_left)))
+                await boot_from_q(bot, attempts, bot_queue, bots_left)
 
             # Join on all tasks prior to exiting or reseting the bluetooth
             # service.
