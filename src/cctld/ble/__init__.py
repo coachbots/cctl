@@ -79,8 +79,8 @@ class BleManager:
         # usually address periodic unreachability.
         # Hard attempts are attempts that reset the whole bluetooth service on
         # failure. These are very slow and should be used sparingly.
-        max_soft_attempts = 3
-        hard_reset_attempts = 4
+        max_soft_attempts = 5
+        hard_reset_attempts = 5
 
         async def boot_bot(addr: str) -> None:
             """Boots a bot at a specified BLE MAC address, blocking until an
