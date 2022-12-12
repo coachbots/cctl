@@ -143,15 +143,10 @@ class BleManager:
                 await bot_queue.put((await bots_left.get(), 0))
 
             # Attempt to command all the bots.
-            running_tasks: List[asyncio.Task] = []
             while not bot_queue.empty():
                 bot, attempts = await bot_queue.get()
 
                 await boot_from_q(bot, attempts, bot_queue, bots_left)
-
-            # Join on all tasks prior to exiting or reseting the bluetooth
-            # service.
-            await asyncio.gather(*running_tasks)
 
             if not bots_left.empty():
                 # We've had hard failures, let's restart the bluetooth service
