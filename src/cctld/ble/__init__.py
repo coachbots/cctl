@@ -133,7 +133,10 @@ class BleManager:
         for bot in bots:
             await bots_left.put(bot)
 
-        for _ in range(hard_reset_attempts):
+        while (
+            (hard_reset_attempt_i := 0) < hard_reset_attempts
+            and not bots_left.empty()
+        ):
             # For this hard attempt, copy all bots to the local queue.
             bot_queue: asyncio.Queue[Tuple[Coachbot, int]] = asyncio.Queue()
             while not bots_left.empty():
@@ -162,6 +165,11 @@ class BleManager:
                     'unresponsive. Restarting the \'bluetooth\' service.')
                 await (await create_subprocess_exec(
                     'systemctl', 'restart', 'bluetooth')).wait()
+            else:
+                logging.getLogger('bluetooth').debug(
+                    'Successfully booted all required bots.')
+
+            hard_reset_attempt_i += 1
 
         # If we still have bots left after this whole fiasco, that means that
         # even hard resetting didn't really fix anything
