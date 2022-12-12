@@ -133,8 +133,9 @@ class BleManager:
         for bot in bots:
             await bots_left.put(bot)
 
+        hard_reset_attempt_i = 0
         while (
-            (hard_reset_attempt_i := 0) < hard_reset_attempts
+            hard_reset_attempt_i < hard_reset_attempts
             and not bots_left.empty()
         ):
             # For this hard attempt, copy all bots to the local queue.
