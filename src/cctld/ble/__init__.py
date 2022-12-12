@@ -46,7 +46,10 @@ class BleManager:
 
     @asynccontextmanager
     async def transaction(self):
-        """Yields an interface for use with transactions."""
+        """Yields an interface for use with transactions.
+
+        Blocks until a transaction is available.
+        """
         intfc = await self.queue.get()
         try:
             yield intfc
@@ -72,7 +75,10 @@ class BleManager:
         """
         max_attempts = 5
 
-        async def boot_bot(addr: str):
+        async def boot_bot(addr: str) -> None:
+            """Boots a bot at a specified BLE MAC address, blocking until an
+            interface is available.
+            """
             async with self.transaction() as intf:
                 # TODO: Ideally this call shouldn't be necessary, but it's
                 # difficult to get stuff to work without it.
@@ -97,7 +103,10 @@ class BleManager:
             addr = bot.bluetooth_mac_address
 
             try:
-                await boot_bot(addr)
+                # Spawn a task to boot a bot. This function will get fired for
+                # all possible bots but will block its own internal execution
+                # until an interface is available.
+                asyncio.create_task(boot_bot(addr))
             except (BleakError, BleakDBusError, asyncio.TimeoutError) as err:
                 if attempts < max_attempts:
                     logging.getLogger('bluetooth').warning(
