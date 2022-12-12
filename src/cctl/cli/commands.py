@@ -358,8 +358,11 @@ async def fetch_output_handler(args: Namespace, conf: Configuration) -> int:
     targets = _parse_arg_id(args.id)
     output_dir = str(
         args.output_dir or
-        os.path.join(os.getcwd(), 'coach-output-', str(int(time.time())))
+        os.path.join(os.getcwd(), f'coach-output-{str(int(time.time()))}')
     )
+
+    if not os.path.isdir(output_dir):
+        os.mkdir(output_dir)
 
     try:
         async with CCTLDClient(conf.cctld.request_host) as client:
