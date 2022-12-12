@@ -50,7 +50,7 @@ We are best off creating a **cctld** user. It will need the **video** and
 You will also need to give ``cctld`` the permissions to reset
 ``bluetooth.service`` via ``sudoedit /etc/sudoers``:
 
-.. code-block:: bash
+.. code-block:: sudo
 
    # Dump this at the bottom:
    Cmnd_Alias CCTLD_COMMANDS = /bin/systemctl restart bluetooth
