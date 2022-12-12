@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 from contextlib import asynccontextmanager
-from typing import Iterable, AsyncGenerator, Tuple
+from typing import Iterable, AsyncGenerator, Tuple, List
 from asyncio.subprocess import create_subprocess_exec
 import asyncio
 import logging
@@ -140,7 +140,7 @@ class BleManager:
                 await bot_queue.put((await bots_left.get(), 0))
 
             # Attempt to command all the bots.
-            running_tasks = []
+            running_tasks: List[asyncio.Task] = []
             while not bot_queue.empty():
                 bot, attempts = await bot_queue.get()
 
@@ -152,8 +152,7 @@ class BleManager:
 
             # Join on all tasks prior to exiting or reseting the bluetooth
             # service.
-            for task in running_tasks:
-                await task
+            await asyncio.wait(running_tasks)
 
             if not bots_left.empty():
                 # We've had hard failures, let's restart the bluetooth service
