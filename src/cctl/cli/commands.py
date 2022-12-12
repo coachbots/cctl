@@ -11,6 +11,7 @@ from typing import List, Literal, Optional, Tuple, Union
 from collections import deque
 import itertools
 import warnings
+import time
 from cctl.ui import ManageApp
 from cctl.utils.algos import group_els, iterable_flatten
 from reactivex import operators as rxops
@@ -207,7 +208,8 @@ async def update_handler(args: Namespace, conf: Configuration) -> int:
     """Updates the code on all robots."""
     if args.os_update:  # TODO: This whole handler is garbage
         warnings.warn('This API is not supported unless you are running '
-                      'on the control laptop. This is subject to change.')
+                      'on the control laptop. This is subject to change. '
+                      'Proceeding.')
         async with CCTLDClient(conf.cctld.request_host) as client:
             on_bots = [Coachbot(i, state) for i, state
                        in enumerate(await client.read_all_states())
@@ -331,3 +333,56 @@ async def led_handler(args: Namespace, conf: Configuration) -> int:
         print(f'{color_str} does not appear to be a valid color.',
               file=sys.stderr)
         return 1
+
+
+@cctl_command(
+    'fetch-output',
+    arguments=[
+        ARGUMENT_ID,
+        (['--output-dir', '-o'], {
+            'dest': 'output_dir',
+            'help': 'Specify the output directory. Will be created if it does '
+                    'not exist.',
+            'action': 'store'
+        })
+    ]
+)
+async def fetch_output_handler(args: Namespace, conf: Configuration) -> int:
+    """Fetches the output of the last experiment. The target coachbot must be
+    paused.
+    """
+    warnings.warn('This API is not supported unless you are running '
+                  'on the control laptop. This command is subject to change. '
+                  'Proceeding.')
+
+    targets = _parse_arg_id(args.id)
+    output_dir = str(
+        args.output_dir or
+        os.path.join(os.getcwd(), f'coach-output-{str(int(time.time()))}')
+    )
+
+    if not os.path.isdir(output_dir):
+        os.mkdir(output_dir)
+
+    try:
+        async with CCTLDClient(conf.cctld.request_host) as client:
+            # Select all coachbots which are on and not running if 'all' is the
+            # query string.
+            target_bots = (
+                [b for b in (Coachbot(i, state) for i, state in
+                 enumerate(await client.read_all_states()))
+                 if b.state.is_on]
+                if targets == 'all'
+                else [Coachbot.stateless(bot) for bot in targets]
+            )
+    except CCTLDRespEx:
+        print('Could not communicate with cctld.', file=sys.stderr)
+        return 1
+
+    for bot in target_bots:
+        cmd = (f'scp -r pi@{bot.ip_address}:/home/pi/experiment_output '
+               f'{output_dir}/{bot.identifier}.txt')
+        print(cmd)
+        os.system(cmd)
+
+    return 0
