@@ -106,7 +106,7 @@ class BleManager:
                 # Spawn a task to boot a bot. This function will get fired for
                 # all possible bots but will block its own internal execution
                 # until an interface is available.
-                asyncio.create_task(boot_bot(addr))
+                await boot_bot(addr)
             except (BleakError, BleakDBusError, asyncio.TimeoutError) as err:
                 if attempts < max_attempts:
                     logging.getLogger('bluetooth').warning(
