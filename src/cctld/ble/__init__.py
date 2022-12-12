@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 from contextlib import asynccontextmanager
-from typing import Iterable, AsyncGenerator, Tuple, List
+from typing import Iterable, AsyncGenerator, Tuple
 from asyncio.subprocess import create_subprocess_exec
 import asyncio
 import logging
