@@ -5,6 +5,7 @@
 from __future__ import annotations
 from contextlib import asynccontextmanager
 from typing import Iterable, AsyncGenerator, Tuple
+from asyncio.subprocess import create_subprocess_exec
 import asyncio
 import logging
 
@@ -45,7 +46,10 @@ class BleManager:
 
     @asynccontextmanager
     async def transaction(self):
-        """Yields an interface for use with transactions."""
+        """Yields an interface for use with transactions.
+
+        Blocks until a transaction is available.
+        """
         intfc = await self.queue.get()
         try:
             yield intfc
@@ -69,10 +73,23 @@ class BleManager:
             A generator of ``BLENotReachableError`` objects which can be used
             to figure out which robots could not be booted up.
         """
-        max_attempts = 5
+        # This implementation relies on two types of attempts -- soft attempts
+        # and hard attempts. Soft attempts are attempts that can possibly be
+        # fixed by retrying to send the same BLE-UART command again. These
+        # usually address periodic unreachability.
+        # Hard attempts are attempts that reset the whole bluetooth service on
+        # failure. These are very slow and should be used sparingly.
+        max_soft_attempts = 5
+        hard_reset_attempts = 5
 
-        async def boot_bot(addr: str):
+        async def boot_bot(addr: str) -> None:
+            """Boots a bot at a specified BLE MAC address, blocking until an
+            interface is available.
+            """
             async with self.transaction() as intf:
+                logging.getLogger('bluetooth').debug(
+                    'Attempting to command %s via interface %s',
+                    addr, f'hci{intf}')
                 async with CoachbotBLEClient(
                     addr, pair=True, timeout=10,
                     adapter=f'hci{intf}'
@@ -83,24 +100,69 @@ class BleManager:
                     logging.getLogger('bluetooth').debug(
                         'Successfully booted bot %s', addr)
 
-        bot_queue: asyncio.Queue[Tuple[Coachbot, int]] = asyncio.Queue()
-        for bot in bots:
-            await bot_queue.put((bot, 0))
-
-        while not bot_queue.empty():
-            bot, attempts = await bot_queue.get()
+        async def boot_from_q(bot: Coachbot,
+                              attempts: int,
+                              soft_err_q: asyncio.Queue[Tuple[Coachbot, int]],
+                              hard_err_q: asyncio.Queue[Coachbot]):
             addr = bot.bluetooth_mac_address
 
             try:
+                # Spawn a task to boot a bot. This function will get fired for
+                # all possible bots but will block its own internal execution
+                # until an interface is available.
                 await boot_bot(addr)
             except (BleakError, BleakDBusError, asyncio.TimeoutError) as err:
-                if attempts < max_attempts:
+                if attempts < max_soft_attempts:
                     logging.getLogger('bluetooth').warning(
                         'Could not command %s due to %s. Will Retry...',
                         addr, err)
-                    await bot_queue.put((bot, attempts + 1))
+                    # If a soft failure happens, that's okay, we'll simply
+                    # retry again.
+                    await soft_err_q.put((bot, attempts + 1))
                 else:
                     logging.getLogger('bluetooth').error(
-                        'Could not command %s after %d attempts. Giving Up.',
-                        addr, max_attempts)
-                    yield BLENotReachableError(bot)
+                        'Could not command %s after %d attempts. '
+                        'Will re-attempt after hard reset.',
+                        addr, max_soft_attempts)
+                    # If a hard failure happens, however, we gotta push into
+                    # the outer queue.
+                    await hard_err_q.put(bot)
+
+        bots_left: asyncio.Queue[Coachbot] = asyncio.Queue()
+        for bot in bots:
+            await bots_left.put(bot)
+
+        hard_reset_attempt_i = 0
+        while (
+            hard_reset_attempt_i < hard_reset_attempts
+            and not bots_left.empty()
+        ):
+            # For this hard attempt, copy all bots to the local queue.
+            bot_queue: asyncio.Queue[Tuple[Coachbot, int]] = asyncio.Queue()
+            while not bots_left.empty():
+                await bot_queue.put((await bots_left.get(), 0))
+
+            # Attempt to command all the bots.
+            while not bot_queue.empty():
+                bot, attempts = await bot_queue.get()
+
+                await boot_from_q(bot, attempts, bot_queue, bots_left)
+
+            if not bots_left.empty():
+                # We've had hard failures, let's restart the bluetooth service
+                # in hopes that will fix it.
+                logging.getLogger('bluetooth').error(
+                    'A significant error happened. Bluetooth appears '
+                    'unresponsive. Restarting the \'bluetooth\' service.')
+                await (await create_subprocess_exec(
+                    'sudo', 'systemctl', 'restart', 'bluetooth')).wait()
+            else:
+                logging.getLogger('bluetooth').debug(
+                    'Successfully booted all required bots.')
+
+            hard_reset_attempt_i += 1
+
+        # If we still have bots left after this whole fiasco, that means that
+        # even hard resetting didn't really fix anything
+        while not bots_left.empty():
+            yield BLENotReachableError(await bots_left.get())
