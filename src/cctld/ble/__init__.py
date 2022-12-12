@@ -87,8 +87,9 @@ class BleManager:
             interface is available.
             """
             async with self.transaction() as intf:
-                # TODO: Ideally this call shouldn't be necessary, but it's
-                # difficult to get stuff to work without it.
+                logging.getLogger('bluetooth').debug(
+                    'Attempting to command %s via interface %s',
+                    addr, f'hci{intf}')
                 async with CoachbotBLEClient(
                     addr, pair=True, timeout=10,
                     adapter=f'hci{intf}'
@@ -109,9 +110,6 @@ class BleManager:
                 # Spawn a task to boot a bot. This function will get fired for
                 # all possible bots but will block its own internal execution
                 # until an interface is available.
-                logging.getLogger('bluetooth').debug(
-                    'Attempting to command %s. Attempt number: %d.',
-                    addr, attempts + 1)
                 await boot_bot(addr)
             except (BleakError, BleakDBusError,
                     asyncio.TimeoutError) as err:
