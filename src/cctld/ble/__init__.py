@@ -160,7 +160,7 @@ class BleManager:
                     'A significant error happened. Bluetooth appears '
                     'unresponsive. Restarting the \'bluetooth\' service.')
                 await (await create_subprocess_exec(
-                    'systemctl', 'restart', 'bluetooth')).wait()
+                    'sudo', 'systemctl', 'restart', 'bluetooth')).wait()
             else:
                 logging.getLogger('bluetooth').debug(
                     'Successfully booted all required bots.')
