@@ -111,8 +111,7 @@ class BleManager:
                 # all possible bots but will block its own internal execution
                 # until an interface is available.
                 await boot_bot(addr)
-            except (BleakError, BleakDBusError,
-                    asyncio.TimeoutError) as err:
+            except (BleakError, BleakDBusError, asyncio.TimeoutError) as err:
                 if attempts < max_soft_attempts:
                     logging.getLogger('bluetooth').warning(
                         'Could not command %s due to %s. Will Retry...',
@@ -152,7 +151,7 @@ class BleManager:
 
             # Join on all tasks prior to exiting or reseting the bluetooth
             # service.
-            await asyncio.wait(running_tasks)
+            await asyncio.gather(*running_tasks)
 
             if not bots_left.empty():
                 # We've had hard failures, let's restart the bluetooth service
