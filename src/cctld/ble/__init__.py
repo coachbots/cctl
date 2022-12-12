@@ -99,6 +99,38 @@ class BleManager:
                     logging.getLogger('bluetooth').debug(
                         'Successfully booted bot %s', addr)
 
+        async def boot_from_q(bot: Coachbot,
+                              attempts: int,
+                              soft_err_q: asyncio.Queue[Tuple[Coachbot, int]],
+                              hard_err_q: asyncio.Queue[Coachbot]):
+            addr = bot.bluetooth_mac_address
+
+            try:
+                # Spawn a task to boot a bot. This function will get fired for
+                # all possible bots but will block its own internal execution
+                # until an interface is available.
+                logging.getLogger('bluetooth').debug(
+                    'Attempting to command %s. Attempt number: %d.',
+                    addr, attempts + 1)
+                await boot_bot(addr)
+            except (BleakError, BleakDBusError,
+                    asyncio.TimeoutError) as err:
+                if attempts < max_soft_attempts:
+                    logging.getLogger('bluetooth').warning(
+                        'Could not command %s due to %s. Will Retry...',
+                        addr, err)
+                    # If a soft failure happens, that's okay, we'll simply
+                    # retry again.
+                    await soft_err_q.put((bot, attempts + 1))
+                else:
+                    logging.getLogger('bluetooth').error(
+                        'Could not command %s after %d attempts. '
+                        'Will re-attempt after hard reset.',
+                        addr, max_soft_attempts)
+                    # If a hard failure happens, however, we gotta push into
+                    # the outer queue.
+                    await hard_err_q.put(bot)
+
         bots_left: asyncio.Queue[Coachbot] = asyncio.Queue()
         for bot in bots:
             await bots_left.put(bot)
@@ -110,35 +142,20 @@ class BleManager:
                 await bot_queue.put((await bots_left.get(), 0))
 
             # Attempt to command all the bots.
+            running_tasks = []
             while not bot_queue.empty():
                 bot, attempts = await bot_queue.get()
-                addr = bot.bluetooth_mac_address
 
-                try:
-                    # Spawn a task to boot a bot. This function will get fired
-                    # for all possible bots but will block its own internal
-                    # execution until an interface is available.
-                    logging.getLogger('bluetooth').debug(
-                        'Attempting to command %s. Attempt number: %d.',
-                        addr, attempts)
-                    asyncio.create_task(boot_bot(addr))
-                except (BleakError, BleakDBusError,
-                        asyncio.TimeoutError) as err:
-                    if attempts < max_soft_attempts:
-                        logging.getLogger('bluetooth').warning(
-                            'Could not command %s due to %s. Will Retry...',
-                            addr, err)
-                        # If a soft failure happens, that's okay, we'll simply
-                        # retry again.
-                        await bot_queue.put((bot, attempts + 1))
-                    else:
-                        logging.getLogger('bluetooth').error(
-                            'Could not command %s after %d attempts. '
-                            'Will re-attempt after hard reset.',
-                            addr, max_soft_attempts)
-                        # If a hard failure happens, however, we gotta push
-                        # into the outer queue.
-                        await bots_left.put(bot)
+                # Parallel spawn all coachbot booting instructions using up as
+                # many interfaces as available.
+                running_tasks.append(
+                    asyncio.create_task(boot_from_q(bot, attempts, bot_queue,
+                                                    bots_left)))
+
+            # Join on all tasks prior to exiting or reseting the bluetooth
+            # service.
+            for task in running_tasks:
+                await task
 
             if not bots_left.empty():
                 # We've had hard failures, let's restart the bluetooth service
