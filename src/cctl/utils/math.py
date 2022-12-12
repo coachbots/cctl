@@ -106,8 +106,9 @@ def signed_max(value, target):
 
 def distance(point_1,   # type: Union[np.ndarray, List[float], float]
              point_2,   # type: Union[np.ndarray, List[float], float]
-             x_2: Optional[float] = None,
-             y_2: Optional[float] = None):
+             x_2=None,  # type: Optional[float]
+             y_2=None   # type: Optional[float]
+             ):
     """
     Returns the distance between two given points.
 

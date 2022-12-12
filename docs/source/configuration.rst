@@ -47,15 +47,6 @@ We are best off creating a **cctld** user. It will need the **video** and
 
    After you do this, then you can do ``sudo adduser cctld bluetooth``.
 
-You will also need to give ``cctld`` the permissions to reset
-``bluetooth.service`` via ``sudoedit /etc/sudoers``:
-
-.. code-block:: sudo
-
-   # Dump this at the bottom:
-   Cmnd_Alias CCTLD_COMMANDS = /bin/systemctl restart bluetooth
-   cctld   ALL=(ALL) NOPASSWD: CCTLD_COMMANDS
-
 Setting up a Proxy User
 ^^^^^^^^^^^^^^^^^^^^^^^
 
