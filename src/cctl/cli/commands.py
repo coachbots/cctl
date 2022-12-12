@@ -213,7 +213,7 @@ async def update_handler(args: Namespace, conf: Configuration) -> int:
                        in enumerate(await client.read_all_states())
                        if state.is_on]
         for bot in on_bots:
-            cmd = ('scp -r /home/hanlin/coach/server_beta/temp '
+            cmd = ('scp -r /home/hanlin/coach/server_beta/temp/* '
                    f'pi@{bot.ip_address}:~/control')
             print(cmd)
             os.system(cmd)
